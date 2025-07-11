@@ -427,18 +427,59 @@ const getTimeSlotsForDay = (dayIndex) => {
               Daily Schedule Configuration
             </CardTitle>
           </CardHeader>
-          <CardContent>
+<CardContent>
             <div className="space-y-6">
+              {/* Default Working Hours Display */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <ApperIcon name="Settings" size={16} />
+                  Default Working Hours (from Settings)
+                </h4>
+                <div className="text-sm text-blue-700">
+                  <p>
+                    Start: <span className="font-medium">{schedulePreferences?.defaultWorkingHours?.start || "08:00"}</span>
+                    {" • "}
+                    End: <span className="font-medium">{schedulePreferences?.defaultWorkingHours?.end || "16:00"}</span>
+                    {" • "}
+                    Class Duration: <span className="font-medium">{schedulePreferences?.classPeriodMinutes || 45} minutes</span>
+                  </p>
+                  <p className="mt-1 text-xs">
+                    These default hours are used when individual days don't have custom schedules configured.
+                  </p>
+                </div>
+              </div>
+              
               <p className="text-gray-600">
-                Configure working hours and teaching periods for each day. Individual days can override the default schedule.
+                Configure working hours and teaching periods for each day. Individual days can override the default schedule above.
               </p>
               
-              {days.map(day => {
-                const daySchedule = dailySchedule[day] || { enabled: true, startTime: "08:00", endTime: "16:00" };
+{days.map(day => {
+                const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
+                const defaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
+                const defaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
+                
+                // Check if this day is using default values
+                const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === defaultStart;
+                const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === defaultEnd;
+                const effectiveStartTime = daySchedule.startTime || defaultStart;
+                const effectiveEndTime = daySchedule.endTime || defaultEnd;
+                
                 return (
                   <div key={day} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-lg">{day}</h3>
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-semibold text-lg">{day}</h3>
+                        {(isUsingDefaultStart && isUsingDefaultEnd) && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            Using Default Hours
+                          </span>
+                        )}
+                        {(!isUsingDefaultStart || !isUsingDefaultEnd) && (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">
+                            Custom Schedule
+                          </span>
+                        )}
+                      </div>
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -452,18 +493,34 @@ const getTimeSlotsForDay = (dayIndex) => {
                     
                     {daySchedule.enabled && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField label="Start Time">
+                        <FormField label={
+                          <div className="flex items-center gap-2">
+                            <span>Start Time</span>
+                            {isUsingDefaultStart && (
+                              <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
+                            )}
+                          </div>
+                        }>
                           <Input
                             type="time"
-                            value={daySchedule.startTime}
+                            value={effectiveStartTime}
                             onChange={(e) => handleDailyScheduleChange(day, "startTime", e.target.value)}
+                            placeholder={defaultStart}
                           />
                         </FormField>
-                        <FormField label="End Time">
+                        <FormField label={
+                          <div className="flex items-center gap-2">
+                            <span>End Time</span>
+                            {isUsingDefaultEnd && (
+                              <span className="text-xs text-blue-600">(Default: {defaultEnd})</span>
+                            )}
+                          </div>
+                        }>
                           <Input
                             type="time"
-                            value={daySchedule.endTime}
+                            value={effectiveEndTime}
                             onChange={(e) => handleDailyScheduleChange(day, "endTime", e.target.value)}
+                            placeholder={defaultEnd}
                           />
                         </FormField>
                       </div>
