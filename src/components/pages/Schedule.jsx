@@ -175,12 +175,28 @@ const getTimeSlotsForDay = (dayIndex) => {
     }
   };
 
-  const handleCreateClassLevel = async (e) => {
+const handleCreateClassLevel = async (e) => {
     e.preventDefault();
     try {
+      // Generate default name if empty
+      let levelName = newClassLevel.name.trim();
+      if (!levelName) {
+        // Find the next number for "Tahun X" format
+        const existingTahunLevels = classLevels
+          .filter(level => level.name.startsWith("Tahun "))
+          .map(level => {
+            const match = level.name.match(/Tahun (\d+)/);
+            return match ? parseInt(match[1]) : 0;
+          });
+        
+        const nextNumber = existingTahunLevels.length > 0 ? Math.max(...existingTahunLevels) + 1 : 1;
+        levelName = `Tahun ${nextNumber}`;
+      }
+      
       const updatedLevels = [...classLevels, { 
         Id: Math.max(...classLevels.map(c => c.Id), 0) + 1, 
-        ...newClassLevel 
+        name: levelName,
+        description: newClassLevel.description || `Academic level ${levelName}`
       }];
       await settingsService.updateClassLevels(updatedLevels);
       setClassLevels(updatedLevels);
@@ -482,42 +498,60 @@ const getTimeSlotsForDay = (dayIndex) => {
         </Card>
       )}
 
-      {/* Class Levels Management Tab */}
+{/* Class Levels Management Tab */}
       {activeTab === "levels" && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <ApperIcon name="GraduationCap" size={24} className="text-primary-600" />
-                Class Level Management
-              </CardTitle>
-              <Button onClick={() => setShowAddClassLevel(true)}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ApperIcon name="GraduationCap" size={24} className="text-primary-600" />
+                  Class Level Management
+                </CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Organize your school structure with customizable grade levels
+                </p>
+              </div>
+              <Button onClick={() => setShowAddClassLevel(true)} className="shrink-0">
                 <ApperIcon name="Plus" size={18} className="mr-2" />
                 Add Class Level
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                Manage the available class levels for your school. These levels will appear when creating classes and schedules.
-              </p>
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <ApperIcon name="Info" size={20} className="text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-blue-900">Default Level Names</h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      New levels are automatically named "Tahun 1", "Tahun 2", etc. You can edit these names anytime to match your school's structure.
+                    </p>
+                  </div>
+                </div>
+              </div>
               
               {classLevels.length === 0 ? (
                 <Empty
                   title="No class levels configured"
-                  description="Add class levels to organize your school structure"
+                  description="Add class levels to organize your school structure. They will be automatically numbered as Tahun 1, Tahun 2, etc."
                   actionLabel="Add Class Level"
                   icon="GraduationCap"
                   onAction={() => setShowAddClassLevel(true)}
                 />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {classLevels.map(level => (
-                    <div key={level.Id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">{level.name}</h3>
-                        <div className="flex gap-2">
+                    <div key={level.Id} className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                            <ApperIcon name="GraduationCap" size={16} className="text-primary-600" />
+                          </div>
+                          <h3 className="font-semibold text-gray-900">{level.name}</h3>
+                        </div>
+                        <div className="flex gap-1">
                           <Button
                             variant="outline"
                             size="sm"
@@ -525,19 +559,21 @@ const getTimeSlotsForDay = (dayIndex) => {
                               setEditingClassLevel(level);
                               setNewClassLevel({ name: level.name, description: level.description });
                             }}
+                            className="h-8 w-8 p-0"
                           >
-                            <ApperIcon name="Edit" size={16} />
+                            <ApperIcon name="Edit" size={14} />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteClassLevel(level.Id)}
+                            className="h-8 w-8 p-0 hover:bg-red-50 hover:border-red-200"
                           >
-                            <ApperIcon name="Trash" size={16} />
+                            <ApperIcon name="Trash" size={14} className="text-red-500" />
                           </Button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600">{level.description}</p>
+                      <p className="text-sm text-gray-600 leading-relaxed">{level.description}</p>
                     </div>
                   ))}
                 </div>
@@ -621,32 +657,47 @@ const getTimeSlotsForDay = (dayIndex) => {
         </div>
       )}
 
-      {/* Add/Edit Class Level Modal */}
+{/* Add/Edit Class Level Modal */}
       {(showAddClassLevel || editingClassLevel) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>{editingClassLevel ? "Edit Class Level" : "Add New Class Level"}</CardTitle>
+          <Card className="w-full max-w-lg">
+            <CardHeader className="border-b border-gray-100">
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="GraduationCap" size={20} className="text-primary-600" />
+                {editingClassLevel ? "Edit Class Level" : "Add New Class Level"}
+              </CardTitle>
+              {!editingClassLevel && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Leave name empty to auto-generate "Tahun X" format
+                </p>
+              )}
             </CardHeader>
-            <CardContent>
-              <form onSubmit={editingClassLevel ? handleEditClassLevel : handleCreateClassLevel} className="space-y-4">
+            <CardContent className="pt-6">
+              <form onSubmit={editingClassLevel ? handleEditClassLevel : handleCreateClassLevel} className="space-y-6">
                 <FormField label="Level Name">
                   <Input
                     value={newClassLevel.name}
                     onChange={(e) => setNewClassLevel({...newClassLevel, name: e.target.value})}
-                    placeholder="e.g., Grade 4, Form 1"
-                    required
+                    placeholder={editingClassLevel ? "e.g., Grade 4, Form 1" : "Leave empty for auto-naming (Tahun 1, Tahun 2, etc.)"}
                   />
+                  {!editingClassLevel && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Auto-generates as "Tahun {classLevels.length + 1}" if left empty
+                    </p>
+                  )}
                 </FormField>
+                
                 <FormField label="Description">
                   <Input
                     value={newClassLevel.description}
                     onChange={(e) => setNewClassLevel({...newClassLevel, description: e.target.value})}
-                    placeholder="Brief description of this level"
+                    placeholder="Brief description of this academic level"
                   />
                 </FormField>
-                <div className="flex gap-3 pt-4">
+                
+                <div className="flex gap-3 pt-4 border-t border-gray-100">
                   <Button type="submit" className="flex-1">
+                    <ApperIcon name={editingClassLevel ? "Check" : "Plus"} size={16} className="mr-2" />
                     {editingClassLevel ? "Update Level" : "Add Level"}
                   </Button>
                   <Button 
