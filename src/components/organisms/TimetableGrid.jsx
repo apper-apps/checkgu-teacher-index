@@ -19,13 +19,25 @@ const [currentWeek, setCurrentWeek] = useState(new Date());
     loadAcademicCalendar();
   }, []);
 
-  const loadAcademicCalendar = async () => {
+const loadAcademicCalendar = async () => {
     try {
       const calendar = await settingsService.getAcademicCalendar();
       setAcademicCalendar(calendar);
     } catch (error) {
       console.error('Failed to load academic calendar:', error);
     }
+  };
+
+  const isBreakDay = (date) => {
+    if (!academicCalendar?.breaks) return false;
+    
+    const dateString = format(date, 'yyyy-MM-dd');
+    return academicCalendar.breaks.some(breakItem => {
+      const breakStart = new Date(breakItem.startDate);
+      const breakEnd = new Date(breakItem.endDate);
+      const currentDate = new Date(dateString);
+      return currentDate >= breakStart && currentDate <= breakEnd;
+    });
   };
 
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -82,18 +94,30 @@ const getWeekDates = () => {
     <div className="hidden md:block">
       <div className="grid grid-cols-6 gap-4">
         <div className="font-medium text-gray-600">Time</div>
-        {days.map((day, index) => (
-          <div key={day} className={`font-medium text-center p-2 rounded-lg transition-colors ${
-            isCurrentDay(index) 
-              ? 'bg-primary-100 text-primary-800 border-2 border-primary-300' 
-              : 'text-gray-900'
-          }`}>
-            <div className="text-sm font-semibold">{day}</div>
-            <div className="text-xs text-gray-600 mt-1">
-              {format(weekDates[index], 'MMM dd')}
+{days.map((day, index) => {
+          const dayDate = weekDates[index];
+          const isBreak = isBreakDay(dayDate);
+          
+          return (
+            <div key={day} className={`font-medium text-center p-2 rounded-lg transition-colors ${
+              isCurrentDay(index) 
+                ? 'bg-primary-100 text-primary-800 border-2 border-primary-300' 
+                : isBreak
+                ? 'bg-red-50 text-red-800 border border-red-200'
+                : 'text-gray-900'
+            }`}>
+              <div className="text-sm font-semibold">{day}</div>
+              <div className="text-xs text-gray-600 mt-1">
+                {format(dayDate, 'MMM dd')}
+              </div>
+              {isBreak && (
+                <div className="text-xs text-red-600 mt-1">
+                  Break
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
         
         {timeSlots.map((timeSlot, timeIndex) => (
           <div key={timeSlot} className="contents">
@@ -125,24 +149,36 @@ const getWeekDates = () => {
   const MobileView = () => (
     <div className="md:hidden">
 <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-        {days.map((day, index) => (
-          <button
-            key={day}
-            onClick={() => setSelectedDay(index)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              selectedDay === index
-                ? "bg-primary-500 text-white"
-                : isCurrentDay(index)
-                ? "bg-primary-100 text-primary-800 border-2 border-primary-300"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <div className="font-semibold">{day}</div>
-            <div className="text-xs mt-1">
-              {format(weekDates[index], 'MMM dd')}
-            </div>
-          </button>
-        ))}
+{days.map((day, index) => {
+          const dayDate = weekDates[index];
+          const isBreak = isBreakDay(dayDate);
+          
+          return (
+            <button
+              key={day}
+              onClick={() => setSelectedDay(index)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                selectedDay === index
+                  ? "bg-primary-500 text-white"
+                  : isCurrentDay(index)
+                  ? "bg-primary-100 text-primary-800 border-2 border-primary-300"
+                  : isBreak
+                  ? "bg-red-50 text-red-800 border border-red-200"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <div className="font-semibold">{day}</div>
+              <div className="text-xs mt-1">
+                {format(dayDate, 'MMM dd')}
+              </div>
+              {isBreak && (
+                <div className="text-xs mt-1">
+                  Break
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
       
       <Card>

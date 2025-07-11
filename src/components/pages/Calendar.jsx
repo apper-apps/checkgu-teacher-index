@@ -71,12 +71,32 @@ const getScheduleForDay = (date) => {
     return lessonPlans.filter(lp => lp.date === dateString);
   };
 
-  const isHoliday = (date) => {
-    // Mock holiday data - in real app, this would come from settings
-    const holidays = [
+const isHoliday = (date) => {
+    const dateString = format(date, "yyyy-MM-dd");
+    
+    // Check standard holidays
+    const standardHolidays = [
       "2024-01-01", "2024-07-04", "2024-12-25"
     ];
-    return holidays.includes(format(date, "yyyy-MM-dd"));
+    
+    if (standardHolidays.includes(dateString)) {
+      return { isHoliday: true, name: "Holiday" };
+    }
+    
+    // Check custom school breaks
+    if (academicCalendar?.breaks) {
+      for (const breakItem of academicCalendar.breaks) {
+        const breakStart = new Date(breakItem.startDate);
+        const breakEnd = new Date(breakItem.endDate);
+        const currentDate = new Date(dateString);
+        
+        if (currentDate >= breakStart && currentDate <= breakEnd) {
+          return { isHoliday: true, name: breakItem.name };
+        }
+      }
+    }
+    
+    return { isHoliday: false, name: null };
   };
 
 const renderMonthView = () => {
@@ -97,12 +117,12 @@ const renderMonthView = () => {
         ))}
         
         {/* Calendar days */}
-        {days.map(date => {
+{days.map(date => {
           const daySchedules = getScheduleForDay(date);
           const dayLessonPlans = getLessonPlansForDay(date);
           const isCurrentMonth = isSameMonth(date, currentDate);
           const isTodayDate = isToday(date);
-          const isHolidayDate = isHoliday(date);
+          const holidayInfo = isHoliday(date);
 
           return (
             <div
@@ -110,7 +130,7 @@ const renderMonthView = () => {
               className={`min-h-[100px] p-2 border border-gray-200 ${
                 isCurrentMonth ? "bg-white" : "bg-gray-50"
               } ${isTodayDate ? "bg-primary-50 border-primary-200" : ""} ${
-                isHolidayDate ? "bg-red-50 border-red-200" : ""
+                holidayInfo.isHoliday ? "bg-red-50 border-red-200" : ""
               } hover:bg-gray-50 cursor-pointer transition-colors`}
             >
               <div className="flex justify-between items-start mb-1">
@@ -120,9 +140,9 @@ const renderMonthView = () => {
                 }`}>
                   {format(date, "d")}
                 </span>
-                {isHolidayDate && (
+                {holidayInfo.isHoliday && (
                   <Badge variant="error" className="text-xs">
-                    Holiday
+                    {holidayInfo.name}
                   </Badge>
                 )}
               </div>

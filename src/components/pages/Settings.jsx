@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
 import Button from "@/components/atoms/Button";
 import FormField from "@/components/molecules/FormField";
@@ -37,13 +38,22 @@ const [academicCalendar, setAcademicCalendar] = useState({
     winterBreakEnd: "2025-04-15",
     springTermStart: "2025-04-16",
     springTermEnd: "2025-06-30",
-    weekStartsOnSunday: false
+    weekStartsOnSunday: false,
+    breaks: [
+      { id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
+      { id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
+    ]
   });
 
+  const [newBreak, setNewBreak] = useState({
+    name: "",
+    startDate: "",
+    endDate: ""
+  });
+
+  const [editingBreak, setEditingBreak] = useState(null);
+
 const [schedulePreferences, setSchedulePreferences] = useState({
-    classPeriodMinutes: 45,
-    breakDuration: 15,
-    lunchDuration: 30,
     numberOfLevels: 5,
     numberOfClasses: 2,
     defaultLessonDuration: 30,
@@ -124,6 +134,80 @@ const handleSaveCalendar = async (e) => {
     } catch (err) {
       toast.error("Failed to update academic calendar");
     }
+  };
+
+  const handleAddBreak = () => {
+    if (!newBreak.name || !newBreak.startDate || !newBreak.endDate) {
+      toast.error("Please fill in all break details");
+      return;
+    }
+    
+    if (new Date(newBreak.startDate) > new Date(newBreak.endDate)) {
+      toast.error("Start date must be before end date");
+      return;
+    }
+
+    const breakWithId = {
+      ...newBreak,
+      id: Date.now()
+    };
+
+    setAcademicCalendar(prev => ({
+      ...prev,
+      breaks: [...prev.breaks, breakWithId]
+    }));
+
+    setNewBreak({ name: "", startDate: "", endDate: "" });
+    toast.success("Break added successfully!");
+  };
+
+  const handleEditBreak = (breakItem) => {
+    setEditingBreak(breakItem);
+    setNewBreak({
+      name: breakItem.name,
+      startDate: breakItem.startDate,
+      endDate: breakItem.endDate
+    });
+  };
+
+  const handleUpdateBreak = () => {
+    if (!newBreak.name || !newBreak.startDate || !newBreak.endDate) {
+      toast.error("Please fill in all break details");
+      return;
+    }
+    
+    if (new Date(newBreak.startDate) > new Date(newBreak.endDate)) {
+      toast.error("Start date must be before end date");
+      return;
+    }
+
+    setAcademicCalendar(prev => ({
+      ...prev,
+      breaks: prev.breaks.map(b => 
+        b.id === editingBreak.id 
+          ? { ...b, ...newBreak }
+          : b
+      )
+    }));
+
+    setEditingBreak(null);
+    setNewBreak({ name: "", startDate: "", endDate: "" });
+    toast.success("Break updated successfully!");
+  };
+
+  const handleDeleteBreak = (breakId) => {
+    if (confirm("Are you sure you want to delete this break?")) {
+      setAcademicCalendar(prev => ({
+        ...prev,
+        breaks: prev.breaks.filter(b => b.id !== breakId)
+      }));
+      toast.success("Break deleted successfully!");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBreak(null);
+    setNewBreak({ name: "", startDate: "", endDate: "" });
   };
 
 const handleSaveSchedule = async (e) => {
@@ -321,53 +405,165 @@ case "school":
 
 case "calendar":
         return (
-          <form onSubmit={handleSaveCalendar} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Term Start Date">
-                <Input
-                  type="date"
-                  value={academicCalendar.termStart}
-                  onChange={(e) => setAcademicCalendar({...academicCalendar, termStart: e.target.value})}
-                />
-              </FormField>
-              <FormField label="Term End Date">
-                <Input
-                  type="date"
-                  value={academicCalendar.termEnd}
-                  onChange={(e) => setAcademicCalendar({...academicCalendar, termEnd: e.target.value})}
-                />
-              </FormField>
-              <FormField label="Winter Break Start">
-                <Input
-                  type="date"
-                  value={academicCalendar.winterBreakStart}
-                  onChange={(e) => setAcademicCalendar({...academicCalendar, winterBreakStart: e.target.value})}
-                />
-              </FormField>
-              <FormField label="Winter Break End">
-                <Input
-                  type="date"
-                  value={academicCalendar.winterBreakEnd}
-                  onChange={(e) => setAcademicCalendar({...academicCalendar, winterBreakEnd: e.target.value})}
-                />
-              </FormField>
-              <FormField label="Spring Term Start">
-                <Input
-                  type="date"
-                  value={academicCalendar.springTermStart}
-                  onChange={(e) => setAcademicCalendar({...academicCalendar, springTermStart: e.target.value})}
-                />
-              </FormField>
-              <FormField label="Spring Term End">
-                <Input
-                  type="date"
-                  value={academicCalendar.springTermEnd}
-                  onChange={(e) => setAcademicCalendar({...academicCalendar, springTermEnd: e.target.value})}
-                />
-              </FormField>
+          <form onSubmit={handleSaveCalendar} className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Academic Terms</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Term Start Date">
+                  <Input
+                    type="date"
+                    value={academicCalendar.termStart}
+                    onChange={(e) => setAcademicCalendar({...academicCalendar, termStart: e.target.value})}
+                  />
+                </FormField>
+                <FormField label="Term End Date">
+                  <Input
+                    type="date"
+                    value={academicCalendar.termEnd}
+                    onChange={(e) => setAcademicCalendar({...academicCalendar, termEnd: e.target.value})}
+                  />
+                </FormField>
+                <FormField label="Winter Break Start">
+                  <Input
+                    type="date"
+                    value={academicCalendar.winterBreakStart}
+                    onChange={(e) => setAcademicCalendar({...academicCalendar, winterBreakStart: e.target.value})}
+                  />
+                </FormField>
+                <FormField label="Winter Break End">
+                  <Input
+                    type="date"
+                    value={academicCalendar.winterBreakEnd}
+                    onChange={(e) => setAcademicCalendar({...academicCalendar, winterBreakEnd: e.target.value})}
+                  />
+                </FormField>
+                <FormField label="Spring Term Start">
+                  <Input
+                    type="date"
+                    value={academicCalendar.springTermStart}
+                    onChange={(e) => setAcademicCalendar({...academicCalendar, springTermStart: e.target.value})}
+                  />
+                </FormField>
+                <FormField label="Spring Term End">
+                  <Input
+                    type="date"
+                    value={academicCalendar.springTermEnd}
+                    onChange={(e) => setAcademicCalendar({...academicCalendar, springTermEnd: e.target.value})}
+                  />
+                </FormField>
+              </div>
+            </div>
+
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">School Breaks</h3>
+              <div className="text-sm text-gray-600 mb-4">
+                Manage custom school breaks that will appear in your calendar and timetable
+              </div>
+              
+              {/* Add/Edit Break Form */}
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                <div className="flex items-center gap-2">
+                  <ApperIcon name="Plus" size={16} className="text-primary-600" />
+                  <h4 className="font-medium text-gray-900">
+                    {editingBreak ? 'Edit Break' : 'Add New Break'}
+                  </h4>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField label="Break Name">
+                    <Input
+                      value={newBreak.name}
+                      onChange={(e) => setNewBreak({...newBreak, name: e.target.value})}
+                      placeholder="e.g., Easter Break"
+                    />
+                  </FormField>
+                  <FormField label="Start Date">
+                    <Input
+                      type="date"
+                      value={newBreak.startDate}
+                      onChange={(e) => setNewBreak({...newBreak, startDate: e.target.value})}
+                    />
+                  </FormField>
+                  <FormField label="End Date">
+                    <Input
+                      type="date"
+                      value={newBreak.endDate}
+                      onChange={(e) => setNewBreak({...newBreak, endDate: e.target.value})}
+                    />
+                  </FormField>
+                </div>
+                
+                <div className="flex gap-2">
+                  {editingBreak ? (
+                    <>
+                      <Button
+                        type="button"
+                        onClick={handleUpdateBreak}
+                        size="sm"
+                      >
+                        <ApperIcon name="Save" size={14} className="mr-2" />
+                        Update Break
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCancelEdit}
+                        size="sm"
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={handleAddBreak}
+                      size="sm"
+                    >
+                      <ApperIcon name="Plus" size={14} className="mr-2" />
+                      Add Break
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Existing Breaks List */}
+              {academicCalendar.breaks && academicCalendar.breaks.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-900">Current Breaks</h4>
+                  {academicCalendar.breaks.map((breakItem) => (
+                    <div key={breakItem.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{breakItem.name}</div>
+                        <div className="text-sm text-gray-600">
+                          {format(new Date(breakItem.startDate), 'MMM dd, yyyy')} - {format(new Date(breakItem.endDate), 'MMM dd, yyyy')}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditBreak(breakItem)}
+                        >
+                          <ApperIcon name="Edit" size={14} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteBreak(breakItem.id)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <ApperIcon name="Trash2" size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
-            <div className="border-t pt-4">
+            <div className="border-t pt-6">
               <FormField label="Week Start Day">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -407,33 +603,6 @@ case "schedule":
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Class Schedule</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Class Period Duration (minutes)">
-                  <Input
-                    type="number"
-                    value={schedulePreferences.classPeriodMinutes}
-                    onChange={(e) => setSchedulePreferences({...schedulePreferences, classPeriodMinutes: parseInt(e.target.value)})}
-                    min="30"
-                    max="90"
-                  />
-                </FormField>
-                <FormField label="Break Duration (minutes)">
-                  <Input
-                    type="number"
-                    value={schedulePreferences.breakDuration}
-                    onChange={(e) => setSchedulePreferences({...schedulePreferences, breakDuration: parseInt(e.target.value)})}
-                    min="10"
-                    max="30"
-                  />
-                </FormField>
-                <FormField label="Lunch Duration (minutes)">
-                  <Input
-                    type="number"
-                    value={schedulePreferences.lunchDuration}
-                    onChange={(e) => setSchedulePreferences({...schedulePreferences, lunchDuration: parseInt(e.target.value)})}
-                    min="20"
-                    max="60"
-                  />
-                </FormField>
                 <FormField label="Number of Grade Levels">
                   <Input
                     type="number"

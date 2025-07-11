@@ -6,7 +6,11 @@ const mockAcademicCalendar = {
   winterBreakEnd: "2025-04-15",
   springTermStart: "2025-04-16",
   springTermEnd: "2025-06-30",
-  weekStartsOnSunday: false
+  weekStartsOnSunday: false,
+  breaks: [
+    { id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
+    { id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
+  ]
 };
 
 const mockSchoolProfile = {
@@ -21,9 +25,6 @@ const mockSchoolProfile = {
 };
 
 const mockSchedulePreferences = {
-  classPeriodMinutes: 45,
-  breakDuration: 15,
-  lunchDuration: 30,
   numberOfLevels: 5,
   numberOfClasses: 2,
   defaultLessonDuration: 30,
@@ -127,12 +128,29 @@ updateSchedulePreferences: async (preferencesData) => {
     });
   },
 
-  updateClassLevels: async (levelsData) => {
+updateClassLevels: async (levelsData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         mockClassLevels.length = 0;
         mockClassLevels.push(...levelsData);
         resolve([...mockClassLevels]);
+      }, 200);
+    });
+  },
+
+  getSchoolBreaks: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([...mockAcademicCalendar.breaks]);
+      }, 100);
+    });
+  },
+
+  updateSchoolBreaks: async (breaksData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        mockAcademicCalendar.breaks = [...breaksData];
+        resolve([...mockAcademicCalendar.breaks]);
       }, 200);
     });
   }
