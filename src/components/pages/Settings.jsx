@@ -68,7 +68,14 @@ const [schedulePreferences, setSchedulePreferences] = useState({
     defaultWorkingHours: {
       start: "08:00",
       end: "16:00"
-    }
+    },
+    gradeLevels: [
+      { Id: 1, name: "Grade 1", numberOfClasses: 2 },
+      { Id: 2, name: "Grade 2", numberOfClasses: 2 },
+      { Id: 3, name: "Grade 3", numberOfClasses: 2 },
+      { Id: 4, name: "Grade 4", numberOfClasses: 2 },
+      { Id: 5, name: "Grade 5", numberOfClasses: 2 }
+    ]
   });
 
   const [calendarSync, setCalendarSync] = useState({
@@ -251,12 +258,56 @@ const handleDeleteBreak = (breakId) => {
 
 const handleSaveSchedule = async (e) => {
     e.preventDefault();
+    
+    // Validate that all grade levels have names
+    const missingNames = schedulePreferences.gradeLevels.some(level => !level.name.trim());
+    if (missingNames) {
+      toast.error("Please provide names for all grade levels");
+      return;
+    }
+    
     try {
       await settingsService.updateSchedulePreferences(schedulePreferences);
       toast.success("Schedule preferences updated successfully!");
     } catch (err) {
       toast.error("Failed to update schedule preferences");
     }
+  };
+
+  const handleNumberOfLevelsChange = (newCount) => {
+    const currentLevels = schedulePreferences.gradeLevels;
+    let updatedLevels = [...currentLevels];
+    
+    if (newCount > currentLevels.length) {
+      // Add new grade levels
+      for (let i = currentLevels.length; i < newCount; i++) {
+        updatedLevels.push({
+          Id: i + 1,
+          name: `Grade ${i + 1}`,
+          numberOfClasses: schedulePreferences.numberOfClasses
+        });
+      }
+    } else if (newCount < currentLevels.length) {
+      // Remove excess grade levels
+      updatedLevels = updatedLevels.slice(0, newCount);
+    }
+    
+    setSchedulePreferences({
+      ...schedulePreferences,
+      numberOfLevels: newCount,
+      gradeLevels: updatedLevels
+    });
+  };
+
+  const handleGradeLevelChange = (levelId, field, value) => {
+    setSchedulePreferences(prev => ({
+      ...prev,
+      gradeLevels: prev.gradeLevels.map(level => 
+        level.Id === levelId 
+          ? { ...level, [field]: field === 'numberOfClasses' ? parseInt(value) : value }
+          : level
+      )
+    }));
   };
 
   const handleSaveSync = async (e) => {
@@ -746,12 +797,12 @@ case "schedule":
                   <Input
                     type="number"
                     value={schedulePreferences.numberOfLevels}
-                    onChange={(e) => setSchedulePreferences({...schedulePreferences, numberOfLevels: parseInt(e.target.value)})}
+                    onChange={(e) => handleNumberOfLevelsChange(parseInt(e.target.value))}
                     min="1"
                     max="12"
                   />
                 </FormField>
-                <FormField label="Classes per Grade Level">
+                <FormField label="Default Classes per Grade Level">
                   <Input
                     type="number"
                     value={schedulePreferences.numberOfClasses}
@@ -759,7 +810,49 @@ case "schedule":
                     min="1"
                     max="10"
                   />
+                  <div className="text-sm text-gray-500 mt-1">
+                    This will be used as default when adding new grade levels
+                  </div>
                 </FormField>
+              </div>
+            </div>
+
+            {/* Grade Level Configuration */}
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Grade Level Configuration</h3>
+              <div className="text-sm text-gray-600 mb-4">
+                Configure the name and number of classes for each grade level
+              </div>
+              
+              <div className="space-y-4">
+                {schedulePreferences.gradeLevels.map((level, index) => (
+                  <div key={level.Id} className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ApperIcon name="GraduationCap" size={16} className="text-primary-600" />
+                      <h4 className="font-medium text-gray-900">Level {index + 1}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Grade Level Name">
+                        <Input
+                          value={level.name}
+                          onChange={(e) => handleGradeLevelChange(level.Id, 'name', e.target.value)}
+                          placeholder="e.g., Grade 1, Kindergarten"
+                          required
+                        />
+                      </FormField>
+                      <FormField label="Number of Classes">
+                        <Input
+                          type="number"
+                          value={level.numberOfClasses}
+                          onChange={(e) => handleGradeLevelChange(level.Id, 'numberOfClasses', e.target.value)}
+                          min="1"
+                          max="10"
+                          required
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
             
@@ -780,16 +873,12 @@ case "schedule":
                   </div>
                 </FormField>
               </div>
-</div>
+            </div>
             
             <div className="border-t pt-6 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Default Working Hours</h3>
               <div className="text-sm text-gray-600 mb-4">
                 Configure the default working hours for your schedule
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Schedule Default Working Hours</h3>
-              <div className="text-sm text-gray-600 mb-4">
-                These are used as defaults when daily schedules are disabled
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField label="Start Time">
