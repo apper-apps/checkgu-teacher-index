@@ -8,6 +8,9 @@ import StudentList from "@/components/organisms/StudentList";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import ApperIcon from "@/components/ApperIcon";
+import AttendanceChart from "@/components/molecules/AttendanceChart";
+import PerformanceChart from "@/components/molecules/PerformanceChart";
+import SubjectChart from "@/components/molecules/SubjectChart";
 import { studentService } from "@/services/api/studentService";
 import { classService } from "@/services/api/classService";
 import { toast } from "react-toastify";
@@ -19,7 +22,8 @@ const Students = () => {
   const [error, setError] = useState(null);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [showStudentDetails, setShowStudentDetails] = useState(false);
+const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -303,21 +307,25 @@ return (
         </div>
       )}
 
-      {/* Student Details Modal */}
+{/* Student Details Modal */}
       {showStudentDetails && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Student Details</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setShowStudentDetails(false)}>
+                <CardTitle>Student Analytics</CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setShowStudentDetails(false);
+                  setActiveTab('details');
+                }}>
                   <ApperIcon name="X" size={20} />
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div className="flex items-center gap-4">
+                {/* Student Header */}
+                <div className="flex items-center gap-4 pb-4 border-b">
                   <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
                     <ApperIcon name="User" size={24} className="text-primary-600" />
                   </div>
@@ -328,41 +336,174 @@ return (
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-medium mb-2">Guardian Information</h4>
-                    <div className="space-y-2 text-sm">
-                      <p><strong>Name:</strong> {selectedStudent.guardianName}</p>
-                      <p><strong>Phone:</strong> {selectedStudent.guardianPhone}</p>
-                      <p><strong>Email:</strong> {selectedStudent.guardianEmail}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium mb-2">Academic Performance</h4>
-                    <div className="space-y-2 text-sm">
-                      <p><strong>Attendance:</strong> {selectedStudent.attendanceRate}%</p>
-                      <p><strong>Overall Grade:</strong> {selectedStudent.overallGrade || "B+"}</p>
-                      <p><strong>Notes:</strong> {selectedStudent.notes || "No notes available"}</p>
-                    </div>
-                  </div>
+                {/* Tab Navigation */}
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                  <button
+                    onClick={() => setActiveTab('details')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+                      activeTab === 'details'
+                        ? 'bg-white text-primary-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <ApperIcon name="User" size={16} />
+                    Details
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('charts')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+                      activeTab === 'charts'
+                        ? 'bg-white text-primary-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <ApperIcon name="BarChart3" size={16} />
+                    Progress Charts
+                  </button>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1">
-                    <ApperIcon name="Edit" size={16} className="mr-2" />
-                    Edit Student
-                  </Button>
-                  <Button variant="outline" className="flex-1">
-                    <ApperIcon name="FileText" size={16} className="mr-2" />
-                    View Report
-                  </Button>
-                </div>
+                {/* Tab Content */}
+                {activeTab === 'details' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-medium mb-2">Guardian Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <p><strong>Name:</strong> {selectedStudent.guardianName}</p>
+                          <p><strong>Phone:</strong> {selectedStudent.guardianPhone}</p>
+                          <p><strong>Email:</strong> {selectedStudent.guardianEmail}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium mb-2">Academic Performance</h4>
+                        <div className="space-y-2 text-sm">
+                          <p><strong>Attendance:</strong> {selectedStudent.attendanceRate}%</p>
+                          <p><strong>Overall Grade:</strong> {selectedStudent.overallGrade || "B+"}</p>
+                          <p><strong>Notes:</strong> {selectedStudent.notes || "No notes available"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button variant="outline" className="flex-1">
+                        <ApperIcon name="Edit" size={16} className="mr-2" />
+                        Edit Student
+                      </Button>
+                      <Button variant="outline" className="flex-1">
+                        <ApperIcon name="FileText" size={16} className="mr-2" />
+                        View Report
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'charts' && (
+                  <div className="space-y-6">
+                    {/* Attendance Trend Chart */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <ApperIcon name="Calendar" size={18} />
+                          Attendance Trend
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64">
+                          <AttendanceChart studentId={selectedStudent.Id} attendanceRate={selectedStudent.attendanceRate} />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Performance Overview */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <ApperIcon name="TrendingUp" size={18} />
+                            Performance Overview
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-64">
+                            <PerformanceChart 
+                              studentId={selectedStudent.Id} 
+                              overallGrade={selectedStudent.overallGrade}
+                              attendanceRate={selectedStudent.attendanceRate}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <ApperIcon name="Target" size={18} />
+                            Subject Performance
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-64">
+                            <SubjectChart 
+                              studentId={selectedStudent.Id}
+                              className={selectedStudent.className}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-600">Current Attendance</p>
+                              <p className="text-2xl font-bold text-primary-600">{selectedStudent.attendanceRate}%</p>
+                            </div>
+                            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                              <ApperIcon name="UserCheck" size={20} className="text-primary-600" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-600">Overall Grade</p>
+                              <p className="text-2xl font-bold text-secondary-600">{selectedStudent.overallGrade || "B+"}</p>
+                            </div>
+                            <div className="w-10 h-10 bg-secondary-100 rounded-full flex items-center justify-center">
+                              <ApperIcon name="Award" size={20} className="text-secondary-600" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-600">Improvement</p>
+                              <p className="text-2xl font-bold text-accent-600">+5%</p>
+                            </div>
+                            <div className="w-10 h-10 bg-accent-100 rounded-full flex items-center justify-center">
+                              <ApperIcon name="TrendingUp" size={20} className="text-accent-600" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
-)}
+      )}
 
       {/* Import CSV Modal */}
       {showImportModal && (
