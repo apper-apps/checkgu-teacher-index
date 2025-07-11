@@ -669,65 +669,13 @@ case "schedule":
                   </div>
                 </FormField>
               </div>
-            </div>
+</div>
             
             <div className="border-t pt-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Daily Working Hours</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Default Working Hours</h3>
               <div className="text-sm text-gray-600 mb-4">
-                Configure working hours for each day of the week. Days are listed starting from your selected Week Start Day.
+                Configure the default working hours for your schedule
               </div>
-              
-              {/* Get weekdays starting from the selected start day */}
-              {(() => {
-                const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                const startIndex = academicCalendar.weekStartsOnSunday ? 6 : 0; // Sunday = 6, Monday = 0
-                const orderedDays = [...allDays.slice(startIndex), ...allDays.slice(0, startIndex)];
-                const workingDays = orderedDays.slice(0, 5); // Only show first 5 days (working days)
-                
-                return workingDays.map((day, index) => (
-                  <div key={day} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-gray-900">{day}</h4>
-                      <div className="text-sm text-gray-500">
-                        {academicCalendar.weekStartsOnSunday && index === 0 && "Week Start Day"}
-                        {!academicCalendar.weekStartsOnSunday && index === 0 && "Week Start Day"}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Start Time">
-                        <Input
-                          type="time"
-                          value={schedulePreferences.defaultWorkingHours?.start || "08:00"}
-                          onChange={(e) => setSchedulePreferences({
-                            ...schedulePreferences,
-                            defaultWorkingHours: {
-                              ...schedulePreferences.defaultWorkingHours,
-                              start: e.target.value
-                            }
-                          })}
-                        />
-                      </FormField>
-                      <FormField label="End Time">
-                        <Input
-                          type="time"
-                          value={schedulePreferences.defaultWorkingHours?.end || "16:00"}
-                          onChange={(e) => setSchedulePreferences({
-                            ...schedulePreferences,
-                            defaultWorkingHours: {
-                              ...schedulePreferences.defaultWorkingHours,
-                              end: e.target.value
-                            }
-                          })}
-                        />
-                      </FormField>
-                    </div>
-                  </div>
-                ));
-              })()}
-            </div>
-            
-            <div className="border-t pt-6 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Schedule Default Working Hours</h3>
               <div className="text-sm text-gray-600 mb-4">
                 These are used as defaults when daily schedules are disabled
