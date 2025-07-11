@@ -802,18 +802,6 @@ case "schedule":
                     max="12"
                   />
                 </FormField>
-                <FormField label="Default Classes per Grade Level">
-                  <Input
-                    type="number"
-                    value={schedulePreferences.numberOfClasses}
-                    onChange={(e) => setSchedulePreferences({...schedulePreferences, numberOfClasses: parseInt(e.target.value)})}
-                    min="1"
-                    max="10"
-                  />
-                  <div className="text-sm text-gray-500 mt-1">
-                    This will be used as default when adding new grade levels
-                  </div>
-                </FormField>
               </div>
             </div>
 
@@ -837,16 +825,6 @@ case "schedule":
                           value={level.name}
                           onChange={(e) => handleGradeLevelChange(level.Id, 'name', e.target.value)}
                           placeholder="e.g., Grade 1, Kindergarten"
-                          required
-                        />
-                      </FormField>
-                      <FormField label="Number of Classes">
-                        <Input
-                          type="number"
-                          value={level.numberOfClasses}
-                          onChange={(e) => handleGradeLevelChange(level.Id, 'numberOfClasses', e.target.value)}
-                          min="1"
-                          max="10"
                           required
                         />
                       </FormField>

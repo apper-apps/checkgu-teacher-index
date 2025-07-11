@@ -331,5 +331,13 @@ export const settingsService = {
         }
       }, 200);
     });
+},
+
+  updateNotificationPreferences: async (preferencesData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ ...preferencesData });
+      }, 200);
+    });
   }
 };
