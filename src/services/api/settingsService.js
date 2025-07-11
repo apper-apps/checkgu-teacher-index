@@ -7,9 +7,9 @@ const mockAcademicCalendar = {
   springTermStart: "2025-04-16",
   springTermEnd: "2025-06-30",
   weekStartsOnSunday: false,
-  breaks: [
-    { id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
-    { id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
+breaks: [
+    { Id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
+    { Id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
   ]
 };
 
@@ -155,20 +155,20 @@ getSchoolBreaks: async () => {
     });
   },
 
-  addSchoolBreak: async (breakData) => {
+addSchoolBreak: async (breakData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const newBreak = { ...breakData, id: Date.now() };
+        const newBreak = { ...breakData, Id: Math.max(...mockAcademicCalendar.breaks.map(b => b.Id), 0) + 1 };
         mockAcademicCalendar.breaks.push(newBreak);
         resolve(newBreak);
       }, 200);
     });
   },
 
-  deleteSchoolBreak: async (breakId) => {
+deleteSchoolBreak: async (breakId) => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const index = mockAcademicCalendar.breaks.findIndex(b => b.id === breakId);
+        const index = mockAcademicCalendar.breaks.findIndex(b => b.Id === breakId);
         if (index !== -1) {
           mockAcademicCalendar.breaks.splice(index, 1);
         }

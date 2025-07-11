@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import FormField from "@/components/molecules/FormField";
-import Input from "@/components/atoms/Input";
-import Select from "@/components/atoms/Select";
-import Textarea from "@/components/atoms/Textarea";
-import ApperIcon from "@/components/ApperIcon";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
+import Textarea from "@/components/atoms/Textarea";
+import Input from "@/components/atoms/Input";
+import Calendar from "@/components/pages/Calendar";
+import Schedule from "@/components/pages/Schedule";
+import FormField from "@/components/molecules/FormField";
 import { settingsService } from "@/services/api/settingsService";
 
 const Settings = () => {
@@ -39,9 +41,9 @@ const [academicCalendar, setAcademicCalendar] = useState({
     springTermStart: "2025-04-16",
     springTermEnd: "2025-06-30",
     weekStartsOnSunday: false,
-    breaks: [
-      { id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
-      { id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
+breaks: [
+      { Id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
+      { Id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
     ]
   });
 
@@ -161,9 +163,9 @@ const handleAddBreak = () => {
       return;
     }
 
-    const breakWithId = {
+const breakWithId = {
       ...newBreak,
-      id: Date.now()
+      Id: Math.max(...academicCalendar.breaks.map(b => b.Id), 0) + 1
     };
 
     setAcademicCalendar(prev => ({
@@ -198,8 +200,8 @@ const handleAddBreak = () => {
     // Check for overlapping breaks (excluding the one being edited)
     const startDate = new Date(newBreak.startDate);
     const endDate = new Date(newBreak.endDate);
-    const hasOverlap = academicCalendar.breaks.some(existingBreak => {
-      if (existingBreak.id === editingBreak.id) return false; // Skip the break being edited
+const hasOverlap = academicCalendar.breaks.some(existingBreak => {
+      if (existingBreak.Id === editingBreak.Id) return false; // Skip the break being edited
       const existingStart = new Date(existingBreak.startDate);
       const existingEnd = new Date(existingBreak.endDate);
       return (startDate <= existingEnd && endDate >= existingStart);
@@ -212,8 +214,8 @@ const handleAddBreak = () => {
 
     setAcademicCalendar(prev => ({
       ...prev,
-      breaks: prev.breaks.map(b => 
-        b.id === editingBreak.id 
+breaks: prev.breaks.map(b => 
+        b.Id === editingBreak.Id
           ? { ...b, ...newBreak }
           : b
       )
@@ -224,11 +226,11 @@ const handleAddBreak = () => {
     toast.success("Break updated successfully!");
   };
 
-  const handleDeleteBreak = (breakId) => {
+const handleDeleteBreak = (breakId) => {
     if (confirm("Are you sure you want to delete this break?")) {
       setAcademicCalendar(prev => ({
         ...prev,
-        breaks: prev.breaks.filter(b => b.id !== breakId)
+        breaks: prev.breaks.filter(b => b.Id !== breakId)
       }));
       toast.success("Break deleted successfully!");
     }
@@ -559,8 +561,8 @@ case "calendar":
               {academicCalendar.breaks && academicCalendar.breaks.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="font-medium text-gray-900">Current Breaks</h4>
-                  {academicCalendar.breaks.map((breakItem) => (
-                    <div key={breakItem.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+{academicCalendar.breaks.map((breakItem) => (
+                    <div key={breakItem.Id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                       <div className="flex-1">
                         <div className="font-medium text-gray-900">{breakItem.name}</div>
                         <div className="text-sm text-gray-600">
@@ -579,8 +581,8 @@ case "calendar":
                         <Button
                           type="button"
                           variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteBreak(breakItem.id)}
+onClick={() => handleDeleteBreak(breakItem.Id)}
+                          className="text-red-600 hover:bg-red-50"
                           className="text-red-600 hover:bg-red-50"
                         >
                           <ApperIcon name="Trash2" size={14} />
