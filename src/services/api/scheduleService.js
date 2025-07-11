@@ -49,10 +49,11 @@ schedules.splice(index, 1);
     return true;
   },
 
-  async getByWeek(weekStart) {
+async getByWeek(weekStart) {
     await delay(300);
-    // For now, return all schedules as we don't have date-specific data
+    // Return all schedules but with fresh data to reflect any changes
     // In a real app, you would filter by the actual week dates
+    // This ensures the Dashboard gets updated schedule data when week changes
     return [...schedules];
   }
 };

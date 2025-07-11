@@ -9,7 +9,7 @@ import Input from "@/components/atoms/Input";
 import { settingsService } from "@/services/api/settingsService";
 import { calculateAcademicWeek } from "@/utils/academicWeek";
 
-const TimetableGrid = ({ schedules = [], onSlotClick }) => {
+const TimetableGrid = ({ schedules = [], onSlotClick, onWeekChange }) => {
   const [selectedDay, setSelectedDay] = useState(0);
 const [currentWeek, setCurrentWeek] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -18,6 +18,13 @@ const [currentWeek, setCurrentWeek] = useState(new Date());
   useEffect(() => {
     loadAcademicCalendar();
   }, []);
+
+  useEffect(() => {
+    // Notify parent component when week changes to refresh schedule data
+    if (onWeekChange) {
+      onWeekChange(currentWeek);
+    }
+  }, [currentWeek, onWeekChange]);
 
 const loadAcademicCalendar = async () => {
     try {
