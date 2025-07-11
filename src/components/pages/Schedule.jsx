@@ -101,16 +101,20 @@ const loadData = async () => {
     return slots;
   };
 
-  const getTimeSlotsForDay = (dayIndex) => {
-    const daySchedule = dailySchedule[days[dayIndex]];
-    if (daySchedule && daySchedule.enabled) {
-      return generateTimeSlots(daySchedule.startTime, daySchedule.endTime, schedulePreferences?.classPeriodMinutes || 45);
+const getTimeSlotsForDay = (dayIndex) => {
+    const dayName = days[dayIndex];
+    const daySchedule = dailySchedule[dayName];
+    
+    // If day is explicitly disabled, return empty slots
+    if (daySchedule && !daySchedule.enabled) {
+      return [];
     }
-    return generateTimeSlots(
-      schedulePreferences?.defaultWorkingHours?.start || "08:00",
-      schedulePreferences?.defaultWorkingHours?.end || "16:00",
-      schedulePreferences?.classPeriodMinutes || 45
-    );
+    
+    // Use day-specific schedule if available, otherwise use individual day defaults
+    const startTime = daySchedule?.startTime || schedulePreferences?.defaultWorkingHours?.start || "08:00";
+    const endTime = daySchedule?.endTime || schedulePreferences?.defaultWorkingHours?.end || "16:00";
+    
+    return generateTimeSlots(startTime, endTime, schedulePreferences?.classPeriodMinutes || 45);
   };
 
   const handleCreateClass = async (e) => {
