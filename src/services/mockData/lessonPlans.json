@@ -1,0 +1,68 @@
+[
+  {
+    "Id": 1,
+    "subject": "Mathematics",
+    "className": "4A",
+    "date": "2024-01-15",
+    "time": "08:00",
+    "objectives": "Students will understand basic fractions and be able to identify numerator and denominator.",
+    "content": "Introduction to fractions using visual aids and real-world examples. Students will work with pizza slices, cake pieces, and pie charts to understand the concept of parts of a whole. We'll start with simple fractions like 1/2, 1/4, and 1/3, then progress to more complex examples.",
+    "materials": "Fraction circles, pizza cutouts, worksheets, whiteboard markers, fraction wall chart",
+    "assessment": "Students will complete a worksheet with 10 fraction identification problems and participate in a group activity where they create their own fraction examples using classroom materials."
+  },
+  {
+    "Id": 2,
+    "subject": "English",
+    "className": "4A",
+    "date": "2024-01-15",
+    "time": "09:00",
+    "objectives": "Students will be able to identify and use descriptive adjectives in sentences.",
+    "content": "Exploring descriptive adjectives through reading and writing activities. Students will read a short story and identify adjectives, then create their own sentences using colorful descriptive words. We'll focus on adjectives that describe size, color, shape, and emotion.",
+    "materials": "Short story books, adjective word cards, writing journals, colored pencils",
+    "assessment": "Students will write a paragraph describing their favorite place using at least 5 descriptive adjectives."
+  },
+  {
+    "Id": 3,
+    "subject": "Science",
+    "className": "4A",
+    "date": "2024-01-15",
+    "time": "10:00",
+    "objectives": "Students will understand the water cycle and be able to name its four main stages.",
+    "content": "Interactive lesson on the water cycle including evaporation, condensation, precipitation, and collection. Students will observe a demonstration using a terrarium to see the water cycle in action. We'll also discuss how the water cycle affects weather patterns.",
+    "materials": "Terrarium setup, water cycle diagram, spray bottles, ice cubes, clear containers",
+    "assessment": "Students will draw and label their own water cycle diagram and explain each stage to a partner."
+  },
+  {
+    "Id": 4,
+    "subject": "History",
+    "className": "4A",
+    "date": "2024-01-16",
+    "time": "09:00",
+    "objectives": "Students will learn about ancient civilizations and their contributions to modern society.",
+    "content": "Exploring ancient Egypt, Greece, and Rome through stories, pictures, and artifacts. Students will learn about pyramids, democracy, and engineering achievements. We'll discuss how these ancient innovations still influence our world today.",
+    "materials": "Ancient civilization books, artifact replicas, world map, timeline poster",
+    "assessment": "Students will create a timeline of ancient civilizations and present one interesting fact about each culture."
+  },
+  {
+    "Id": 5,
+    "subject": "Art",
+    "className": "4A",
+    "date": "2024-01-16",
+    "time": "10:00",
+    "objectives": "Students will explore color theory and create artwork using primary and secondary colors.",
+    "content": "Hands-on art lesson about primary colors (red, blue, yellow) and how they combine to create secondary colors (green, orange, purple). Students will experiment with color mixing and create their own color wheel artwork.",
+    "materials": "Watercolor paints, brushes, watercolor paper, color wheel templates, palettes",
+    "assessment": "Students will complete a color wheel painting and demonstrate understanding by mixing colors to create new hues."
+  },
+  {
+    "Id": 6,
+    "subject": "Physical Education",
+    "className": "4A",
+    "date": "2024-01-17",
+    "time": "08:00",
+    "objectives": "Students will improve coordination and teamwork through ball-handling activities.",
+    "content": "Fun ball games and exercises to develop hand-eye coordination and teamwork skills. Activities include passing drills, dribbling practice, and team-based games that encourage cooperation and communication.",
+    "materials": "Various balls (basketballs, soccer balls, tennis balls), cones, whistles, sports equipment",
+    "assessment": "Students will be assessed on participation, effort, and demonstration of teamwork during group activities."
+  }
+]
