@@ -1,7 +1,7 @@
 import { cn } from "@/utils/cn";
 import Badge from "@/components/atoms/Badge";
 
-const TimeSlot = ({ time, subject, className, onClick, isEmpty = false, isToday = false, hideTime = false }) => {
+const TimeSlot = ({ time, subject, className, onClick, isEmpty = false, isToday = false, hideTime = false, isAfterWorkingHours = false }) => {
   const subjectColors = {
     "Mathematics": "bg-blue-100 text-blue-800 border-blue-200",
     "English": "bg-green-100 text-green-800 border-green-200",
@@ -33,8 +33,8 @@ return (
             {subject}
           </Badge>
         </div>
-      ) : (
-        <div className="text-xs text-gray-400">Click to add lesson</div>
+) : (
+        !isAfterWorkingHours && <div className="text-xs text-gray-400">Click to add lesson</div>
       )}
     </div>
   );

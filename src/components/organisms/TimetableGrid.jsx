@@ -12,13 +12,14 @@ import { calculateAcademicWeek } from "@/utils/academicWeek";
 const TimetableGrid = ({ schedules = [], onSlotClick }) => {
   const [selectedDay, setSelectedDay] = useState(0);
 const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+const [showDatePicker, setShowDatePicker] = useState(false);
   const [academicCalendar, setAcademicCalendar] = useState(null);
+  const [dailySchedule, setDailySchedule] = useState(null);
   
   useEffect(() => {
     loadAcademicCalendar();
+    loadDailySchedule();
   }, []);
-
 const loadAcademicCalendar = async () => {
     try {
       const calendar = await settingsService.getAcademicCalendar();
@@ -28,6 +29,14 @@ const loadAcademicCalendar = async () => {
     }
   };
 
+  const loadDailySchedule = async () => {
+    try {
+      const schedule = await settingsService.getDailySchedule();
+      setDailySchedule(schedule);
+    } catch (error) {
+      console.error('Failed to load daily schedule:', error);
+    }
+  };
   const isBreakDay = (date) => {
     if (!academicCalendar?.breaks) return false;
     
@@ -81,13 +90,30 @@ const getAcademicWeekNumber = () => {
     return isToday(weekDates[dayIndex]);
   };
 
-  const getScheduleForSlot = (dayIndex, timeIndex) => {
+const getScheduleForSlot = (dayIndex, timeIndex) => {
     const schedule = schedules.find(
       (s) => s.dayOfWeek === dayIndex && s.timeSlot === timeSlots[timeIndex]
     );
     return schedule || null;
   };
 
+  const isAfterWorkingHours = (dayIndex, timeSlot) => {
+    if (!dailySchedule) return false;
+    
+    const dayName = days[dayIndex];
+    const daySchedule = dailySchedule[dayName];
+    
+    if (!daySchedule || !daySchedule.enabled) return true;
+    
+    const endTime = daySchedule.endTime;
+    const slotStartTime = timeSlot.split(' - ')[0];
+    
+    // Convert times to minutes for comparison
+    const endMinutes = parseInt(endTime.split(':')[0]) * 60 + parseInt(endTime.split(':')[1]);
+    const slotMinutes = parseInt(slotStartTime.split(':')[0]) * 60 + parseInt(slotStartTime.split(':')[1]);
+    
+    return slotMinutes >= endMinutes;
+  };
   const handlePreviousWeek = () => {
     setCurrentWeek(prev => subWeeks(prev, 1));
   };
@@ -144,6 +170,7 @@ const getAcademicWeekNumber = () => {
                   isEmpty={!schedule}
                   isToday={isCurrentDay(dayIndex)}
                   hideTime={!schedule}
+                  isAfterWorkingHours={isAfterWorkingHours(dayIndex, timeSlot)}
                   onClick={() => onSlotClick?.(dayIndex, timeIndex, timeSlot)}
                 />
               );
@@ -215,6 +242,7 @@ const getAcademicWeekNumber = () => {
                   isEmpty={!schedule}
                   isToday={isCurrentDay(selectedDay)}
                   hideTime={!schedule}
+                  isAfterWorkingHours={isAfterWorkingHours(selectedDay, timeSlot)}
                   onClick={() => onSlotClick?.(selectedDay, timeIndex, timeSlot)}
                 />
               );
