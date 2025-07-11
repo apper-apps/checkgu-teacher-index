@@ -485,11 +485,8 @@ case "calendar":
               </div>
             </div>
 
-            <div className="border-t pt-6 space-y-4">
+<div className="border-t pt-6 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">School Breaks</h3>
-              <div className="text-sm text-gray-600 mb-4">
-                Manage custom school breaks that will appear in your calendar and timetable
-              </div>
               
               {/* Add/Edit Break Form */}
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
