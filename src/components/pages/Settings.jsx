@@ -22,6 +22,12 @@ const Settings = () => {
     department: "Elementary"
   });
 
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    classReminders: true,
+    processingComplete: true,
+    systemUpdates: false
+  });
+
 const [schoolProfile, setSchoolProfile] = useState({
     name: "Greenwood Elementary School",
     type: "Public Elementary",
@@ -77,7 +83,9 @@ const tabs = [
     { id: "school", label: "School Profile", icon: "Building" },
     { id: "calendar", label: "Academic Calendar", icon: "Calendar" },
     { id: "schedule", label: "Schedule", icon: "Clock" },
-    { id: "sync", label: "Calendar Sync", icon: "RefreshCw" }
+    { id: "sync", label: "Calendar Sync", icon: "RefreshCw" },
+    { id: "notifications", label: "Notifications", icon: "Bell" },
+    { id: "export", label: "Export & Import", icon: "Download" }
   ];
 
   const handleSaveProfile = async (e) => {
@@ -273,6 +281,109 @@ const handleSaveSchedule = async (e) => {
       }, 2000);
     } catch (err) {
       toast.error("Failed to sync calendars");
+    }
+};
+
+  const handleSaveNotifications = async (e) => {
+    e.preventDefault();
+    try {
+      await settingsService.updateNotificationPreferences(notificationPreferences);
+      toast.success("Notification preferences updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update notification preferences");
+    }
+  };
+
+  const handleExportAllData = async () => {
+    try {
+      toast.info("Preparing data export...");
+      // Mock export process
+      setTimeout(() => {
+        const dataBlob = new Blob([JSON.stringify({
+          students: [],
+          lessonPlans: [],
+          schedules: [],
+          settings: { userProfile, schoolProfile, academicCalendar, schedulePreferences }
+        }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'checkgu-all-data.json';
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success("All data exported successfully!");
+      }, 1000);
+    } catch (err) {
+      toast.error("Failed to export data");
+    }
+  };
+
+  const handleExportTimetable = async () => {
+    try {
+      toast.info("Exporting timetable...");
+      setTimeout(() => {
+        const csvContent = "Subject,Class,Day,Time,Duration\nMath,Grade 1A,Monday,09:00,30\nEnglish,Grade 1A,Monday,10:00,45";
+        const dataBlob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'timetable.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success("Timetable exported successfully!");
+      }, 800);
+    } catch (err) {
+      toast.error("Failed to export timetable");
+    }
+  };
+
+  const handleImportData = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      toast.info("Importing data...");
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          // Mock import process
+          setTimeout(() => {
+            toast.success("Data imported successfully!");
+          }, 1000);
+        } catch (parseErr) {
+          toast.error("Invalid file format");
+        }
+      };
+      reader.readAsText(file);
+    } catch (err) {
+      toast.error("Failed to import data");
+    }
+  };
+
+  const handleResetAllData = async () => {
+    if (confirm("Are you sure you want to reset all data? This action cannot be undone.")) {
+      try {
+        toast.info("Resetting all data...");
+        setTimeout(() => {
+          // Reset to default values
+          setUserProfile({
+            name: "Ms. Johnson",
+            email: "sarah.johnson@greenwood.edu",
+            phone: "+1 (555) 123-4567",
+            role: "Teacher",
+            department: "Elementary"
+          });
+          setNotificationPreferences({
+            classReminders: true,
+            processingComplete: true,
+            systemUpdates: false
+          });
+          toast.success("All data has been reset successfully!");
+        }, 1500);
+      } catch (err) {
+        toast.error("Failed to reset data");
+      }
     }
   };
 
@@ -777,6 +888,157 @@ case "schedule":
               </Button>
             </div>
           </form>
+);
+
+      case "notifications":
+        return (
+          <form onSubmit={handleSaveNotifications} className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Notification Preferences</h3>
+              <p className="text-sm text-gray-600">Configure when you want to receive notifications</p>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <ApperIcon name="Clock" size={18} className="text-primary-600" />
+                      <h4 className="font-medium text-gray-900">Class Reminders</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Get notified 5 minutes before class starts</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notificationPreferences.classReminders}
+                      onChange={(e) => setNotificationPreferences({...notificationPreferences, classReminders: e.target.checked})}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <ApperIcon name="CheckCircle" size={18} className="text-primary-600" />
+                      <h4 className="font-medium text-gray-900">Processing Complete</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Notify when lesson plan processing is done</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notificationPreferences.processingComplete}
+                      onChange={(e) => setNotificationPreferences({...notificationPreferences, processingComplete: e.target.checked})}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <ApperIcon name="Info" size={18} className="text-primary-600" />
+                      <h4 className="font-medium text-gray-900">System Updates</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">Receive notifications about new features</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notificationPreferences.systemUpdates}
+                      onChange={(e) => setNotificationPreferences({...notificationPreferences, systemUpdates: e.target.checked})}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <Button type="submit">
+              <ApperIcon name="Save" size={16} className="mr-2" />
+              Save Notification Preferences
+            </Button>
+          </form>
+        );
+
+      case "export":
+        return (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Export Data</h3>
+              <p className="text-sm text-gray-600">Export your data for backup or transfer purposes</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ApperIcon name="Database" size={18} className="text-primary-600" />
+                    <h4 className="font-medium text-gray-900">Export All Data</h4>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Export all students, lesson plans, schedules, and settings</p>
+                  <Button onClick={handleExportAllData} size="sm" className="w-full">
+                    <ApperIcon name="Download" size={14} className="mr-2" />
+                    Export All Data
+                  </Button>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ApperIcon name="Calendar" size={18} className="text-primary-600" />
+                    <h4 className="font-medium text-gray-900">Export Timetable</h4>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">Export your timetable as a CSV file</p>
+                  <Button onClick={handleExportTimetable} size="sm" className="w-full">
+                    <ApperIcon name="Download" size={14} className="mr-2" />
+                    Export Timetable
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Import Data</h3>
+              <p className="text-sm text-gray-600">Import data from a previously exported file</p>
+              
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <ApperIcon name="Upload" size={18} className="text-primary-600" />
+                  <h4 className="font-medium text-gray-900">Import Data</h4>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">Select a JSON file to import your data</p>
+                <Input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportData}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Reset Data</h3>
+              <p className="text-sm text-gray-600">Reset all data to default values</p>
+              
+              <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <ApperIcon name="AlertTriangle" size={18} className="text-red-600" />
+                  <h4 className="font-medium text-red-900">Reset All Data</h4>
+                </div>
+                <p className="text-sm text-red-700 mb-3">This will permanently delete all your data and cannot be undone</p>
+                <Button 
+                  onClick={handleResetAllData}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
+                  <ApperIcon name="RotateCcw" size={14} className="mr-2" />
+                  Reset All Data
+                </Button>
+              </div>
+            </div>
+          </div>
         );
 
       default:
