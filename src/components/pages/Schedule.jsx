@@ -10,28 +10,34 @@ import Empty from "@/components/ui/Empty";
 import ApperIcon from "@/components/ApperIcon";
 import { scheduleService } from "@/services/api/scheduleService";
 import { classService } from "@/services/api/classService";
+import { settingsService } from "@/services/api/settingsService";
 import { toast } from "react-toastify";
 
 const Schedule = () => {
   const [classes, setClasses] = useState([]);
   const [schedules, setSchedules] = useState([]);
+  const [schedulePreferences, setSchedulePreferences] = useState(null);
+  const [dailySchedule, setDailySchedule] = useState({});
+  const [classLevels, setClassLevels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("schedule");
   const [showAddClass, setShowAddClass] = useState(false);
+  const [showAddClassLevel, setShowAddClassLevel] = useState(false);
+  const [editingClassLevel, setEditingClassLevel] = useState(null);
   const [newClass, setNewClass] = useState({
     name: "",
     gradeLevel: "",
     subjects: []
   });
+  const [newClassLevel, setNewClassLevel] = useState({
+    name: "",
+    description: ""
+  });
 
   const subjects = [
     "Mathematics", "English", "Science", "History", "Geography", 
     "Art", "Physical Education", "Music"
-  ];
-
-  const timeSlots = [
-    "08:00 - 08:45", "09:00 - 09:45", "10:00 - 10:45", "11:00 - 11:45",
-    "12:00 - 12:45", "13:00 - 13:45", "14:00 - 14:45", "15:00 - 15:45"
   ];
 
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -44,17 +50,52 @@ const Schedule = () => {
     try {
       setLoading(true);
       setError(null);
-      const [classesData, schedulesData] = await Promise.all([
+      const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData] = await Promise.all([
         classService.getAll(),
-        scheduleService.getAll()
+        scheduleService.getAll(),
+        settingsService.getSchedulePreferences(),
+        settingsService.getDailySchedule(),
+        settingsService.getClassLevels()
       ]);
       setClasses(classesData);
       setSchedules(schedulesData);
+      setSchedulePreferences(preferencesData);
+      setDailySchedule(dailyScheduleData);
+      setClassLevels(classLevelsData);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateTimeSlots = (startTime, endTime, duration = 45) => {
+    const slots = [];
+    const start = new Date(`2000-01-01T${startTime}:00`);
+    const end = new Date(`2000-01-01T${endTime}:00`);
+    
+    while (start < end) {
+      const slotStart = start.toTimeString().slice(0, 5);
+      start.setMinutes(start.getMinutes() + duration);
+      const slotEnd = start.toTimeString().slice(0, 5);
+      
+      if (start <= end) {
+        slots.push(`${slotStart} - ${slotEnd}`);
+      }
+    }
+    return slots;
+  };
+
+  const getTimeSlotsForDay = (dayIndex) => {
+    const daySchedule = dailySchedule[days[dayIndex]];
+    if (daySchedule && daySchedule.enabled) {
+      return generateTimeSlots(daySchedule.startTime, daySchedule.endTime, schedulePreferences?.classPeriodMinutes || 45);
+    }
+    return generateTimeSlots(
+      schedulePreferences?.defaultWorkingHours?.start || "08:00",
+      schedulePreferences?.defaultWorkingHours?.end || "16:00",
+      schedulePreferences?.classPeriodMinutes || 45
+    );
   };
 
   const handleCreateClass = async (e) => {
@@ -97,6 +138,70 @@ const Schedule = () => {
     }
   };
 
+  const handleDailyScheduleChange = async (day, field, value) => {
+    const updatedSchedule = {
+      ...dailySchedule,
+      [day]: {
+        ...dailySchedule[day],
+        [field]: value
+      }
+    };
+    
+    try {
+      await settingsService.updateDailySchedule(updatedSchedule);
+      setDailySchedule(updatedSchedule);
+      toast.success("Daily schedule updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update daily schedule");
+    }
+  };
+
+  const handleCreateClassLevel = async (e) => {
+    e.preventDefault();
+    try {
+      const updatedLevels = [...classLevels, { 
+        Id: Math.max(...classLevels.map(c => c.Id), 0) + 1, 
+        ...newClassLevel 
+      }];
+      await settingsService.updateClassLevels(updatedLevels);
+      setClassLevels(updatedLevels);
+      setNewClassLevel({ name: "", description: "" });
+      setShowAddClassLevel(false);
+      toast.success("Class level added successfully!");
+    } catch (err) {
+      toast.error("Failed to add class level");
+    }
+  };
+
+  const handleEditClassLevel = async (e) => {
+    e.preventDefault();
+    try {
+      const updatedLevels = classLevels.map(level => 
+        level.Id === editingClassLevel.Id ? { ...level, ...newClassLevel } : level
+      );
+      await settingsService.updateClassLevels(updatedLevels);
+      setClassLevels(updatedLevels);
+      setEditingClassLevel(null);
+      setNewClassLevel({ name: "", description: "" });
+      toast.success("Class level updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update class level");
+    }
+  };
+
+  const handleDeleteClassLevel = async (levelId) => {
+    if (confirm("Are you sure you want to delete this class level?")) {
+      try {
+        const updatedLevels = classLevels.filter(level => level.Id !== levelId);
+        await settingsService.updateClassLevels(updatedLevels);
+        setClassLevels(updatedLevels);
+        toast.success("Class level deleted successfully!");
+      } catch (err) {
+        toast.error("Failed to delete class level");
+      }
+    }
+  };
+
   const getScheduleForSlot = (classId, dayIndex, timeSlot) => {
     return schedules.find(
       s => s.classId === classId && s.dayOfWeek === dayIndex && s.timeSlot === timeSlot
@@ -111,7 +216,7 @@ const Schedule = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Schedule Management</h1>
-          <p className="text-gray-600">Manage your classes and weekly schedule</p>
+          <p className="text-gray-600">Configure daily schedules, class levels, and weekly timetables</p>
         </div>
         <Button onClick={() => setShowAddClass(true)}>
           <ApperIcon name="Plus" size={18} className="mr-2" />
@@ -119,123 +224,305 @@ const Schedule = () => {
         </Button>
       </div>
 
-      {/* Classes Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ApperIcon name="Users" size={24} className="text-primary-600" />
-            Classes Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {classes.length === 0 ? (
-            <Empty
-              title="No classes configured"
-              description="Create your first class to start building your schedule"
-              actionLabel="Add Class"
-              icon="Users"
-              onAction={() => setShowAddClass(true)}
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Class Name</th>
-                    <th className="text-left py-2">Grade Level</th>
-                    <th className="text-left py-2">Subjects</th>
-                    <th className="text-left py-2">Weekly Periods</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {classes.map(cls => {
-                    const classSchedules = schedules.filter(s => s.classId === cls.Id);
-                    return (
-                      <tr key={cls.Id} className="border-b">
-                        <td className="py-2 font-medium">{cls.name}</td>
-                        <td className="py-2">{cls.gradeLevel}</td>
-                        <td className="py-2">
-                          <div className="flex flex-wrap gap-1">
-                            {cls.subjects.map(subject => (
-                              <span
-                                key={subject}
-                                className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded"
-                              >
-                                {subject}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-2">{classSchedules.length}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-8">
+          <button
+            onClick={() => setActiveTab("schedule")}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "schedule"
+                ? "border-primary-500 text-primary-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <ApperIcon name="Calendar" size={20} className="inline mr-2" />
+            Schedule Overview
+          </button>
+          <button
+            onClick={() => setActiveTab("daily")}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "daily"
+                ? "border-primary-500 text-primary-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <ApperIcon name="Clock" size={20} className="inline mr-2" />
+            Daily Schedule
+          </button>
+          <button
+            onClick={() => setActiveTab("levels")}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "levels"
+                ? "border-primary-500 text-primary-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <ApperIcon name="GraduationCap" size={20} className="inline mr-2" />
+            Class Levels
+          </button>
+        </nav>
+      </div>
 
-      {/* Schedule Grid */}
-      {classes.length > 0 && (
+      {/* Schedule Overview Tab */}
+      {activeTab === "schedule" && (
+        <div className="space-y-6">
+          {/* Classes Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="Users" size={24} className="text-primary-600" />
+                Classes Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {classes.length === 0 ? (
+                <Empty
+                  title="No classes configured"
+                  description="Create your first class to start building your schedule"
+                  actionLabel="Add Class"
+                  icon="Users"
+                  onAction={() => setShowAddClass(true)}
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2">Class Name</th>
+                        <th className="text-left py-2">Grade Level</th>
+                        <th className="text-left py-2">Subjects</th>
+                        <th className="text-left py-2">Weekly Periods</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {classes.map(cls => {
+                        const classSchedules = schedules.filter(s => s.classId === cls.Id);
+                        return (
+                          <tr key={cls.Id} className="border-b">
+                            <td className="py-2 font-medium">{cls.name}</td>
+                            <td className="py-2">{cls.gradeLevel}</td>
+                            <td className="py-2">
+                              <div className="flex flex-wrap gap-1">
+                                {cls.subjects.map(subject => (
+                                  <span
+                                    key={subject}
+                                    className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded"
+                                  >
+                                    {subject}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-2">{classSchedules.length}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Schedule Grid */}
+          {classes.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ApperIcon name="Calendar" size={24} className="text-primary-600" />
+                  Weekly Schedule
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {classes.map(cls => (
+                    <div key={cls.Id} className="space-y-4">
+                      <h3 className="font-semibold text-lg">{cls.name}</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border border-gray-200 rounded-lg">
+                          <thead>
+                            <tr className="bg-gray-50">
+                              <th className="p-3 text-left">Time</th>
+                              {days.map(day => (
+                                <th key={day} className="p-3 text-center">{day}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {getTimeSlotsForDay(0).map(timeSlot => (
+                              <tr key={timeSlot} className="border-t">
+                                <td className="p-3 font-medium text-sm">{timeSlot}</td>
+                                {days.map((day, dayIndex) => {
+                                  const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                                  const isSlotAvailable = dayTimeSlots.includes(timeSlot);
+                                  const schedule = getScheduleForSlot(cls.Id, dayIndex, timeSlot);
+                                  
+                                  return (
+                                    <td key={day} className="p-3">
+                                      {isSlotAvailable ? (
+                                        <Select
+                                          value={schedule?.subject || ""}
+                                          onChange={(e) => handleScheduleChange(
+                                            cls.Id, 
+                                            dayIndex, 
+                                            timeSlot, 
+                                            e.target.value
+                                          )}
+                                          className="w-full text-sm"
+                                        >
+                                          <option value="">-</option>
+                                          {cls.subjects.map(subject => (
+                                            <option key={subject} value={subject}>
+                                              {subject}
+                                            </option>
+                                          ))}
+                                        </Select>
+                                      ) : (
+                                        <div className="bg-gray-100 p-2 text-xs text-gray-500 rounded text-center">
+                                          Not Available
+                                        </div>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Daily Schedule Configuration Tab */}
+      {activeTab === "daily" && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ApperIcon name="Calendar" size={24} className="text-primary-600" />
-              Weekly Schedule
+              <ApperIcon name="Clock" size={24} className="text-primary-600" />
+              Daily Schedule Configuration
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {classes.map(cls => (
-                <div key={cls.Id} className="space-y-4">
-                  <h3 className="font-semibold text-lg">{cls.name}</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border border-gray-200 rounded-lg">
-                      <thead>
-                        <tr className="bg-gray-50">
-                          <th className="p-3 text-left">Time</th>
-                          {days.map(day => (
-                            <th key={day} className="p-3 text-center">{day}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {timeSlots.map(timeSlot => (
-                          <tr key={timeSlot} className="border-t">
-                            <td className="p-3 font-medium text-sm">{timeSlot}</td>
-                            {days.map((day, dayIndex) => {
-                              const schedule = getScheduleForSlot(cls.Id, dayIndex, timeSlot);
-                              return (
-                                <td key={day} className="p-3">
-                                  <Select
-                                    value={schedule?.subject || ""}
-                                    onChange={(e) => handleScheduleChange(
-                                      cls.Id, 
-                                      dayIndex, 
-                                      timeSlot, 
-                                      e.target.value
-                                    )}
-                                    className="w-full text-sm"
-                                  >
-                                    <option value="">-</option>
-                                    {cls.subjects.map(subject => (
-                                      <option key={subject} value={subject}>
-                                        {subject}
-                                      </option>
-                                    ))}
-                                  </Select>
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              <p className="text-gray-600">
+                Configure working hours and teaching periods for each day. Individual days can override the default schedule.
+              </p>
+              
+              {days.map(day => {
+                const daySchedule = dailySchedule[day] || { enabled: true, startTime: "08:00", endTime: "16:00" };
+                return (
+                  <div key={day} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-lg">{day}</h3>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={daySchedule.enabled}
+                          onChange={(e) => handleDailyScheduleChange(day, "enabled", e.target.checked)}
+                          className="rounded"
+                        />
+                        <span className="text-sm">Active</span>
+                      </label>
+                    </div>
+                    
+                    {daySchedule.enabled && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField label="Start Time">
+                          <Input
+                            type="time"
+                            value={daySchedule.startTime}
+                            onChange={(e) => handleDailyScheduleChange(day, "startTime", e.target.value)}
+                          />
+                        </FormField>
+                        <FormField label="End Time">
+                          <Input
+                            type="time"
+                            value={daySchedule.endTime}
+                            onChange={(e) => handleDailyScheduleChange(day, "endTime", e.target.value)}
+                          />
+                        </FormField>
+                      </div>
+                    )}
+                    
+                    {!daySchedule.enabled && (
+                      <div className="text-gray-500 text-sm">
+                        This day is disabled for classes
+                      </div>
+                    )}
                   </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Class Levels Management Tab */}
+      {activeTab === "levels" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="GraduationCap" size={24} className="text-primary-600" />
+                Class Level Management
+              </CardTitle>
+              <Button onClick={() => setShowAddClassLevel(true)}>
+                <ApperIcon name="Plus" size={18} className="mr-2" />
+                Add Class Level
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Manage the available class levels for your school. These levels will appear when creating classes and schedules.
+              </p>
+              
+              {classLevels.length === 0 ? (
+                <Empty
+                  title="No class levels configured"
+                  description="Add class levels to organize your school structure"
+                  actionLabel="Add Class Level"
+                  icon="GraduationCap"
+                  onAction={() => setShowAddClassLevel(true)}
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {classLevels.map(level => (
+                    <div key={level.Id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold">{level.name}</h3>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingClassLevel(level);
+                              setNewClassLevel({ name: level.name, description: level.description });
+                            }}
+                          >
+                            <ApperIcon name="Edit" size={16} />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteClassLevel(level.Id)}
+                          >
+                            <ApperIcon name="Trash" size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600">{level.description}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -265,8 +552,8 @@ const Schedule = () => {
                     required
                   >
                     <option value="">Select Grade</option>
-                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(grade => (
-                      <option key={grade} value={grade}>Grade {grade}</option>
+                    {classLevels.map(level => (
+                      <option key={level.Id} value={level.name}>{level.name}</option>
                     ))}
                   </Select>
                 </FormField>
@@ -305,6 +592,52 @@ const Schedule = () => {
                     type="button" 
                     variant="outline" 
                     onClick={() => setShowAddClass(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Add/Edit Class Level Modal */}
+      {(showAddClassLevel || editingClassLevel) && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>{editingClassLevel ? "Edit Class Level" : "Add New Class Level"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={editingClassLevel ? handleEditClassLevel : handleCreateClassLevel} className="space-y-4">
+                <FormField label="Level Name">
+                  <Input
+                    value={newClassLevel.name}
+                    onChange={(e) => setNewClassLevel({...newClassLevel, name: e.target.value})}
+                    placeholder="e.g., Grade 4, Form 1"
+                    required
+                  />
+                </FormField>
+                <FormField label="Description">
+                  <Input
+                    value={newClassLevel.description}
+                    onChange={(e) => setNewClassLevel({...newClassLevel, description: e.target.value})}
+                    placeholder="Brief description of this level"
+                  />
+                </FormField>
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit" className="flex-1">
+                    {editingClassLevel ? "Update Level" : "Add Level"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowAddClassLevel(false);
+                      setEditingClassLevel(null);
+                      setNewClassLevel({ name: "", description: "" });
+                    }}
                   >
                     Cancel
                   </Button>

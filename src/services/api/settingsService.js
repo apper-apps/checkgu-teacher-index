@@ -33,6 +33,23 @@ const mockSchedulePreferences = {
   }
 };
 
+const mockDailySchedule = {
+  Monday: { enabled: true, startTime: "08:00", endTime: "16:00" },
+  Tuesday: { enabled: true, startTime: "08:00", endTime: "16:00" },
+  Wednesday: { enabled: true, startTime: "08:00", endTime: "16:00" },
+  Thursday: { enabled: true, startTime: "08:00", endTime: "16:00" },
+  Friday: { enabled: true, startTime: "08:00", endTime: "15:00" }
+};
+
+const mockClassLevels = [
+  { Id: 1, name: "Grade 1", description: "Elementary level - Age 6-7" },
+  { Id: 2, name: "Grade 2", description: "Elementary level - Age 7-8" },
+  { Id: 3, name: "Grade 3", description: "Elementary level - Age 8-9" },
+  { Id: 4, name: "Grade 4", description: "Elementary level - Age 9-10" },
+  { Id: 5, name: "Grade 5", description: "Elementary level - Age 10-11" },
+  { Id: 6, name: "Grade 6", description: "Elementary level - Age 11-12" }
+];
+
 export const settingsService = {
   getAcademicCalendar: async () => {
     return new Promise((resolve) => {
@@ -76,11 +93,46 @@ export const settingsService = {
     });
   },
 
-  updateSchedulePreferences: async (preferencesData) => {
+updateSchedulePreferences: async (preferencesData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         Object.assign(mockSchedulePreferences, preferencesData);
         resolve({ ...mockSchedulePreferences });
+      }, 200);
+    });
+  },
+
+  getDailySchedule: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ ...mockDailySchedule });
+      }, 100);
+    });
+  },
+
+  updateDailySchedule: async (scheduleData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        Object.assign(mockDailySchedule, scheduleData);
+        resolve({ ...mockDailySchedule });
+      }, 200);
+    });
+  },
+
+  getClassLevels: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([...mockClassLevels]);
+      }, 100);
+    });
+  },
+
+  updateClassLevels: async (levelsData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        mockClassLevels.length = 0;
+        mockClassLevels.push(...levelsData);
+        resolve([...mockClassLevels]);
       }, 200);
     });
   }
