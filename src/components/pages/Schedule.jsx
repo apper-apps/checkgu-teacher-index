@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import FormField from "@/components/molecules/FormField";
-import Input from "@/components/atoms/Input";
-import Select from "@/components/atoms/Select";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import { scheduleService } from "@/services/api/scheduleService";
-import { classService } from "@/services/api/classService";
-import { settingsService } from "@/services/api/settingsService";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
+import Input from "@/components/atoms/Input";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import FormField from "@/components/molecules/FormField";
+import { scheduleService } from "@/services/api/scheduleService";
+import { settingsService } from "@/services/api/settingsService";
+import { classService } from "@/services/api/classService";
 
 const Schedule = () => {
   const [classes, setClasses] = useState([]);
@@ -172,6 +172,30 @@ const getTimeSlotsForDay = (dayIndex) => {
       toast.success("Daily schedule updated successfully!");
     } catch (err) {
       toast.error("Failed to update daily schedule");
+    }
+};
+
+  const handleDefaultWorkingHoursChange = async (field, value) => {
+    const updatedPreferences = {
+      ...schedulePreferences,
+      defaultWorkingHours: {
+        ...schedulePreferences.defaultWorkingHours,
+        [field]: value
+      }
+    };
+    
+    // Handle classPeriodMinutes separately since it's not nested
+    if (field === "classPeriodMinutes") {
+      updatedPreferences.classPeriodMinutes = value;
+      delete updatedPreferences.defaultWorkingHours.classPeriodMinutes;
+    }
+    
+    try {
+      await settingsService.updateSchedulePreferences(updatedPreferences);
+      setSchedulePreferences(updatedPreferences);
+      toast.success("Default working hours updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update default working hours");
     }
   };
 
@@ -425,39 +449,64 @@ const getTimeSlotsForDay = (dayIndex) => {
             <CardTitle className="flex items-center gap-2">
               <ApperIcon name="Clock" size={24} className="text-primary-600" />
               Daily Schedule Configuration
-            </CardTitle>
+</CardTitle>
           </CardHeader>
-<CardContent>
+          <CardContent>
             <div className="space-y-6">
-              {/* Default Working Hours Display */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                  <ApperIcon name="Settings" size={16} />
-                  Default Working Hours (from Settings)
+              {/* Default Working Hours Configuration */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h4 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                  <ApperIcon name="Settings" size={20} />
+                  Default Working Hours Configuration
                 </h4>
-                <div className="text-sm text-blue-700">
+                <div className="text-sm text-blue-700 mb-4">
                   <p>
-                    Start: <span className="font-medium">{schedulePreferences?.defaultWorkingHours?.start || "08:00"}</span>
-                    {" • "}
-                    End: <span className="font-medium">{schedulePreferences?.defaultWorkingHours?.end || "16:00"}</span>
-                    {" • "}
-                    Class Duration: <span className="font-medium">{schedulePreferences?.classPeriodMinutes || 45} minutes</span>
+                    Set the default working hours and class duration that will be used for all days unless individually overridden below.
                   </p>
-                  <p className="mt-1 text-xs">
-                    These default hours are used when individual days don't have custom schedules configured.
-                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField label="Default Start Time">
+                    <Input
+                      type="time"
+                      value={schedulePreferences?.defaultWorkingHours?.start || "08:00"}
+                      onChange={(e) => handleDefaultWorkingHoursChange("start", e.target.value)}
+                      className="bg-white"
+                    />
+                  </FormField>
+                  <FormField label="Default End Time">
+                    <Input
+                      type="time"
+                      value={schedulePreferences?.defaultWorkingHours?.end || "16:00"}
+                      onChange={(e) => handleDefaultWorkingHoursChange("end", e.target.value)}
+                      className="bg-white"
+                    />
+                  </FormField>
+                  <FormField label="Class Period Duration (minutes)">
+                    <Select
+                      value={schedulePreferences?.classPeriodMinutes || 45}
+                      onChange={(e) => handleDefaultWorkingHoursChange("classPeriodMinutes", parseInt(e.target.value))}
+                      className="bg-white"
+                    >
+                      <option value={30}>30 minutes</option>
+                      <option value={45}>45 minutes</option>
+                      <option value={60}>60 minutes</option>
+                    </Select>
+                  </FormField>
                 </div>
               </div>
               
-              <p className="text-gray-600">
-                Configure working hours and teaching periods for each day. Individual days can override the default schedule above.
-              </p>
+              <div className="border-t pt-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Daily Schedule Overrides</h4>
+                <p className="text-gray-600 mb-4">
+                  Configure specific working hours for individual days. Leave empty to use the default hours above.
+                </p>
+              </div>
               
 {days.map(day => {
                 const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
                 const defaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
                 const defaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
-                
                 // Check if this day is using default values
                 const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === defaultStart;
                 const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === defaultEnd;

@@ -113,11 +113,37 @@ export const settingsService = {
     });
   },
 
-  updateSchedulePreferences: async (preferencesData) => {
-    return new Promise((resolve) => {
+updateSchedulePreferences: async (preferencesData) => {
+    return new Promise((resolve, reject) => {
       setTimeout(() => {
-        Object.assign(mockSchedulePreferences, preferencesData);
-        resolve({ ...mockSchedulePreferences });
+        try {
+          // Validate default working hours if provided
+          if (preferencesData.defaultWorkingHours) {
+            const { start, end } = preferencesData.defaultWorkingHours;
+            if (start && end) {
+              const startTime = new Date(`2000-01-01T${start}:00`);
+              const endTime = new Date(`2000-01-01T${end}:00`);
+              if (startTime >= endTime) {
+                reject(new Error("Start time must be before end time"));
+                return;
+              }
+            }
+          }
+          
+          // Validate class period minutes if provided
+          if (preferencesData.classPeriodMinutes) {
+            const minutes = parseInt(preferencesData.classPeriodMinutes);
+            if (isNaN(minutes) || minutes < 15 || minutes > 120) {
+              reject(new Error("Class period must be between 15 and 120 minutes"));
+              return;
+            }
+          }
+          
+          Object.assign(mockSchedulePreferences, preferencesData);
+          resolve({ ...mockSchedulePreferences });
+        } catch (error) {
+          reject(error);
+        }
       }, 200);
     });
   },
