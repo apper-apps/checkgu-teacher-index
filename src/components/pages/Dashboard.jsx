@@ -18,7 +18,7 @@ const Dashboard = () => {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [showLessonModal, setShowLessonModal] = useState(false);
 
-useEffect(() => {
+  useEffect(() => {
     loadSchedules();
   }, []);
 
@@ -27,18 +27,6 @@ useEffect(() => {
       setLoading(true);
       setError(null);
       const data = await scheduleService.getAll();
-      setSchedules(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleWeekChange = async (weekStart) => {
-    try {
-      setLoading(true);
-      const data = await scheduleService.getByWeek(weekStart);
       setSchedules(data);
     } catch (err) {
       setError(err.message);
@@ -185,10 +173,9 @@ useEffect(() => {
               onAction={() => window.location.href = "/schedule"}
             />
           ) : (
-<TimetableGrid
+            <TimetableGrid
               schedules={schedules}
               onSlotClick={handleSlotClick}
-              onWeekChange={handleWeekChange}
             />
           )}
         </CardContent>
