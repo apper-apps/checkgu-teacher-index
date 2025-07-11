@@ -7,11 +7,24 @@ const mockAcademicCalendar = {
   springTermStart: "2025-04-16",
   springTermEnd: "2025-06-30",
   weekStartsOnSunday: false,
-breaks: [
+  breaks: [
     { Id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
     { Id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
   ]
 };
+
+const mockHolidays = [
+  { Id: 1, name: "New Year's Day", date: "2025-01-01", description: "New Year celebration", isSchoolHoliday: true },
+  { Id: 2, name: "Martin Luther King Jr. Day", date: "2025-01-20", description: "Federal holiday", isSchoolHoliday: true },
+  { Id: 3, name: "Presidents' Day", date: "2025-02-17", description: "Federal holiday", isSchoolHoliday: true },
+  { Id: 4, name: "Memorial Day", date: "2025-05-26", description: "Federal holiday", isSchoolHoliday: true },
+  { Id: 5, name: "Independence Day", date: "2025-07-04", description: "Fourth of July", isSchoolHoliday: false },
+  { Id: 6, name: "Labor Day", date: "2025-09-01", description: "Federal holiday", isSchoolHoliday: true },
+  { Id: 7, name: "Thanksgiving", date: "2025-11-27", description: "Thanksgiving Day", isSchoolHoliday: true },
+  { Id: 8, name: "Christmas Day", date: "2025-12-25", description: "Christmas celebration", isSchoolHoliday: true }
+];
+
+let nextHolidayId = 9;
 
 const mockSchoolProfile = {
   name: "Greenwood Elementary School",
@@ -94,7 +107,7 @@ export const settingsService = {
     });
   },
 
-updateSchedulePreferences: async (preferencesData) => {
+  updateSchedulePreferences: async (preferencesData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         Object.assign(mockSchedulePreferences, preferencesData);
@@ -128,7 +141,7 @@ updateSchedulePreferences: async (preferencesData) => {
     });
   },
 
-updateClassLevels: async (levelsData) => {
+  updateClassLevels: async (levelsData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         mockClassLevels.length = 0;
@@ -138,7 +151,7 @@ updateClassLevels: async (levelsData) => {
     });
   },
 
-getSchoolBreaks: async () => {
+  getSchoolBreaks: async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve([...mockAcademicCalendar.breaks]);
@@ -155,7 +168,7 @@ getSchoolBreaks: async () => {
     });
   },
 
-addSchoolBreak: async (breakData) => {
+  addSchoolBreak: async (breakData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const newBreak = { ...breakData, Id: Math.max(...mockAcademicCalendar.breaks.map(b => b.Id), 0) + 1 };
@@ -165,7 +178,7 @@ addSchoolBreak: async (breakData) => {
     });
   },
 
-deleteSchoolBreak: async (breakId) => {
+  deleteSchoolBreak: async (breakId) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const index = mockAcademicCalendar.breaks.findIndex(b => b.Id === breakId);
@@ -173,6 +186,142 @@ deleteSchoolBreak: async (breakId) => {
           mockAcademicCalendar.breaks.splice(index, 1);
         }
         resolve(true);
+      }, 200);
+    });
+  },
+
+  // Holiday Management Methods
+  getHolidays: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([...mockHolidays]);
+      }, 200);
+    });
+  },
+
+  addHoliday: async (holidayData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newHoliday = { 
+          ...holidayData, 
+          Id: nextHolidayId++,
+          isSchoolHoliday: holidayData.isSchoolHoliday || false
+        };
+        mockHolidays.push(newHoliday);
+        resolve(newHoliday);
+      }, 200);
+    });
+  },
+
+  updateHoliday: async (id, holidayData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockHolidays.findIndex(h => h.Id === id);
+        if (index !== -1) {
+          mockHolidays[index] = { ...mockHolidays[index], ...holidayData };
+          resolve(mockHolidays[index]);
+        }
+      }, 200);
+    });
+  },
+
+  deleteHoliday: async (id) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockHolidays.findIndex(h => h.Id === id);
+        if (index !== -1) {
+          mockHolidays.splice(index, 1);
+        }
+        resolve(true);
+      }, 200);
+    });
+  },
+
+  addMultipleHolidays: async (holidaysData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newHolidays = holidaysData.map(holiday => ({
+          ...holiday,
+          Id: nextHolidayId++,
+          isSchoolHoliday: holiday.isSchoolHoliday || false
+        }));
+        mockHolidays.push(...newHolidays);
+        resolve(newHolidays);
+      }, 200);
+    });
+  },
+
+  toggleSchoolHoliday: async (id) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockHolidays.findIndex(h => h.Id === id);
+        if (index !== -1) {
+          mockHolidays[index].isSchoolHoliday = !mockHolidays[index].isSchoolHoliday;
+          resolve(mockHolidays[index]);
+        }
+      }, 200);
+    });
+  },
+
+  toggleSchoolHolidays: async (ids) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const updatedHolidays = [];
+        ids.forEach(id => {
+          const index = mockHolidays.findIndex(h => h.Id === id);
+          if (index !== -1) {
+            mockHolidays[index].isSchoolHoliday = !mockHolidays[index].isSchoolHoliday;
+            updatedHolidays.push(mockHolidays[index]);
+          }
+        });
+        resolve(updatedHolidays);
+      }, 200);
+    });
+  },
+
+  processCSV: async (csvData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        try {
+          const lines = csvData.trim().split('\n');
+          const holidays = [];
+          
+          for (const line of lines) {
+            const [name, date, description, isSchoolHoliday] = line.split(',');
+            
+            if (!name || !date) {
+              continue;
+            }
+            
+            // Validate date format
+            const dateObj = new Date(date.trim());
+            if (isNaN(dateObj.getTime())) {
+              continue;
+            }
+            
+            holidays.push({
+              name: name.trim(),
+              date: date.trim(),
+              description: description?.trim() || '',
+              isSchoolHoliday: isSchoolHoliday?.trim().toLowerCase() === 'true'
+            });
+          }
+          
+          if (holidays.length === 0) {
+            resolve({ success: false, error: 'No valid holidays found in CSV' });
+            return;
+          }
+          
+          const newHolidays = holidays.map(holiday => ({
+            ...holiday,
+            Id: nextHolidayId++
+          }));
+          
+          mockHolidays.push(...newHolidays);
+          resolve({ success: true, holidays: newHolidays });
+        } catch (error) {
+          resolve({ success: false, error: 'Invalid CSV format' });
+        }
       }, 200);
     });
   }
