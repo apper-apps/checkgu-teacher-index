@@ -1,7 +1,7 @@
 import { cn } from "@/utils/cn";
 import Badge from "@/components/atoms/Badge";
 
-const TimeSlot = ({ time, subject, className, onClick, isEmpty = false, isToday = false }) => {
+const TimeSlot = ({ time, subject, className, onClick, isEmpty = false, isToday = false, hideTime = false }) => {
   const subjectColors = {
     "Mathematics": "bg-blue-100 text-blue-800 border-blue-200",
     "English": "bg-green-100 text-green-800 border-green-200",
@@ -23,7 +23,7 @@ return (
       )}
       onClick={onClick}
     >
-      <div className="text-xs text-gray-500 mb-1">{time}</div>
+{!hideTime && <div className="text-xs text-gray-500 mb-1">{time}</div>}
       {!isEmpty && subject ? (
         <div className="space-y-2">
           <div className="text-sm font-semibold text-gray-900">

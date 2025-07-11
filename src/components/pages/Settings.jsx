@@ -7,6 +7,7 @@ import Select from "@/components/atoms/Select";
 import Textarea from "@/components/atoms/Textarea";
 import ApperIcon from "@/components/ApperIcon";
 import { toast } from "react-toastify";
+import { settingsService } from "@/services/api/settingsService";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -27,13 +28,13 @@ const Settings = () => {
     website: "www.greenwood.edu"
   });
 
-  const [academicCalendar, setAcademicCalendar] = useState({
-    termStart: "2024-09-01",
-    termEnd: "2024-12-20",
-    winterBreakStart: "2024-12-21",
-    winterBreakEnd: "2025-01-05",
-    springTermStart: "2025-01-06",
-    springTermEnd: "2025-05-30"
+const [academicCalendar, setAcademicCalendar] = useState({
+    termStart: "2025-02-17",
+    termEnd: "2025-06-30",
+    winterBreakStart: "2025-04-01",
+    winterBreakEnd: "2025-04-15",
+    springTermStart: "2025-04-16",
+    springTermEnd: "2025-06-30"
   });
 
   const [teachingDuration, setTeachingDuration] = useState({
@@ -78,9 +79,10 @@ const Settings = () => {
     }
   };
 
-  const handleSaveCalendar = async (e) => {
+const handleSaveCalendar = async (e) => {
     e.preventDefault();
     try {
+      await settingsService.updateAcademicCalendar(academicCalendar);
       toast.success("Academic calendar updated successfully!");
     } catch (err) {
       toast.error("Failed to update academic calendar");

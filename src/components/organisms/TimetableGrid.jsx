@@ -1,17 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { startOfWeek, addDays, format, isToday, addWeeks, subWeeks } from "date-fns";
 import TimeSlot from "@/components/molecules/TimeSlot";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
+import { settingsService } from "@/services/api/settingsService";
+import { calculateAcademicWeek } from "@/utils/academicWeek";
 
 const TimetableGrid = ({ schedules = [], onSlotClick }) => {
   const [selectedDay, setSelectedDay] = useState(0);
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [academicCalendar, setAcademicCalendar] = useState(null);
+useEffect(() => {
+    loadAcademicCalendar();
+  }, []);
+
+  const loadAcademicCalendar = async () => {
+    try {
+      const calendar = await settingsService.getAcademicCalendar();
+      setAcademicCalendar(calendar);
+    } catch (error) {
+      console.error('Failed to load academic calendar:', error);
+    }
+  };
+
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const timeSlots = [
+  const timeSlots = [
     "08:00 - 08:45",
     "09:00 - 09:45",
     "10:00 - 10:45",
@@ -27,6 +44,16 @@ const timeSlots = [
     return days.map((_, index) => addDays(startDate, index));
   };
 
+  const getAcademicWeekNumber = () => {
+    if (!academicCalendar?.termStart) return null;
+    return calculateAcademicWeek(currentWeek, academicCalendar.termStart);
+  };
+
+  const handleDatePickerChange = (e) => {
+    const selectedDate = new Date(e.target.value);
+    setCurrentWeek(selectedDate);
+    setShowDatePicker(false);
+  };
   const isCurrentDay = (dayIndex) => {
     const weekDates = getWeekDates();
     return isToday(weekDates[dayIndex]);
@@ -82,6 +109,7 @@ const timeSlots = [
                   className={schedule?.className}
                   isEmpty={!schedule}
                   isToday={isCurrentDay(dayIndex)}
+                  hideTime={!schedule}
                   onClick={() => onSlotClick?.(dayIndex, timeIndex, timeSlot)}
                 />
               );
@@ -140,6 +168,7 @@ const timeSlots = [
                   className={schedule?.className}
                   isEmpty={!schedule}
                   isToday={isCurrentDay(selectedDay)}
+                  hideTime={!schedule}
                   onClick={() => onSlotClick?.(selectedDay, timeIndex, timeSlot)}
                 />
               );
@@ -164,13 +193,27 @@ return (
           Previous Week
         </Button>
         
-        <div className="text-center">
+<div className="text-center relative">
           <div className="text-lg font-semibold text-gray-900">
-            Week of {format(weekDates[0], 'MMMM dd, yyyy')}
+            {getAcademicWeekNumber() ? `Week ${getAcademicWeekNumber()}` : 'Week'} of {format(weekDates[0], 'MMMM dd, yyyy')}
           </div>
-          <div className="text-sm text-gray-600">
+          <div 
+            className="text-sm text-gray-600 cursor-pointer hover:text-primary-600 transition-colors"
+            onClick={() => setShowDatePicker(!showDatePicker)}
+          >
             {format(weekDates[0], 'MMM dd')} - {format(weekDates[4], 'MMM dd, yyyy')}
+            <ApperIcon name="CalendarDays" size={14} className="inline-block ml-1" />
           </div>
+          {showDatePicker && (
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
+              <Input
+                type="date"
+                value={format(currentWeek, 'yyyy-MM-dd')}
+                onChange={handleDatePickerChange}
+                className="w-auto text-sm"
+              />
+            </div>
+          )}
         </div>
         
         <Button
