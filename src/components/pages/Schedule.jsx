@@ -17,13 +17,15 @@ const Schedule = () => {
   const [classes, setClasses] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [schedulePreferences, setSchedulePreferences] = useState(null);
-  const [dailySchedule, setDailySchedule] = useState({});
+const [dailySchedule, setDailySchedule] = useState({});
   const [classLevels, setClassLevels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("schedule");
   const [showAddClass, setShowAddClass] = useState(false);
   const [showAddClassLevel, setShowAddClassLevel] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingClassLevel, setEditingClassLevel] = useState(null);
   const [newClass, setNewClass] = useState({
     name: "",
@@ -157,7 +159,7 @@ const getTimeSlotsForDay = (dayIndex) => {
     }
   };
 
-  const handleDailyScheduleChange = async (day, field, value) => {
+const handleDailyScheduleChange = (day, field, value) => {
     const updatedSchedule = {
       ...dailySchedule,
       [day]: {
@@ -166,16 +168,11 @@ const getTimeSlotsForDay = (dayIndex) => {
       }
     };
     
-    try {
-      await settingsService.updateDailySchedule(updatedSchedule);
-      setDailySchedule(updatedSchedule);
-      toast.success("Daily schedule updated successfully!");
-    } catch (err) {
-      toast.error("Failed to update daily schedule");
-    }
-};
+    setDailySchedule(updatedSchedule);
+    setHasUnsavedChanges(true);
+  };
 
-const handleDefaultWorkingHoursChange = async (field, value) => {
+const handleDefaultWorkingHoursChange = (field, value) => {
     const updatedPreferences = {
       ...schedulePreferences,
       defaultWorkingHours: {
@@ -190,57 +187,67 @@ const handleDefaultWorkingHoursChange = async (field, value) => {
       delete updatedPreferences.defaultWorkingHours.classPeriodMinutes;
     }
     
-    try {
-      await settingsService.updateSchedulePreferences(updatedPreferences);
-      setSchedulePreferences(updatedPreferences);
+    setSchedulePreferences(updatedPreferences);
+    
+    // Auto-update daily schedules that are using default values
+    if (field === "start" || field === "end") {
+      const currentDefaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
+      const currentDefaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
       
-      // Auto-update daily schedules that are using default values
-      if (field === "start" || field === "end") {
-        const currentDefaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
-        const currentDefaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
+      const updatedDailySchedule = { ...dailySchedule };
+      
+      days.forEach(day => {
+        const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
         
-        const updatedDailySchedule = { ...dailySchedule };
-        let daysUpdated = 0;
+        // Check if this day is currently using the default value for the field being changed
+        const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === currentDefaultStart;
+        const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === currentDefaultEnd;
         
-        days.forEach(day => {
-          const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
-          
-          // Check if this day is currently using the default value for the field being changed
-          const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === currentDefaultStart;
-          const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === currentDefaultEnd;
-          
-          let shouldUpdate = false;
-          const updatedDaySchedule = { ...daySchedule };
-          
-          if (field === "start" && isUsingDefaultStart) {
-            updatedDaySchedule.startTime = value;
-            shouldUpdate = true;
-          }
-          
-          if (field === "end" && isUsingDefaultEnd) {
-            updatedDaySchedule.endTime = value;
-            shouldUpdate = true;
-          }
-          
-          if (shouldUpdate) {
-            updatedDailySchedule[day] = updatedDaySchedule;
-            daysUpdated++;
-          }
-        });
+        let shouldUpdate = false;
+        const updatedDaySchedule = { ...daySchedule };
         
-        // Update daily schedule if any days were affected
-        if (daysUpdated > 0) {
-          await settingsService.updateDailySchedule(updatedDailySchedule);
-          setDailySchedule(updatedDailySchedule);
-          toast.success(`Default working hours updated successfully! ${daysUpdated} day(s) automatically updated to follow the new defaults.`);
-        } else {
-          toast.success("Default working hours updated successfully!");
+        if (field === "start" && isUsingDefaultStart) {
+          updatedDaySchedule.startTime = value;
+          shouldUpdate = true;
         }
-      } else {
-        toast.success("Default working hours updated successfully!");
-      }
+        
+        if (field === "end" && isUsingDefaultEnd) {
+          updatedDaySchedule.endTime = value;
+          shouldUpdate = true;
+        }
+        
+        if (shouldUpdate) {
+          updatedDailySchedule[day] = updatedDaySchedule;
+        }
+      });
+      
+      setDailySchedule(updatedDailySchedule);
+    }
+    
+    setHasUnsavedChanges(true);
+  };
+  
+  const handleSaveAllChanges = async () => {
+    if (!hasUnsavedChanges) return;
+    
+    setIsSaving(true);
+    
+    try {
+      // Save schedule preferences
+      await settingsService.updateSchedulePreferences(schedulePreferences);
+      
+      // Save daily schedule
+      await settingsService.updateDailySchedule(dailySchedule);
+      
+      setHasUnsavedChanges(false);
+      toast.success("All schedule changes saved successfully!");
+      
+      // Reload data to ensure consistency
+      await loadData();
     } catch (err) {
-      toast.error("Failed to update default working hours");
+      toast.error("Failed to save schedule changes");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -487,14 +494,41 @@ const handleDefaultWorkingHoursChange = async (field, value) => {
         </div>
       )}
 
-      {/* Daily Schedule Configuration Tab */}
+{/* Daily Schedule Configuration Tab */}
       {activeTab === "daily" && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ApperIcon name="Clock" size={24} className="text-primary-600" />
-              Daily Schedule Configuration
-</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="Clock" size={24} className="text-primary-600" />
+                Daily Schedule Configuration
+              </CardTitle>
+              {hasUnsavedChanges && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-amber-600 flex items-center gap-1">
+                    <ApperIcon name="AlertCircle" size={16} />
+                    Unsaved changes
+                  </span>
+                  <Button
+                    onClick={handleSaveAllChanges}
+                    disabled={isSaving}
+                    className="flex items-center gap-2"
+                  >
+                    {isSaving ? (
+                      <>
+                        <ApperIcon name="Loader" size={16} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <ApperIcon name="Save" size={16} />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -627,7 +661,40 @@ const handleDefaultWorkingHoursChange = async (field, value) => {
                     )}
                   </div>
                 );
-              })}
+})}
+              
+              {hasUnsavedChanges && (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ApperIcon name="AlertCircle" size={20} className="text-amber-600" />
+                      <div>
+                        <p className="font-medium text-amber-800">You have unsaved changes</p>
+                        <p className="text-sm text-amber-600">
+                          Click "Save Changes" to apply your schedule modifications
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleSaveAllChanges}
+                      disabled={isSaving}
+                      className="flex items-center gap-2"
+                    >
+                      {isSaving ? (
+                        <>
+                          <ApperIcon name="Loader" size={16} className="animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <ApperIcon name="Save" size={16} />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

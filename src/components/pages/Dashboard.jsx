@@ -18,8 +18,21 @@ const Dashboard = () => {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [showLessonModal, setShowLessonModal] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     loadSchedules();
+  }, []);
+
+  useEffect(() => {
+    // Refresh schedules when user returns to dashboard
+    const handleFocus = () => {
+      loadSchedules();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const loadSchedules = async () => {
@@ -35,7 +48,10 @@ const Dashboard = () => {
     }
   };
 
-  const handleSlotClick = (dayIndex, timeIndex, timeSlot) => {
+const handleSlotClick = async (dayIndex, timeIndex, timeSlot) => {
+    // Refresh schedules to ensure we have the latest data
+    await loadSchedules();
+    
     const existingSchedule = schedules.find(
       s => s.dayOfWeek === dayIndex && s.timeSlot === timeSlot
     );
@@ -62,12 +78,14 @@ const Dashboard = () => {
     setShowLessonModal(true);
   };
 
-  const handleSaveLessonPlan = async (lessonData) => {
+const handleSaveLessonPlan = async (lessonData) => {
     try {
       await lessonPlanService.create(lessonData);
       toast.success("Lesson plan saved successfully!");
       setShowLessonModal(false);
       setSelectedLesson(null);
+      // Refresh schedules to reflect any changes
+      await loadSchedules();
     } catch (err) {
       toast.error("Failed to save lesson plan");
       throw err;
