@@ -40,7 +40,16 @@ const loadAcademicCalendar = async () => {
     });
   };
 
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+// Get days array based on week start preference
+  const getDaysArray = () => {
+    const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    if (academicCalendar?.weekStartsOnSunday) {
+      return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+    }
+    return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  };
+
+  const days = getDaysArray();
   const timeSlots = [
     "08:00 - 08:45",
     "09:00 - 09:45",
@@ -57,9 +66,9 @@ const getWeekDates = () => {
     const startDate = startOfWeek(currentWeek, { weekStartsOn });
     return days.map((_, index) => addDays(startDate, index));
   };
-  const getAcademicWeekNumber = () => {
+const getAcademicWeekNumber = () => {
     if (!academicCalendar?.termStart) return null;
-    return calculateAcademicWeek(currentWeek, academicCalendar.termStart);
+    return calculateAcademicWeek(currentWeek, academicCalendar.termStart, academicCalendar.weekStartsOnSunday);
   };
 
   const handleDatePickerChange = (e) => {

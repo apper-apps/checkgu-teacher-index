@@ -1,15 +1,16 @@
 import { differenceInWeeks, startOfWeek, parseISO } from 'date-fns';
 
-export const calculateAcademicWeek = (currentDate, termStartDate) => {
+export const calculateAcademicWeek = (currentDate, termStartDate, weekStartsOnSunday = false) => {
   if (!termStartDate) return null;
   
   try {
     const termStart = typeof termStartDate === 'string' ? parseISO(termStartDate) : termStartDate;
     const current = typeof currentDate === 'string' ? parseISO(currentDate) : currentDate;
     
-    // Get the start of the week for both dates (Monday as first day)
-    const termStartWeek = startOfWeek(termStart, { weekStartsOn: 1 });
-    const currentWeek = startOfWeek(current, { weekStartsOn: 1 });
+    // Get the start of the week for both dates (configurable first day)
+    const weekStartsOn = weekStartsOnSunday ? 0 : 1; // 0 = Sunday, 1 = Monday
+    const termStartWeek = startOfWeek(termStart, { weekStartsOn });
+    const currentWeek = startOfWeek(current, { weekStartsOn });
     
     // Calculate the difference in weeks
     const weeksDiff = differenceInWeeks(currentWeek, termStartWeek);

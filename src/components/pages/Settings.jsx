@@ -136,7 +136,7 @@ const handleSaveCalendar = async (e) => {
     }
   };
 
-  const handleAddBreak = () => {
+const handleAddBreak = () => {
     if (!newBreak.name || !newBreak.startDate || !newBreak.endDate) {
       toast.error("Please fill in all break details");
       return;
@@ -144,6 +144,20 @@ const handleSaveCalendar = async (e) => {
     
     if (new Date(newBreak.startDate) > new Date(newBreak.endDate)) {
       toast.error("Start date must be before end date");
+      return;
+    }
+
+    // Check for overlapping breaks
+    const startDate = new Date(newBreak.startDate);
+    const endDate = new Date(newBreak.endDate);
+    const hasOverlap = academicCalendar.breaks.some(existingBreak => {
+      const existingStart = new Date(existingBreak.startDate);
+      const existingEnd = new Date(existingBreak.endDate);
+      return (startDate <= existingEnd && endDate >= existingStart);
+    });
+
+    if (hasOverlap) {
+      toast.error("Break dates overlap with an existing break");
       return;
     }
 
@@ -178,6 +192,21 @@ const handleSaveCalendar = async (e) => {
     
     if (new Date(newBreak.startDate) > new Date(newBreak.endDate)) {
       toast.error("Start date must be before end date");
+      return;
+    }
+
+    // Check for overlapping breaks (excluding the one being edited)
+    const startDate = new Date(newBreak.startDate);
+    const endDate = new Date(newBreak.endDate);
+    const hasOverlap = academicCalendar.breaks.some(existingBreak => {
+      if (existingBreak.id === editingBreak.id) return false; // Skip the break being edited
+      const existingStart = new Date(existingBreak.startDate);
+      const existingEnd = new Date(existingBreak.endDate);
+      return (startDate <= existingEnd && endDate >= existingStart);
+    });
+
+    if (hasOverlap) {
+      toast.error("Break dates overlap with an existing break");
       return;
     }
 
@@ -641,6 +670,62 @@ case "schedule":
                   </div>
                 </FormField>
               </div>
+            </div>
+            
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Daily Working Hours</h3>
+              <div className="text-sm text-gray-600 mb-4">
+                Configure working hours for each day of the week. Days are listed starting from your selected Week Start Day.
+              </div>
+              
+              {/* Get weekdays starting from the selected start day */}
+              {(() => {
+                const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                const startIndex = academicCalendar.weekStartsOnSunday ? 6 : 0; // Sunday = 6, Monday = 0
+                const orderedDays = [...allDays.slice(startIndex), ...allDays.slice(0, startIndex)];
+                const workingDays = orderedDays.slice(0, 5); // Only show first 5 days (working days)
+                
+                return workingDays.map((day, index) => (
+                  <div key={day} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-gray-900">{day}</h4>
+                      <div className="text-sm text-gray-500">
+                        {academicCalendar.weekStartsOnSunday && index === 0 && "Week Start Day"}
+                        {!academicCalendar.weekStartsOnSunday && index === 0 && "Week Start Day"}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Start Time">
+                        <Input
+                          type="time"
+                          value={schedulePreferences.defaultWorkingHours?.start || "08:00"}
+                          onChange={(e) => setSchedulePreferences({
+                            ...schedulePreferences,
+                            defaultWorkingHours: {
+                              ...schedulePreferences.defaultWorkingHours,
+                              start: e.target.value
+                            }
+                          })}
+                        />
+                      </FormField>
+                      <FormField label="End Time">
+                        <Input
+                          type="time"
+                          value={schedulePreferences.defaultWorkingHours?.end || "16:00"}
+                          onChange={(e) => setSchedulePreferences({
+                            ...schedulePreferences,
+                            defaultWorkingHours: {
+                              ...schedulePreferences.defaultWorkingHours,
+                              end: e.target.value
+                            }
+                          })}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
             
             <div className="border-t pt-6 space-y-4">

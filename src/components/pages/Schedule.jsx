@@ -40,28 +40,43 @@ const Schedule = () => {
     "Art", "Physical Education", "Music"
   ];
 
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const [academicCalendar, setAcademicCalendar] = useState(null);
+
+  // Get days array based on week start preference
+  const getDaysArray = () => {
+    if (!academicCalendar) return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    
+    const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    if (academicCalendar.weekStartsOnSunday) {
+      return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+    }
+    return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  };
+
+  const days = getDaysArray();
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData] = await Promise.all([
+      const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData, academicCalendarData] = await Promise.all([
         classService.getAll(),
         scheduleService.getAll(),
         settingsService.getSchedulePreferences(),
         settingsService.getDailySchedule(),
-        settingsService.getClassLevels()
+        settingsService.getClassLevels(),
+        settingsService.getAcademicCalendar()
       ]);
       setClasses(classesData);
       setSchedules(schedulesData);
       setSchedulePreferences(preferencesData);
       setDailySchedule(dailyScheduleData);
       setClassLevels(classLevelsData);
+      setAcademicCalendar(academicCalendarData);
     } catch (err) {
       setError(err.message);
     } finally {

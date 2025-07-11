@@ -138,7 +138,7 @@ updateClassLevels: async (levelsData) => {
     });
   },
 
-  getSchoolBreaks: async () => {
+getSchoolBreaks: async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve([...mockAcademicCalendar.breaks]);
@@ -151,6 +151,28 @@ updateClassLevels: async (levelsData) => {
       setTimeout(() => {
         mockAcademicCalendar.breaks = [...breaksData];
         resolve([...mockAcademicCalendar.breaks]);
+      }, 200);
+    });
+  },
+
+  addSchoolBreak: async (breakData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newBreak = { ...breakData, id: Date.now() };
+        mockAcademicCalendar.breaks.push(newBreak);
+        resolve(newBreak);
+      }, 200);
+    });
+  },
+
+  deleteSchoolBreak: async (breakId) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockAcademicCalendar.breaks.findIndex(b => b.id === breakId);
+        if (index !== -1) {
+          mockAcademicCalendar.breaks.splice(index, 1);
+        }
+        resolve(true);
       }, 200);
     });
   }
