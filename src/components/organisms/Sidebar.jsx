@@ -4,7 +4,7 @@ import ApperIcon from "@/components/ApperIcon";
 import NavItem from "@/components/molecules/NavItem";
 import { cn } from "@/utils/cn";
 
-const Sidebar = ({ isOpen, onClose, className }) => {
+const Sidebar = ({ isOpen, onClose, className, schoolProfile }) => {
 const navigationItems = [
     { icon: "LayoutDashboard", label: "Dashboard", to: "/" },
     { icon: "Users", label: "Parent Dashboard", to: "/parent-dashboard" },
@@ -17,11 +17,19 @@ const navigationItems = [
 
   // Desktop Sidebar
   const DesktopSidebar = () => (
-    <div className="hidden lg:block w-64 bg-white border-r border-gray-200 h-screen">
+<div className="hidden lg:block w-64 bg-white border-r border-gray-200 h-screen">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
-            <ApperIcon name="GraduationCap" size={24} className="text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center overflow-hidden">
+            {schoolProfile?.logoPreview ? (
+              <img
+                src={schoolProfile.logoPreview}
+                alt="School Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <ApperIcon name="GraduationCap" size={24} className="text-white" />
+            )}
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Checkgu</h1>
@@ -61,10 +69,18 @@ const navigationItems = [
         className="fixed left-0 top-0 w-64 bg-white h-full z-50 lg:hidden shadow-xl"
       >
         <div className="p-6">
-          <div className="flex items-center justify-between mb-8">
+<div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
-                <ApperIcon name="GraduationCap" size={24} className="text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center overflow-hidden">
+                {schoolProfile?.logoPreview ? (
+                  <img
+                    src={schoolProfile.logoPreview}
+                    alt="School Logo"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <ApperIcon name="GraduationCap" size={24} className="text-white" />
+                )}
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Checkgu</h1>

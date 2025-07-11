@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
+import React, { useEffect, useState } from "react";
+import { eachDayOfInterval, endOfMonth, format, getDay, isSameMonth, isToday, startOfMonth } from "date-fns";
 import ApperIcon from "@/components/ApperIcon";
-import { scheduleService } from "@/services/api/scheduleService";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
 import { lessonPlanService } from "@/services/api/lessonPlanService";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, getDay } from "date-fns";
-
+import { scheduleService } from "@/services/api/scheduleService";
+import { settingsService } from "@/services/api/settingsService";
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [schedules, setSchedules] = useState([]);
@@ -16,6 +16,20 @@ const Calendar = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState("month");
+  const [academicCalendar, setAcademicCalendar] = useState(null);
+
+  useEffect(() => {
+    loadAcademicCalendar();
+  }, []);
+
+  const loadAcademicCalendar = async () => {
+    try {
+      const calendar = await settingsService.getAcademicCalendar();
+      setAcademicCalendar(calendar);
+    } catch (error) {
+      console.error('Failed to load academic calendar:', error);
+    }
+  };
 
   useEffect(() => {
     loadCalendarData();
@@ -44,8 +58,11 @@ const Calendar = () => {
     setCurrentDate(newDate);
   };
 
-  const getScheduleForDay = (date) => {
-    const dayOfWeek = (getDay(date) + 6) % 7; // Convert Sunday=0 to Monday=0
+const getScheduleForDay = (date) => {
+    // Convert day to match schedule dayOfWeek (0=Monday, 6=Sunday)
+    const dayOfWeek = academicCalendar?.weekStartsOnSunday 
+      ? getDay(date) === 0 ? 6 : getDay(date) - 1  // Sunday=6, Monday=0
+      : (getDay(date) + 6) % 7; // Convert Sunday=0 to Monday=0
     return schedules.filter(s => s.dayOfWeek === dayOfWeek);
   };
 
@@ -62,7 +79,7 @@ const Calendar = () => {
     return holidays.includes(format(date, "yyyy-MM-dd"));
   };
 
-  const renderMonthView = () => {
+const renderMonthView = () => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -70,7 +87,10 @@ const Calendar = () => {
     return (
       <div className="grid grid-cols-7 gap-1">
         {/* Day headers */}
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => (
+        {(academicCalendar?.weekStartsOnSunday 
+          ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+          : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        ).map(day => (
           <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
             {day}
           </div>

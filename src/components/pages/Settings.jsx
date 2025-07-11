@@ -19,13 +19,15 @@ const Settings = () => {
     department: "Elementary"
   });
 
-  const [schoolProfile, setSchoolProfile] = useState({
+const [schoolProfile, setSchoolProfile] = useState({
     name: "Greenwood Elementary School",
     type: "Public Elementary",
     address: "123 Education Lane, Springfield, ST 12345",
     phone: "+1 (555) 987-6543",
     email: "info@greenwood.edu",
-    website: "www.greenwood.edu"
+    website: "www.greenwood.edu",
+    logo: null,
+    logoPreview: null
   });
 
 const [academicCalendar, setAcademicCalendar] = useState({
@@ -34,15 +36,21 @@ const [academicCalendar, setAcademicCalendar] = useState({
     winterBreakStart: "2025-04-01",
     winterBreakEnd: "2025-04-15",
     springTermStart: "2025-04-16",
-    springTermEnd: "2025-06-30"
+    springTermEnd: "2025-06-30",
+    weekStartsOnSunday: false
   });
 
-  const [teachingDuration, setTeachingDuration] = useState({
+const [schedulePreferences, setSchedulePreferences] = useState({
     classPeriodMinutes: 45,
     breakDuration: 15,
     lunchDuration: 30,
     numberOfLevels: 5,
-    numberOfClasses: 2
+    numberOfClasses: 2,
+    defaultLessonDuration: 30,
+    defaultWorkingHours: {
+      start: "08:00",
+      end: "16:00"
+    }
   });
 
   const [calendarSync, setCalendarSync] = useState({
@@ -52,11 +60,11 @@ const [academicCalendar, setAcademicCalendar] = useState({
     lastSyncDate: null
   });
 
-  const tabs = [
+const tabs = [
     { id: "profile", label: "User Profile", icon: "User" },
     { id: "school", label: "School Profile", icon: "Building" },
     { id: "calendar", label: "Academic Calendar", icon: "Calendar" },
-    { id: "duration", label: "Teaching Duration", icon: "Clock" },
+    { id: "schedule", label: "Schedule", icon: "Clock" },
     { id: "sync", label: "Calendar Sync", icon: "RefreshCw" }
   ];
 
@@ -69,14 +77,43 @@ const [academicCalendar, setAcademicCalendar] = useState({
       toast.error("Failed to update profile");
     }
   };
-
-  const handleSaveSchool = async (e) => {
+const handleSaveSchool = async (e) => {
     e.preventDefault();
     try {
+      await settingsService.updateSchoolProfile(schoolProfile);
       toast.success("School profile updated successfully!");
     } catch (err) {
       toast.error("Failed to update school profile");
     }
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Logo file size must be less than 5MB");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const logoUrl = event.target.result;
+        setSchoolProfile(prev => ({
+          ...prev,
+          logo: file,
+          logoPreview: logoUrl
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setSchoolProfile(prev => ({
+      ...prev,
+      logo: null,
+      logoPreview: null
+    }));
   };
 
 const handleSaveCalendar = async (e) => {
@@ -89,12 +126,13 @@ const handleSaveCalendar = async (e) => {
     }
   };
 
-  const handleSaveDuration = async (e) => {
+const handleSaveSchedule = async (e) => {
     e.preventDefault();
     try {
-      toast.success("Teaching duration settings updated successfully!");
+      await settingsService.updateSchedulePreferences(schedulePreferences);
+      toast.success("Schedule preferences updated successfully!");
     } catch (err) {
-      toast.error("Failed to update teaching duration");
+      toast.error("Failed to update schedule preferences");
     }
   };
 
@@ -180,9 +218,52 @@ const handleSaveCalendar = async (e) => {
           </form>
         );
 
-      case "school":
+case "school":
         return (
           <form onSubmit={handleSaveSchool} className="space-y-4">
+            <FormField label="School Logo">
+              <div className="space-y-3">
+                {schoolProfile.logoPreview && (
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={schoolProfile.logoPreview}
+                      alt="School Logo Preview"
+                      className="w-16 h-16 object-contain rounded-lg border border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveLogo}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      <ApperIcon name="Trash2" size={16} className="mr-2" />
+                      Remove Logo
+                    </Button>
+                  </div>
+                )}
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                    id="logo-upload"
+                  />
+                  <label
+                    htmlFor="logo-upload"
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <ApperIcon name="Upload" size={16} />
+                    Choose Logo
+                  </label>
+                  <span className="text-sm text-gray-500">
+                    PNG, JPG up to 5MB
+                  </span>
+                </div>
+              </div>
+            </FormField>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField label="School Name">
                 <Input
@@ -238,7 +319,7 @@ const handleSaveCalendar = async (e) => {
           </form>
         );
 
-      case "calendar":
+case "calendar":
         return (
           <form onSubmit={handleSaveCalendar} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -285,6 +366,34 @@ const handleSaveCalendar = async (e) => {
                 />
               </FormField>
             </div>
+            
+            <div className="border-t pt-4">
+              <FormField label="Week Start Day">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${!academicCalendar.weekStartsOnSunday ? 'text-primary-600' : 'text-gray-600'}`}>
+                      Monday
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={academicCalendar.weekStartsOnSunday}
+                        onChange={(e) => setAcademicCalendar({...academicCalendar, weekStartsOnSunday: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                    </label>
+                    <span className={`text-sm font-medium ${academicCalendar.weekStartsOnSunday ? 'text-primary-600' : 'text-gray-600'}`}>
+                      Sunday
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    This setting will be reflected in your Timetable and Calendar
+                  </div>
+                </div>
+              </FormField>
+            </div>
+            
             <Button type="submit">
               <ApperIcon name="Save" size={16} className="mr-2" />
               Save Academic Calendar
@@ -292,59 +401,117 @@ const handleSaveCalendar = async (e) => {
           </form>
         );
 
-      case "duration":
+case "schedule":
         return (
-          <form onSubmit={handleSaveDuration} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Class Period Duration (minutes)">
-                <Input
-                  type="number"
-                  value={teachingDuration.classPeriodMinutes}
-                  onChange={(e) => setTeachingDuration({...teachingDuration, classPeriodMinutes: parseInt(e.target.value)})}
-                  min="30"
-                  max="90"
-                />
-              </FormField>
-              <FormField label="Break Duration (minutes)">
-                <Input
-                  type="number"
-                  value={teachingDuration.breakDuration}
-                  onChange={(e) => setTeachingDuration({...teachingDuration, breakDuration: parseInt(e.target.value)})}
-                  min="10"
-                  max="30"
-                />
-              </FormField>
-              <FormField label="Lunch Duration (minutes)">
-                <Input
-                  type="number"
-                  value={teachingDuration.lunchDuration}
-                  onChange={(e) => setTeachingDuration({...teachingDuration, lunchDuration: parseInt(e.target.value)})}
-                  min="20"
-                  max="60"
-                />
-              </FormField>
-              <FormField label="Number of Grade Levels">
-                <Input
-                  type="number"
-                  value={teachingDuration.numberOfLevels}
-                  onChange={(e) => setTeachingDuration({...teachingDuration, numberOfLevels: parseInt(e.target.value)})}
-                  min="1"
-                  max="12"
-                />
-              </FormField>
-              <FormField label="Classes per Grade Level">
-                <Input
-                  type="number"
-                  value={teachingDuration.numberOfClasses}
-                  onChange={(e) => setTeachingDuration({...teachingDuration, numberOfClasses: parseInt(e.target.value)})}
-                  min="1"
-                  max="10"
-                />
-              </FormField>
+          <form onSubmit={handleSaveSchedule} className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Class Schedule</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Class Period Duration (minutes)">
+                  <Input
+                    type="number"
+                    value={schedulePreferences.classPeriodMinutes}
+                    onChange={(e) => setSchedulePreferences({...schedulePreferences, classPeriodMinutes: parseInt(e.target.value)})}
+                    min="30"
+                    max="90"
+                  />
+                </FormField>
+                <FormField label="Break Duration (minutes)">
+                  <Input
+                    type="number"
+                    value={schedulePreferences.breakDuration}
+                    onChange={(e) => setSchedulePreferences({...schedulePreferences, breakDuration: parseInt(e.target.value)})}
+                    min="10"
+                    max="30"
+                  />
+                </FormField>
+                <FormField label="Lunch Duration (minutes)">
+                  <Input
+                    type="number"
+                    value={schedulePreferences.lunchDuration}
+                    onChange={(e) => setSchedulePreferences({...schedulePreferences, lunchDuration: parseInt(e.target.value)})}
+                    min="20"
+                    max="60"
+                  />
+                </FormField>
+                <FormField label="Number of Grade Levels">
+                  <Input
+                    type="number"
+                    value={schedulePreferences.numberOfLevels}
+                    onChange={(e) => setSchedulePreferences({...schedulePreferences, numberOfLevels: parseInt(e.target.value)})}
+                    min="1"
+                    max="12"
+                  />
+                </FormField>
+                <FormField label="Classes per Grade Level">
+                  <Input
+                    type="number"
+                    value={schedulePreferences.numberOfClasses}
+                    onChange={(e) => setSchedulePreferences({...schedulePreferences, numberOfClasses: parseInt(e.target.value)})}
+                    min="1"
+                    max="10"
+                  />
+                </FormField>
+              </div>
             </div>
+            
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Schedule Preferences</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Default Lesson Duration (minutes)">
+                  <Input
+                    type="number"
+                    value={schedulePreferences.defaultLessonDuration}
+                    onChange={(e) => setSchedulePreferences({...schedulePreferences, defaultLessonDuration: parseInt(e.target.value)})}
+                    min="15"
+                    max="120"
+                    placeholder="e.g., 30"
+                  />
+                  <div className="text-sm text-gray-500 mt-1">
+                    This will be used as the default when creating new lessons
+                  </div>
+                </FormField>
+              </div>
+            </div>
+            
+            <div className="border-t pt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Schedule Default Working Hours</h3>
+              <div className="text-sm text-gray-600 mb-4">
+                These are used as defaults when daily schedules are disabled
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Start Time">
+                  <Input
+                    type="time"
+                    value={schedulePreferences.defaultWorkingHours.start}
+                    onChange={(e) => setSchedulePreferences({
+                      ...schedulePreferences,
+                      defaultWorkingHours: {
+                        ...schedulePreferences.defaultWorkingHours,
+                        start: e.target.value
+                      }
+                    })}
+                  />
+                </FormField>
+                <FormField label="End Time">
+                  <Input
+                    type="time"
+                    value={schedulePreferences.defaultWorkingHours.end}
+                    onChange={(e) => setSchedulePreferences({
+                      ...schedulePreferences,
+                      defaultWorkingHours: {
+                        ...schedulePreferences.defaultWorkingHours,
+                        end: e.target.value
+                      }
+                    })}
+                  />
+                </FormField>
+              </div>
+            </div>
+            
             <Button type="submit">
               <ApperIcon name="Save" size={16} className="mr-2" />
-              Save Duration Settings
+              Save Schedule Preferences
             </Button>
           </form>
         );

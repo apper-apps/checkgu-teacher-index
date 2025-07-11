@@ -11,10 +11,11 @@ import { calculateAcademicWeek } from "@/utils/academicWeek";
 
 const TimetableGrid = ({ schedules = [], onSlotClick }) => {
   const [selectedDay, setSelectedDay] = useState(0);
-  const [currentWeek, setCurrentWeek] = useState(new Date());
+const [currentWeek, setCurrentWeek] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [academicCalendar, setAcademicCalendar] = useState(null);
-useEffect(() => {
+  
+  useEffect(() => {
     loadAcademicCalendar();
   }, []);
 
@@ -39,11 +40,11 @@ useEffect(() => {
     "15:00 - 15:45",
   ];
 
-  const getWeekDates = () => {
-    const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
+const getWeekDates = () => {
+    const weekStartsOn = academicCalendar?.weekStartsOnSunday ? 0 : 1;
+    const startDate = startOfWeek(currentWeek, { weekStartsOn });
     return days.map((_, index) => addDays(startDate, index));
   };
-
   const getAcademicWeekNumber = () => {
     if (!academicCalendar?.termStart) return null;
     return calculateAcademicWeek(currentWeek, academicCalendar.termStart);
