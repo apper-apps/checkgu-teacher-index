@@ -43,17 +43,16 @@ const mockSchedulePreferences = {
   defaultLessonDuration: 30,
   defaultWorkingHours: {
     start: "08:00",
-    end: "16:00"
+end: "16:00"
   },
   gradeLevels: [
-    { Id: 1, name: "Grade 1", numberOfClasses: 2 },
-    { Id: 2, name: "Grade 2", numberOfClasses: 2 },
-    { Id: 3, name: "Grade 3", numberOfClasses: 2 },
-    { Id: 4, name: "Grade 4", numberOfClasses: 2 },
-    { Id: 5, name: "Grade 5", numberOfClasses: 2 }
+    { Id: 1, name: "Tahun 1", numberOfClasses: 2 },
+    { Id: 2, name: "Tahun 2", numberOfClasses: 2 },
+    { Id: 3, name: "Tahun 3", numberOfClasses: 2 },
+    { Id: 4, name: "Tahun 4", numberOfClasses: 2 },
+    { Id: 5, name: "Tahun 5", numberOfClasses: 2 }
   ]
 };
-
 const mockDailySchedule = {
   Monday: { enabled: true, startTime: "08:00", endTime: "16:00" },
   Tuesday: { enabled: true, startTime: "08:00", endTime: "16:00" },

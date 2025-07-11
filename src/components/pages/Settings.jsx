@@ -67,17 +67,16 @@ const [schedulePreferences, setSchedulePreferences] = useState({
     defaultLessonDuration: 30,
     defaultWorkingHours: {
       start: "08:00",
-      end: "16:00"
+end: "16:00"
     },
     gradeLevels: [
-      { Id: 1, name: "Grade 1", numberOfClasses: 2 },
-      { Id: 2, name: "Grade 2", numberOfClasses: 2 },
-      { Id: 3, name: "Grade 3", numberOfClasses: 2 },
-      { Id: 4, name: "Grade 4", numberOfClasses: 2 },
-      { Id: 5, name: "Grade 5", numberOfClasses: 2 }
+      { Id: 1, name: "Tahun 1", numberOfClasses: 2 },
+      { Id: 2, name: "Tahun 2", numberOfClasses: 2 },
+      { Id: 3, name: "Tahun 3", numberOfClasses: 2 },
+      { Id: 4, name: "Tahun 4", numberOfClasses: 2 },
+      { Id: 5, name: "Tahun 5", numberOfClasses: 2 }
     ]
   });
-
   const [calendarSync, setCalendarSync] = useState({
     googleCalendarId: "",
     appleCalendarId: "",
@@ -277,13 +276,12 @@ const handleSaveSchedule = async (e) => {
   const handleNumberOfLevelsChange = (newCount) => {
     const currentLevels = schedulePreferences.gradeLevels;
     let updatedLevels = [...currentLevels];
-    
-    if (newCount > currentLevels.length) {
-      // Add new grade levels
+if (newCount > currentLevels.length) {
+      // Add new grade levels with "Tahun" naming
       for (let i = currentLevels.length; i < newCount; i++) {
         updatedLevels.push({
           Id: i + 1,
-          name: `Grade ${i + 1}`,
+          name: `Tahun ${i + 1}`,
           numberOfClasses: schedulePreferences.numberOfClasses
         });
       }
@@ -804,36 +802,46 @@ case "schedule":
                 </FormField>
               </div>
             </div>
-
-            {/* Grade Level Configuration */}
-            <div className="border-t pt-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Grade Level Configuration</h3>
-              <div className="text-sm text-gray-600 mb-4">
-                Configure the name and number of classes for each grade level
+{/* Grade Level Configuration */}
+            <div className="border-t pt-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Grade Level Configuration</h3>
+                <div className="text-sm text-gray-600">
+                  Configure the name and number of classes for each grade level. Default names use "Tahun" format but can be customized.
+                </div>
               </div>
               
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
                 {schedulePreferences.gradeLevels.map((level, index) => (
-                  <div key={level.Id} className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-3">
-                      <ApperIcon name="GraduationCap" size={16} className="text-primary-600" />
-                      <h4 className="font-medium text-gray-900">Level {index + 1}</h4>
+                  <div key={level.Id} className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
+                        <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">Level {index + 1}</h4>
+                        <p className="text-xs text-gray-600">Grade level configuration</p>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div className="space-y-4">
                       <FormField label="Grade Level Name">
                         <Input
                           value={level.name}
                           onChange={(e) => handleGradeLevelChange(level.Id, 'name', e.target.value)}
-                          placeholder="e.g., Grade 1, Kindergarten"
+                          placeholder="e.g., Tahun 1, Kindergarten"
                           required
+                          className="font-medium"
                         />
+                        <div className="text-xs text-gray-500 mt-1">
+                          This name will appear in your schedules and reports
+                        </div>
                       </FormField>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            
             <div className="border-t pt-6 space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Schedule Preferences</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
