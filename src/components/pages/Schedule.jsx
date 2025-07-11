@@ -175,7 +175,7 @@ const getTimeSlotsForDay = (dayIndex) => {
     }
 };
 
-  const handleDefaultWorkingHoursChange = async (field, value) => {
+const handleDefaultWorkingHoursChange = async (field, value) => {
     const updatedPreferences = {
       ...schedulePreferences,
       defaultWorkingHours: {
@@ -193,7 +193,52 @@ const getTimeSlotsForDay = (dayIndex) => {
     try {
       await settingsService.updateSchedulePreferences(updatedPreferences);
       setSchedulePreferences(updatedPreferences);
-      toast.success("Default working hours updated successfully!");
+      
+      // Auto-update daily schedules that are using default values
+      if (field === "start" || field === "end") {
+        const currentDefaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
+        const currentDefaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
+        
+        const updatedDailySchedule = { ...dailySchedule };
+        let daysUpdated = 0;
+        
+        days.forEach(day => {
+          const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
+          
+          // Check if this day is currently using the default value for the field being changed
+          const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === currentDefaultStart;
+          const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === currentDefaultEnd;
+          
+          let shouldUpdate = false;
+          const updatedDaySchedule = { ...daySchedule };
+          
+          if (field === "start" && isUsingDefaultStart) {
+            updatedDaySchedule.startTime = value;
+            shouldUpdate = true;
+          }
+          
+          if (field === "end" && isUsingDefaultEnd) {
+            updatedDaySchedule.endTime = value;
+            shouldUpdate = true;
+          }
+          
+          if (shouldUpdate) {
+            updatedDailySchedule[day] = updatedDaySchedule;
+            daysUpdated++;
+          }
+        });
+        
+        // Update daily schedule if any days were affected
+        if (daysUpdated > 0) {
+          await settingsService.updateDailySchedule(updatedDailySchedule);
+          setDailySchedule(updatedDailySchedule);
+          toast.success(`Default working hours updated successfully! ${daysUpdated} day(s) automatically updated to follow the new defaults.`);
+        } else {
+          toast.success("Default working hours updated successfully!");
+        }
+      } else {
+        toast.success("Default working hours updated successfully!");
+      }
     } catch (err) {
       toast.error("Failed to update default working hours");
     }
