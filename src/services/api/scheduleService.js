@@ -45,7 +45,14 @@ export const scheduleService = {
     if (index === -1) {
       throw new Error("Schedule not found");
     }
-    schedules.splice(index, 1);
+schedules.splice(index, 1);
     return true;
+  },
+
+  async getByWeek(weekStart) {
+    await delay(300);
+    // For now, return all schedules as we don't have date-specific data
+    // In a real app, you would filter by the actual week dates
+    return [...schedules];
   }
 };
