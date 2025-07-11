@@ -500,7 +500,7 @@ const getTimeSlotsForDay = (dayIndex) => {
                               <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
                             )}
                           </div>
-                        }>
+}>
                           <Input
                             type="time"
                             value={effectiveStartTime}
@@ -515,7 +515,7 @@ const getTimeSlotsForDay = (dayIndex) => {
                               <span className="text-xs text-blue-600">(Default: {defaultEnd})</span>
                             )}
                           </div>
-                        }>
+}>
                           <Input
                             type="time"
                             value={effectiveEndTime}
