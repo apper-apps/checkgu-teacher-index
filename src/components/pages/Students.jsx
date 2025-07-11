@@ -20,6 +20,12 @@ const Students = () => {
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importProgress, setImportProgress] = useState(0);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [newStudent, setNewStudent] = useState({
     name: "",
     studentId: "",
@@ -75,7 +81,7 @@ const Students = () => {
     setShowStudentDetails(true);
   };
 
-  const handleAttendanceUpdate = async (studentId, date, isPresent) => {
+const handleAttendanceUpdate = async (studentId, date, isPresent) => {
     try {
       // In a real app, this would update attendance records
       toast.success("Attendance updated successfully!");
@@ -84,20 +90,85 @@ const Students = () => {
     }
   };
 
+  const handleImportCSV = async () => {
+    if (!importFile) {
+      toast.error("Please select a CSV file to import");
+      return;
+    }
+
+    try {
+      setIsImporting(true);
+      setImportProgress(0);
+      
+      const result = await studentService.importStudents(importFile, (progress) => {
+        setImportProgress(progress);
+      });
+      
+      toast.success(`Successfully imported ${result.imported} students`);
+      if (result.skipped > 0) {
+        toast.info(`Skipped ${result.skipped} duplicate entries`);
+      }
+      
+      setShowImportModal(false);
+      setImportFile(null);
+      setImportProgress(0);
+      loadData();
+    } catch (err) {
+      toast.error(`Import failed: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true);
+      await studentService.exportStudentsCSV(students);
+      toast.success("CSV export completed successfully!");
+      setShowExportModal(false);
+    } catch (err) {
+      toast.error("Failed to export CSV");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await studentService.exportStudentsPDF(students);
+      toast.success("PDF export completed successfully!");
+      setShowExportModal(false);
+    } catch (err) {
+      toast.error("Failed to export PDF");
+    } finally {
+      setIsExporting(false);
+    }
+  };
   if (loading) return <Loading />;
   if (error) return <Error message={error} onRetry={loadData} />;
 
-  return (
+return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Student Management</h1>
           <p className="text-gray-600">Manage your students and track their progress</p>
         </div>
-        <Button onClick={() => setShowAddStudent(true)}>
-          <ApperIcon name="UserPlus" size={18} className="mr-2" />
-          Add Student
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => setShowImportModal(true)}>
+            <ApperIcon name="Upload" size={18} className="mr-2" />
+            Import CSV
+          </Button>
+          <Button variant="outline" onClick={() => setShowExportModal(true)}>
+            <ApperIcon name="Download" size={18} className="mr-2" />
+            Export Data
+          </Button>
+          <Button onClick={() => setShowAddStudent(true)}>
+            <ApperIcon name="UserPlus" size={18} className="mr-2" />
+            Add Student
+          </Button>
+        </div>
       </div>
 
       {/* Students Overview */}
@@ -285,6 +356,120 @@ const Students = () => {
                   <Button variant="outline" className="flex-1">
                     <ApperIcon name="FileText" size={16} className="mr-2" />
                     View Report
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+)}
+
+      {/* Import CSV Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Import Students from CSV</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select CSV File
+                  </label>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setImportFile(e.target.files[0])}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    CSV should contain: name, studentId, classId, guardianName, guardianPhone, guardianEmail
+                  </p>
+                </div>
+                
+                {isImporting && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Importing...</span>
+                      <span>{importProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-primary-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${importProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    onClick={handleImportCSV}
+                    disabled={!importFile || isImporting}
+                    className="flex-1"
+                  >
+                    {isImporting ? "Importing..." : "Import"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowImportModal(false);
+                      setImportFile(null);
+                      setImportProgress(0);
+                    }}
+                    disabled={isImporting}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Export Student Data</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Choose export format for student data including attendance and performance information.
+                </p>
+                
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    onClick={handleExportCSV}
+                    disabled={isExporting}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <ApperIcon name="FileText" size={16} />
+                    {isExporting ? "Exporting..." : "Export as CSV"}
+                  </Button>
+                  <Button 
+                    onClick={handleExportPDF}
+                    disabled={isExporting}
+                    variant="outline"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <ApperIcon name="FileText" size={16} />
+                    {isExporting ? "Exporting..." : "Export as PDF"}
+                  </Button>
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowExportModal(false)}
+                    disabled={isExporting}
+                    className="flex-1"
+                  >
+                    Cancel
                   </Button>
                 </div>
               </div>
