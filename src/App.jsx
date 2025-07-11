@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import Layout from "@/components/organisms/Layout";
 import Dashboard from "@/components/pages/Dashboard";
+import ParentDashboard from "@/components/pages/ParentDashboard";
 import Calendar from "@/components/pages/Calendar";
 import Schedule from "@/components/pages/Schedule";
 import Students from "@/components/pages/Students";
@@ -13,8 +14,9 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-background">
         <Routes>
-          <Route path="/" element={<Layout />}>
+<Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="parent-dashboard" element={<ParentDashboard />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="schedule" element={<Schedule />} />
             <Route path="students" element={<Students />} />

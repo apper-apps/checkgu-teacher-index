@@ -5,8 +5,9 @@ import NavItem from "@/components/molecules/NavItem";
 import { cn } from "@/utils/cn";
 
 const Sidebar = ({ isOpen, onClose, className }) => {
-  const navigationItems = [
+const navigationItems = [
     { icon: "LayoutDashboard", label: "Dashboard", to: "/" },
+    { icon: "Users", label: "Parent Dashboard", to: "/parent-dashboard" },
     { icon: "Calendar", label: "Calendar", to: "/calendar" },
     { icon: "Clock", label: "Schedule", to: "/schedule" },
     { icon: "Users", label: "Students", to: "/students" },
