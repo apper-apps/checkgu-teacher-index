@@ -1,25 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
+import { useUser } from "@/contexts/UserContext";
 import Header from "@/components/organisms/Header";
 import Sidebar from "@/components/organisms/Sidebar";
-import { settingsService } from "@/services/api/settingsService";
-
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [schoolProfile, setSchoolProfile] = useState(null);
-
-  useEffect(() => {
-    const loadSchoolProfile = async () => {
-      try {
-        const profile = await settingsService.getSchoolProfile();
-        setSchoolProfile(profile);
-      } catch (error) {
-        console.error('Failed to load school profile:', error);
-      }
-    };
-    loadSchoolProfile();
-  }, []);
-
+  const { userProfile, schoolProfile } = useUser();
   const handleMenuToggle = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -31,10 +17,18 @@ const Layout = () => {
 return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} schoolProfile={schoolProfile} />
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={handleSidebarClose} 
+          schoolProfile={schoolProfile} 
+        />
         <div className="flex-1 lg:ml-0">
-          <Header onMenuToggle={handleMenuToggle} />
-          <main className="p-6">
+          <Header 
+            onMenuToggle={handleMenuToggle} 
+            userProfile={userProfile}
+            schoolProfile={schoolProfile}
+          />
+          <main className="p-4 sm:p-6">
             <Outlet />
           </main>
         </div>

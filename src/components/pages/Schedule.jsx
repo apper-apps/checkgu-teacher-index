@@ -11,7 +11,7 @@ import Loading from "@/components/ui/Loading";
 import FormField from "@/components/molecules/FormField";
 import { scheduleService } from "@/services/api/scheduleService";
 import { settingsService } from "@/services/api/settingsService";
-import { classService } from '@/services/api/classService'
+import { classService } from "@/services/api/classService";
 
 // Helper functions for time slot generation
 const generateTimeSlots = (startTime, endTime, duration = 45) => {
@@ -551,54 +551,56 @@ const handleDefaultWorkingHoursChange = (field, value) => {
   if (loading) return <Loading />;
   if (error) return <Error message={error} onRetry={loadData} />;
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Schedule Management</h1>
-          <p className="text-gray-600">Configure daily schedules, class levels, and weekly timetables</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Schedule Management</h1>
+          <p className="text-sm sm:text-base text-gray-600">Configure daily schedules, class levels, and weekly timetables</p>
         </div>
-        <Button onClick={() => setShowAddClass(true)}>
-          <ApperIcon name="Plus" size={18} className="mr-2" />
+        <Button onClick={() => setShowAddClass(true)} className="w-full sm:w-auto">
+          <ApperIcon name="Plus" size={16} className="mr-2" />
           Add Class
         </Button>
       </div>
-
 {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="flex space-x-4 sm:space-x-8 min-w-max px-4 sm:px-0">
           <button
             onClick={() => setActiveTab("daily")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === "daily"
                 ? "border-primary-500 text-primary-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
-          >
-            <ApperIcon name="Clock" size={20} className="inline mr-2" />
-            Daily Schedule
+>
+            <ApperIcon name="Clock" size={16} className="inline mr-2" />
+            <span className="hidden sm:inline">Daily Schedule</span>
+            <span className="sm:hidden">Daily</span>
           </button>
           <button
             onClick={() => setActiveTab("weekly")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === "weekly"
                 ? "border-primary-500 text-primary-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
-          >
-            <ApperIcon name="Calendar" size={20} className="inline mr-2" />
-            Weekly Schedule
+>
+            <ApperIcon name="Calendar" size={16} className="inline mr-2" />
+            <span className="hidden sm:inline">Weekly Schedule</span>
+            <span className="sm:hidden">Weekly</span>
           </button>
           <button
             onClick={() => setActiveTab("levels")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === "levels"
                 ? "border-primary-500 text-primary-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
-          >
-            <ApperIcon name="GraduationCap" size={20} className="inline mr-2" />
-            Class Levels
+>
+            <ApperIcon name="GraduationCap" size={16} className="inline mr-2" />
+            <span className="hidden sm:inline">Class Levels</span>
+            <span className="sm:hidden">Levels</span>
           </button>
         </nav>
       </div>
@@ -650,7 +652,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                   </p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <FormField label="Default Start Time">
                     <Input
                       type="time"
@@ -667,7 +669,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                       className="bg-white"
                     />
                   </FormField>
-                  <FormField label="Class Period Duration (minutes)">
+                  <FormField label="Class Period Duration (minutes)" className="sm:col-span-2 lg:col-span-1">
                     <Select
                       value={schedulePreferences?.classPeriodMinutes || 45}
                       onChange={(e) => handleDefaultWorkingHoursChange("classPeriodMinutes", parseInt(e.target.value))}
@@ -725,16 +727,16 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                       </label>
                     </div>
                     
-                    {daySchedule.enabled && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+{daySchedule.enabled && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField label={
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
                             <span>Start Time</span>
                             {isUsingDefaultStart && (
                               <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
                             )}
                           </div>
-}>
+                        }>
                           <Input
                             type="time"
                             value={effectiveStartTime}
@@ -743,13 +745,13 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                           />
                         </FormField>
                         <FormField label={
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
                             <span>End Time</span>
                             {isUsingDefaultEnd && (
                               <span className="text-xs text-blue-600">(Default: {defaultEnd})</span>
                             )}
                           </div>
-}>
+                        }>
                           <Input
                             type="time"
                             value={effectiveEndTime}
@@ -1298,7 +1300,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                   Manage the available class levels for your school. These levels will appear when creating classes and schedules.
                 </p>
                 
-                {classLevels.length === 0 ? (
+{classLevels.length === 0 ? (
                   <Empty
                     title="No class levels configured"
                     description="Add class levels to organize your school structure"
@@ -1307,12 +1309,12 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                     onAction={() => setShowAddClassLevel(true)}
                   />
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {classLevels.map(level => (
                       <div key={level.Id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold">{level.name}</h3>
-                          <div className="flex gap-2">
+                          <h3 className="font-semibold text-sm sm:text-base">{level.name}</h3>
+                          <div className="flex gap-1 sm:gap-2">
                             <Button
                               variant="outline"
                               size="sm"
@@ -1320,23 +1322,26 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                                 setEditingClassLevel(level);
                                 setNewClassLevel({ name: level.name, description: level.description });
                               }}
+                              className="p-2"
                             >
-                              <ApperIcon name="Edit" size={16} />
+                              <ApperIcon name="Edit" size={14} />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleDeleteClassLevel(level.Id)}
+                              className="p-2"
                             >
-                              <ApperIcon name="Trash" size={16} />
+                              <ApperIcon name="Trash" size={14} />
                             </Button>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600">{level.description}</p>
+                        <p className="text-xs sm:text-sm text-gray-600">{level.description}</p>
                       </div>
                     ))}
                   </div>
                 )}
+              </div>
               </div>
             </CardContent>
 </Card>
@@ -1345,8 +1350,8 @@ const handleDefaultWorkingHoursChange = (field, value) => {
 
 {/* Add/Edit Class Modal */}
       {(showAddClass || editingClass) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+<div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>{editingClass ? "Edit Class" : "Add New Class"}</CardTitle>
             </CardHeader>
@@ -1406,8 +1411,8 @@ const handleDefaultWorkingHoursChange = (field, value) => {
 
       {/* Add/Edit Class Level Modal */}
       {(showAddClassLevel || editingClassLevel) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+<div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle>{editingClassLevel ? "Edit Class Level" : "Add New Class Level"}</CardTitle>
             </CardHeader>

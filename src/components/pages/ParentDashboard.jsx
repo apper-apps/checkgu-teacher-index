@@ -123,27 +123,26 @@ if (loading) return <Loading />;
   const weeklySchedule = getWeeklySchedule();
 
 return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             {token ? "Secure Parent Access" : "Parent Dashboard"}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             {token 
               ? `Viewing ${childData.name}'s academic progress and attendance`
               : "Monitor your child's academic progress and attendance"
             }
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ApperIcon name="Calendar" size={20} className="text-primary-600" />
-          <span className="text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
+          <ApperIcon name="Calendar" size={16} className="text-primary-600" />
+          <span className="text-gray-600">
             {new Date().toLocaleDateString("en-US", { 
-              weekday: "long", 
-              year: "numeric", 
-              month: "long", 
+              weekday: "short", 
+              month: "short", 
               day: "numeric" 
             })}
           </span>
@@ -158,24 +157,24 @@ return (
             Student Information
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Name</p>
-              <p className="text-lg font-semibold text-gray-900">{childData.name}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Name</p>
+              <p className="text-base sm:text-lg font-semibold text-gray-900">{childData.name}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Student ID</p>
-              <p className="text-lg font-semibold text-gray-900">{childData.studentId}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Student ID</p>
+              <p className="text-base sm:text-lg font-semibold text-gray-900">{childData.studentId}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Class</p>
-              <p className="text-lg font-semibold text-gray-900">{childData.className}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Class</p>
+              <p className="text-base sm:text-lg font-semibold text-gray-900">{childData.className}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Overall Grade</p>
+              <p className="text-xs sm:text-sm text-gray-600">Overall Grade</p>
               <div className="flex items-center gap-2">
-                <Badge variant={gradeBadge.variant}>{gradeBadge.text}</Badge>
+                <Badge variant={gradeBadge.variant} className="text-sm">{gradeBadge.text}</Badge>
               </div>
             </div>
           </div>
@@ -255,17 +254,17 @@ return (
             Weekly Schedule Overview
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+<CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {weeklySchedule.map((dayInfo, index) => (
-              <div key={index} className="bg-gray-50 p-4 rounded-lg">
+              <div key={index} className="bg-gray-50 p-3 sm:p-4 rounded-lg">
                 <div className="text-center">
-                  <h3 className="font-semibold text-gray-900 mb-2">{dayInfo.day}</h3>
-                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-lg font-bold text-primary-600">{dayInfo.classes}</span>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">{dayInfo.day}</h3>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="text-base sm:text-lg font-bold text-primary-600">{dayInfo.classes}</span>
                   </div>
                   <p className="text-xs text-gray-600">{dayInfo.classes} classes</p>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">{dayInfo.subjects}</p>
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2 hidden sm:block">{dayInfo.subjects}</p>
                 </div>
               </div>
             ))}

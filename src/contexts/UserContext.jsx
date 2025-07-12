@@ -11,7 +11,6 @@ export const useUser = () => {
   }
   return context;
 };
-
 export const UserProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState({
     name: "Ms. Johnson",
@@ -20,14 +19,18 @@ export const UserProvider = ({ children }) => {
     role: "Teacher",
     department: "Elementary"
   });
+  const [schoolProfile, setSchoolProfile] = useState({
+    name: "Greenwood Elementary School",
+    type: "Public Elementary",
+    logoPreview: null
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Load user profile on provider mount
+// Load user and school profiles on provider mount
   useEffect(() => {
     loadUserProfile();
+    loadSchoolProfile();
   }, []);
-
   const loadUserProfile = async () => {
     try {
       setLoading(true);
@@ -52,23 +55,48 @@ export const UserProvider = ({ children }) => {
       toast.error(err.message || "Failed to update profile");
       throw err;
     }
+};
+
+  const loadSchoolProfile = async () => {
+    try {
+      const profile = await settingsService.getSchoolProfile();
+      setSchoolProfile(profile);
+    } catch (err) {
+      console.error('Failed to load school profile:', err);
+    }
+  };
+
+  const updateSchoolProfile = async (profileData) => {
+    try {
+      const updatedProfile = await settingsService.updateSchoolProfile(profileData);
+      setSchoolProfile(updatedProfile);
+      toast.success("School profile updated successfully!");
+      return updatedProfile;
+    } catch (err) {
+      toast.error(err.message || "Failed to update school profile");
+      throw err;
+    }
   };
 
   const refreshProfile = () => {
     loadUserProfile();
+    loadSchoolProfile();
   };
 
-  const value = {
+const value = {
     userProfile,
+    schoolProfile,
     loading,
     error,
     updateUserProfile,
+    updateSchoolProfile,
     refreshProfile,
     // Helper getters for common display needs
     displayName: userProfile.name,
     firstName: userProfile.name.split(' ')[0],
     initials: userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase(),
-    roleDisplay: `${userProfile.role} - ${userProfile.department}`
+    roleDisplay: `${userProfile.role} - ${userProfile.department}`,
+    schoolDisplayName: schoolProfile.name
   };
 
   return (

@@ -392,18 +392,19 @@ const renderMonthView = () => {
   if (loading) return <Loading />;
   if (error) return <Error message={error} onRetry={loadCalendarData} />;
 
-  return (
-<div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
-          <p className="text-gray-600">View your teaching schedule and lesson plans</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Calendar</h1>
+          <p className="text-sm sm:text-base text-gray-600">View your teaching schedule and lesson plans</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             variant={viewMode === "month" ? "primary" : "outline"}
             size="sm"
             onClick={() => setViewMode("month")}
+            className="flex-1 sm:flex-none"
           >
             Month
           </Button>
@@ -411,6 +412,7 @@ const renderMonthView = () => {
             variant={viewMode === "week" ? "primary" : "outline"}
             size="sm"
             onClick={() => setViewMode("week")}
+            className="flex-1 sm:flex-none"
           >
             Week
           </Button>
@@ -455,15 +457,15 @@ const renderMonthView = () => {
         </CardContent>
       </Card>
 
-      {/* Holiday Management */}
+{/* Holiday Management */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">
-              <ApperIcon name="Calendar" size={24} className="text-primary-600" />
+              <ApperIcon name="Calendar" size={20} sm:size={24} className="text-primary-600" />
               Holiday Management
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -533,7 +535,7 @@ const renderMonthView = () => {
               <p>No holidays found. Add holidays or import from CSV.</p>
             </div>
           ) : (
-            <div className={holidayViewMode === "card" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : ""}>
+<div className={holidayViewMode === "card" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : ""}>
               {holidayViewMode === "card" 
                 ? holidays.map(renderHolidayCard)
                 : renderHolidayList()

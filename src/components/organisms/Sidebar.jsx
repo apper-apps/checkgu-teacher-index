@@ -51,7 +51,7 @@ const navigationItems = [
   );
 
   // Mobile Sidebar
-  const MobileSidebar = () => (
+const MobileSidebar = () => (
     <>
       {/* Overlay */}
       {isOpen && (
@@ -65,8 +65,8 @@ const navigationItems = [
       <motion.div
         initial={{ x: "-100%" }}
         animate={{ x: isOpen ? 0 : "-100%" }}
-        transition={{ type: "tween", duration: 0.3 }}
-        className="fixed left-0 top-0 w-64 bg-white h-full z-50 lg:hidden shadow-xl"
+        transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+        className="fixed left-0 top-0 w-72 sm:w-80 bg-white h-full z-50 lg:hidden shadow-2xl"
       >
         <div className="p-6">
 <div className="flex items-center justify-between mb-8">
@@ -87,9 +87,10 @@ const navigationItems = [
                 <p className="text-xs text-gray-500">Teacher Platform</p>
               </div>
             </div>
-            <button
+<button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Close sidebar"
             >
               <ApperIcon name="X" size={20} />
             </button>

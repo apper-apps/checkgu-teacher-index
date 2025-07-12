@@ -102,19 +102,18 @@ const LessonPlans = () => {
   if (loading) return <Loading />;
   if (error) return <Error message={error} onRetry={loadData} />;
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lesson Plans</h1>
-          <p className="text-gray-600">Create and manage your lesson plans</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Lesson Plans</h1>
+          <p className="text-sm sm:text-base text-gray-600">Create and manage your lesson plans</p>
         </div>
-        <Button onClick={handleCreateLesson}>
-          <ApperIcon name="Plus" size={18} className="mr-2" />
+        <Button onClick={handleCreateLesson} className="w-full sm:w-auto">
+          <ApperIcon name="Plus" size={16} className="mr-2" />
           Create Lesson Plan
         </Button>
       </div>
-
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -177,11 +176,12 @@ const LessonPlans = () => {
             Filter Lesson Plans
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+<CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <SearchBar
               placeholder="Search lesson plans..."
               onSearch={setSearchTerm}
+              className="sm:col-span-2 lg:col-span-1"
             />
             <Select
               value={selectedSubject}
@@ -219,13 +219,13 @@ const LessonPlans = () => {
           onAction={handleCreateLesson}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredLessonPlans.map(lesson => (
             <Card key={lesson.Id} className="hover:shadow-md transition-shadow duration-200">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">{lesson.subject}</h3>
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{lesson.subject}</h3>
                     <p className="text-sm text-gray-600">{lesson.className}</p>
                   </div>
                   <div className="flex gap-2">

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import { UserProvider } from "@/contexts/UserContext";
 import Layout from "@/components/organisms/Layout";
 import Dashboard from "@/components/pages/Dashboard";
 import ParentDashboard from "@/components/pages/ParentDashboard";
@@ -8,12 +9,12 @@ import Schedule from "@/components/pages/Schedule";
 import Students from "@/components/pages/Students";
 import LessonPlans from "@/components/pages/LessonPlans";
 import Settings from "@/components/pages/Settings";
-
 function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-background">
-<Routes>
+    <UserProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-background">
+          <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="parent-dashboard" element={<ParentDashboard />} />
@@ -37,9 +38,10 @@ function App() {
           pauseOnHover
           theme="colored"
           style={{ zIndex: 9999 }}
-        />
-      </div>
-    </BrowserRouter>
+/>
+        </div>
+      </BrowserRouter>
+    </UserProvider>
   );
 }
 
