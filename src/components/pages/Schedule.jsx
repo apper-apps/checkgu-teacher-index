@@ -1339,9 +1339,8 @@ return (
                         <p className="text-xs sm:text-sm text-gray-600">{level.description}</p>
                       </div>
                     ))}
-                  </div>
+</div>
                 )}
-              </div>
               </div>
             </CardContent>
 </Card>
