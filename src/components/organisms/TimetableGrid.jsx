@@ -7,10 +7,11 @@ import Button from "@/components/atoms/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
 import Input from "@/components/atoms/Input";
 import TimeSlot from "@/components/molecules/TimeSlot";
+import schedulesData from "@/services/mockData/schedules.json";
+import classesData from "@/services/mockData/classes.json";
+import lessonPlansData from "@/services/mockData/lessonPlans.json";
+import studentsData from "@/services/mockData/students.json";
 import { settingsService } from "@/services/api/settingsService";
-import { scheduleService } from "@/services/api/scheduleService";
-import { lessonPlanService } from "@/services/api/lessonPlanService";
-import { studentService } from "@/services/api/studentService";
 
 const TimetableGrid = ({ schedules = [], onSlotClick }) => {
   const [selectedDay, setSelectedDay] = useState(0);

@@ -212,51 +212,22 @@ const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Load data with individual error handling for each service
-      const promises = [
-        classService.getAll().catch(err => {
-          console.error('Failed to load classes:', err);
-          return [];
-        }),
-        scheduleService.getAll().catch(err => {
-          console.error('Failed to load schedules:', err);
-          return [];
-        }),
-        settingsService.getSchedulePreferences?.().catch(err => {
-          console.error('Failed to load schedule preferences:', err);
-          return { defaultWorkingHours: { start: "08:00", end: "16:00" }, classPeriodMinutes: 45 };
-        }) || Promise.resolve({ defaultWorkingHours: { start: "08:00", end: "16:00" }, classPeriodMinutes: 45 }),
-        settingsService.getDailySchedule?.().catch(err => {
-          console.error('Failed to load daily schedule:', err);
-          return {};
-        }) || Promise.resolve({}),
-        settingsService.getClassLevels?.().catch(err => {
-          console.error('Failed to load class levels:', err);
-          return [];
-        }) || Promise.resolve([]),
-        settingsService.getAcademicCalendar?.().catch(err => {
-          console.error('Failed to load academic calendar:', err);
-return null;
-        }) || Promise.resolve(null)
-      ];
-      
-      const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData, academicCalendarData] = await Promise.all(promises);
-      
-      setClasses(Array.isArray(classesData) ? classesData : []);
-      setSchedules(Array.isArray(schedulesData) ? schedulesData : []);
-      setSchedulePreferences(preferencesData || { 
-        defaultWorkingHours: { start: "08:00", end: "16:00" }, 
-        classPeriodMinutes: 45,
-        dailySchedules: {},
-        gradeLevels: []
-      });
-      setDailySchedule(dailyScheduleData || {});
-      setClassLevels(Array.isArray(classLevelsData) ? classLevelsData : []);
+      const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData, academicCalendarData] = await Promise.all([
+        classService.getAll(),
+        scheduleService.getAll(),
+        settingsService.getSchedulePreferences(),
+        settingsService.getDailySchedule(),
+        settingsService.getClassLevels(),
+        settingsService.getAcademicCalendar()
+      ]);
+      setClasses(classesData);
+      setSchedules(schedulesData);
+      setSchedulePreferences(preferencesData);
+      setDailySchedule(dailyScheduleData);
+      setClassLevels(classLevelsData);
       setAcademicCalendar(academicCalendarData);
     } catch (err) {
-      console.error('Error loading data:', err);
-      setError('Failed to load schedule data');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -275,9 +246,26 @@ return null;
       if (start <= end) {
         slots.push(`${slotStart} - ${slotEnd}`);
       }
-}
+    }
     return slots;
   };
+
+const getTimeSlotsForDay = (dayIndex) => {
+    const dayName = days[dayIndex];
+    const daySchedule = dailySchedule[dayName];
+    
+    // If day is explicitly disabled, return empty slots
+    if (daySchedule && !daySchedule.enabled) {
+      return [];
+    }
+    
+    // Use day-specific schedule if available, otherwise use individual day defaults
+    const startTime = daySchedule?.startTime || schedulePreferences?.defaultWorkingHours?.start || "08:00";
+    const endTime = daySchedule?.endTime || schedulePreferences?.defaultWorkingHours?.end || "16:00";
+    
+    return generateTimeSlots(startTime, endTime, schedulePreferences?.classPeriodMinutes || 45);
+  };
+
 const handleCreateClass = async (e) => {
     e.preventDefault();
     try {
@@ -341,6 +329,7 @@ const handleCreateClass = async (e) => {
       toast.error("Failed to update schedule");
     }
   };
+
 const handleDailyScheduleChange = (day, field, value) => {
     const updatedSchedule = {
       ...dailySchedule,
@@ -349,54 +338,64 @@ const handleDailyScheduleChange = (day, field, value) => {
         [field]: value
       }
     };
+    
     setDailySchedule(updatedSchedule);
     setHasUnsavedChanges(true);
   };
 
-  const handleDefaultWorkingHoursChange = (field, value) => {
+const handleDefaultWorkingHoursChange = (field, value) => {
     const updatedPreferences = {
       ...schedulePreferences,
       defaultWorkingHours: {
-        ...schedulePreferences?.defaultWorkingHours,
+        ...schedulePreferences.defaultWorkingHours,
         [field]: value
       }
     };
+    
+    // Handle classPeriodMinutes separately since it's not nested
+    if (field === "classPeriodMinutes") {
+      updatedPreferences.classPeriodMinutes = value;
+      delete updatedPreferences.defaultWorkingHours.classPeriodMinutes;
+    }
+    
     setSchedulePreferences(updatedPreferences);
-    setHasUnsavedChanges(true);
-  };
-
-  const getTimeSlotsForDay = (dayIndex) => {
-    const daysArray = getDaysArray() || [];
-    const dayName = daysArray[dayIndex];
-    if (!dayName) return [];
     
-    const daySchedule = schedulePreferences?.dailySchedules?.[dayName] || {};
-    const startTime = daySchedule.startTime || schedulePreferences?.defaultWorkingHours?.start || "08:00";
-    const endTime = daySchedule.endTime || schedulePreferences?.defaultWorkingHours?.end || "16:00";
-    const duration = schedulePreferences?.classPeriodMinutes || 45;
-    
-    return generateTimeSlots(startTime, endTime, duration);
-  };
-const getAllTimeSlots = () => {
-    const allSlots = [];
-    
-    (getDaysArray() || []).forEach((day, dayIndex) => {
-      const dayTimeSlots = getTimeSlotsForDay(dayIndex) || [];
-      dayTimeSlots.forEach(slot => {
-        if (slot && !allSlots.some(existingSlot => 
-          existingSlot === slot
-        )) {
-          allSlots.push(slot);
+    // Auto-update daily schedules that are using default values
+    if (field === "start" || field === "end") {
+      const currentDefaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
+      const currentDefaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
+      
+      const updatedDailySchedule = { ...dailySchedule };
+      
+      days.forEach(day => {
+        const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
+        
+        // Check if this day is currently using the default value for the field being changed
+        const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === currentDefaultStart;
+        const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === currentDefaultEnd;
+        
+        let shouldUpdate = false;
+        const updatedDaySchedule = { ...daySchedule };
+        
+        if (field === "start" && isUsingDefaultStart) {
+          updatedDaySchedule.startTime = value;
+          shouldUpdate = true;
+        }
+        
+        if (field === "end" && isUsingDefaultEnd) {
+          updatedDaySchedule.endTime = value;
+          shouldUpdate = true;
+        }
+        
+        if (shouldUpdate) {
+          updatedDailySchedule[day] = updatedDaySchedule;
         }
       });
-    });
+      
+      setDailySchedule(updatedDailySchedule);
+    }
     
-    // Sort slots by start time
-    return allSlots.sort((a, b) => {
-      const timeA = new Date(`1970/01/01 ${a.split(' - ')[0]}`);
-      const timeB = new Date(`1970/01/01 ${b.split(' - ')[0]}`);
-      return timeA - timeB;
-    });
+    setHasUnsavedChanges(true);
   };
   
   const handleSaveAllChanges = async () => {
@@ -423,13 +422,9 @@ const getAllTimeSlots = () => {
     }
   };
 
-const handleCreateClassLevel = async (e) => {
+  const handleCreateClassLevel = async (e) => {
     e.preventDefault();
     try {
-      if (!settingsService.updateClassLevels) {
-        throw new Error("Class level management not available");
-      }
-      
       const updatedLevels = [...classLevels, { 
         Id: Math.max(...classLevels.map(c => c.Id), 0) + 1, 
         ...newClassLevel 
@@ -440,18 +435,13 @@ const handleCreateClassLevel = async (e) => {
       setShowAddClassLevel(false);
       toast.success("Class level added successfully!");
     } catch (err) {
-      console.error('Error creating class level:', err);
-      toast.error(err.message || "Failed to add class level");
+      toast.error("Failed to add class level");
     }
   };
 
-const handleEditClassLevel = async (e) => {
+  const handleEditClassLevel = async (e) => {
     e.preventDefault();
     try {
-      if (!settingsService.updateClassLevels) {
-        throw new Error("Class level management not available");
-      }
-      
       const updatedLevels = classLevels.map(level => 
         level.Id === editingClassLevel.Id ? { ...level, ...newClassLevel } : level
       );
@@ -461,28 +451,22 @@ const handleEditClassLevel = async (e) => {
       setNewClassLevel({ name: "", description: "" });
       toast.success("Class level updated successfully!");
     } catch (err) {
-      console.error('Error updating class level:', err);
-      toast.error(err.message || "Failed to update class level");
+      toast.error("Failed to update class level");
     }
   };
 
-const handleDeleteClassLevel = async (levelId) => {
+  const handleDeleteClassLevel = async (levelId) => {
     if (confirm("Are you sure you want to delete this class level?")) {
       try {
-        if (!settingsService.updateClassLevels) {
-          throw new Error("Class level management not available");
-        }
-        
         const updatedLevels = classLevels.filter(level => level.Id !== levelId);
         await settingsService.updateClassLevels(updatedLevels);
         setClassLevels(updatedLevels);
         toast.success("Class level deleted successfully!");
       } catch (err) {
-        console.error('Error deleting class level:', err);
-        toast.error(err.message || "Failed to delete class level");
+        toast.error("Failed to delete class level");
       }
     }
-  };
+};
 
   const resetGradeLevelsToDefaults = async () => {
     if (confirm("Are you sure you want to reset all grade levels to default values? This will replace all current grade level names.")) {
@@ -630,10 +614,10 @@ const handleDeleteClassLevel = async (levelId) => {
                                   </span>
                                 ))}
                               </div>
-</td>
+                            </td>
                             <td className="py-2">{classSchedules.length}</td>
                           </tr>
-                        );
+);
                       })}
                     </tbody>
                   </table>
@@ -769,9 +753,9 @@ const handleDeleteClassLevel = async (levelId) => {
                     ) : (
                       <>
                         <ApperIcon name="Save" size={16} />
-Save Changes
+                        Save Changes
                       </>
-                    )}
+)}
                   </Button>
                 </div>
               )}
@@ -798,7 +782,7 @@ Save Changes
                       className="bg-white"
                     />
                   </FormField>
-<FormField label="Default End Time">
+                  <FormField label="Default End Time">
                     <Input
                       type="time"
                       value={schedulePreferences?.defaultWorkingHours?.end || "16:00"}
@@ -807,105 +791,106 @@ Save Changes
                     />
                   </FormField>
                   <FormField label="Class Period Duration (minutes)">
-                    <Input
-                      type="number"
+                    <Select
                       value={schedulePreferences?.classPeriodMinutes || 45}
-                      onChange={(e) => {
-                        const updatedPreferences = {
-                          ...schedulePreferences,
-                          classPeriodMinutes: parseInt(e.target.value)
-                        };
-                        setSchedulePreferences(updatedPreferences);
-                        setHasUnsavedChanges(true);
-                      }}
-                      min="15"
-                      max="120"
+                      onChange={(e) => handleDefaultWorkingHoursChange("classPeriodMinutes", parseInt(e.target.value))}
                       className="bg-white"
-                    />
+                    >
+                      <option value={30}>30 minutes</option>
+                      <option value={45}>45 minutes</option>
+                      <option value={60}>60 minutes</option>
+                    </Select>
                   </FormField>
                 </div>
               </div>
-
-              {/* Individual Day Configurations */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <ApperIcon name="Calendar" size={20} />
-                  Individual Day Configuration
-                </h4>
-                <div className="text-sm text-gray-600 mb-4">
-                  <p>
-                    Override default hours for specific days. Leave empty to use default values.
-                  </p>
-                </div>
-                
-                {days.map(day => {
-                  const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
-                  const defaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
-                  const defaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
-                  const effectiveStartTime = daySchedule.startTime || defaultStart;
-                  const effectiveEndTime = daySchedule.endTime || defaultEnd;
-                  const isUsingDefaultStart = !daySchedule.startTime;
-                  const isUsingDefaultEnd = !daySchedule.endTime;
-
-                  return (
-                    <div key={day} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h5 className="font-medium text-gray-900">{day}</h5>
-                        <div className="flex items-center">
-                          <label className="text-sm text-gray-600 mr-2">Enabled</label>
-                          <input
-                            type="checkbox"
-                            checked={daySchedule.enabled !== false}
-                            onChange={(e) => handleDailyScheduleChange(day, "enabled", e.target.checked)}
-                            className="rounded border-gray-300"
-                          />
-                        </div>
-                      </div>
-                      
-                      {daySchedule.enabled !== false && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-<FormField label={
-                            <div className="flex items-center gap-2">
-                              <span>Start Time</span>
-                              {isUsingDefaultStart && (
-                                <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
-                              )}
-                            </div>
-                          }>
-                            <Input
-                              type="time"
-                              value={effectiveStartTime}
-                              onChange={(e) => handleDailyScheduleChange(day, "startTime", e.target.value)}
-                              placeholder={defaultStart}
-                            />
-                          </FormField>
-                          <FormField label={
-                            <div className="flex items-center gap-2">
-                              <span>End Time</span>
-                              {isUsingDefaultEnd && (
-                                <span className="text-xs text-blue-600">(Default: {defaultEnd})</span>
-                              )}
-                            </div>
-                          }>
-                            <Input
-                              type="time"
-                              value={effectiveEndTime}
-                              onChange={(e) => handleDailyScheduleChange(day, "endTime", e.target.value)}
-                              placeholder={defaultEnd}
-                            />
-                          </FormField>
-                        </div>
-                      )}
-                      
-                      {!daySchedule.enabled && (
-                        <div className="text-gray-500 text-sm">
-                          This day is disabled for classes
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              
+              <div className="border-t pt-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Daily Schedule Overrides</h4>
+                <p className="text-gray-600 mb-4">
+                  Configure specific working hours for individual days. Leave empty to use the default hours above.
+                </p>
               </div>
+              
+{days.map(day => {
+                const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
+                const defaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
+                const defaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
+                // Check if this day is using default values
+                const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === defaultStart;
+                const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === defaultEnd;
+                const effectiveStartTime = daySchedule.startTime || defaultStart;
+                const effectiveEndTime = daySchedule.endTime || defaultEnd;
+                
+                return (
+                  <div key={day} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-semibold text-lg">{day}</h3>
+                        {(isUsingDefaultStart && isUsingDefaultEnd) && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            Using Default Hours
+                          </span>
+                        )}
+                        {(!isUsingDefaultStart || !isUsingDefaultEnd) && (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">
+                            Custom Schedule
+                          </span>
+                        )}
+                      </div>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={daySchedule.enabled}
+                          onChange={(e) => handleDailyScheduleChange(day, "enabled", e.target.checked)}
+                          className="rounded"
+                        />
+                        <span className="text-sm">Active</span>
+                      </label>
+                    </div>
+                    
+                    {daySchedule.enabled && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField label={
+                          <div className="flex items-center gap-2">
+                            <span>Start Time</span>
+                            {isUsingDefaultStart && (
+                              <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
+                            )}
+                          </div>
+}>
+                          <Input
+                            type="time"
+                            value={effectiveStartTime}
+                            onChange={(e) => handleDailyScheduleChange(day, "startTime", e.target.value)}
+                            placeholder={defaultStart}
+                          />
+                        </FormField>
+                        <FormField label={
+                          <div className="flex items-center gap-2">
+                            <span>End Time</span>
+                            {isUsingDefaultEnd && (
+                              <span className="text-xs text-blue-600">(Default: {defaultEnd})</span>
+                            )}
+                          </div>
+}>
+                          <Input
+                            type="time"
+                            value={effectiveEndTime}
+                            onChange={(e) => handleDailyScheduleChange(day, "endTime", e.target.value)}
+                            placeholder={defaultEnd}
+                          />
+                        </FormField>
+                      </div>
+                    )}
+                    
+                    {!daySchedule.enabled && (
+                      <div className="text-gray-500 text-sm">
+                        This day is disabled for classes
+                      </div>
+                    )}
+                  </div>
+                );
+})}
               
               {hasUnsavedChanges && (
                 <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -936,17 +921,16 @@ Save Changes
                         </>
                       )}
                     </Button>
+                  </div>
 </div>
-                </div>
               )}
             </CardContent>
           </Card>
         )}
-
       {/* Class Levels Management Tab */}
-{activeTab === "levels" && (
+      {activeTab === "levels" && (
         <div className="space-y-6">
-          {/* Grade Level Configuration */}
+{/* Grade Level Configuration */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -1105,9 +1089,9 @@ Save Changes
                     ))}
                   </div>
                 )}
-</div>
+              </div>
             </CardContent>
-          </Card>
+</Card>
         </div>
       )}
 
@@ -1126,9 +1110,9 @@ Save Changes
                     onChange={(e) => setNewClass({...newClass, name: e.target.value})}
                     placeholder="e.g., 4A"
                     required
-/>
+                  />
                 </FormField>
-                <FormField label="Grade Level">
+<FormField label="Grade Level">
                   <Select
                     value={newClass.gradeLevel}
                     onChange={(e) => setNewClass({...newClass, gradeLevel: e.target.value})}
