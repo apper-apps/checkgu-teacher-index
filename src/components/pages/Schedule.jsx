@@ -922,14 +922,14 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                       )}
                     </Button>
                   </div>
-                </div>
+</div>
               )}
             </CardContent>
           </Card>
-        </Card>
+        </div>
       )}
+      
       {/* Class Levels Management Tab */}
-{/* Class Levels Management Tab */}
       {activeTab === "levels" && (
         <div className="space-y-6">
 {/* Grade Level Configuration */}
