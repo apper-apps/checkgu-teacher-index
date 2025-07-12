@@ -47,12 +47,36 @@ export const scheduleService = {
     }
 schedules.splice(index, 1);
     return true;
-  },
+},
 
   async getByWeek(weekStart) {
     await delay(300);
     // For now, return all schedules as we don't have date-specific data
     // In a real app, you would filter by the actual week dates
     return [...schedules];
+  },
+
+  async createSubjectSchedules(classId, className, subjectSchedules) {
+    await delay(400);
+    const newSchedules = [];
+    
+    for (const subjectSchedule of subjectSchedules) {
+      for (const dayIndex of subjectSchedule.days) {
+        for (const timeSlot of subjectSchedule.timeSlots) {
+          const newSchedule = {
+            Id: Math.max(...schedules.map(s => s.Id), 0) + 1,
+            classId: parseInt(classId),
+            className: className,
+            dayOfWeek: dayIndex,
+            timeSlot: timeSlot,
+            subject: subjectSchedule.subject
+          };
+          schedules.push(newSchedule);
+          newSchedules.push({ ...newSchedule });
+        }
+      }
+    }
+    
+    return newSchedules;
   }
 };

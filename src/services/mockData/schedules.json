@@ -111,7 +111,7 @@
     "timeSlot": "09:00 - 09:45",
     "subject": "Mathematics"
   },
-  {
+{
     "Id": 15,
     "classId": 1,
     "className": "4A",
@@ -126,5 +126,29 @@
     "dayOfWeek": 4,
     "timeSlot": "09:00 - 09:45",
     "subject": "History"
+  },
+  {
+    "Id": 17,
+    "classId": 2,
+    "className": "4B",
+    "dayOfWeek": 2,
+    "timeSlot": "08:00 - 08:45",
+    "subject": "Mathematics"
+  },
+  {
+    "Id": 18,
+    "classId": 2,
+    "className": "4B",
+    "dayOfWeek": 3,
+    "timeSlot": "09:00 - 09:45",
+    "subject": "English"
+  },
+  {
+    "Id": 19,
+    "classId": 2,
+    "className": "4B",
+    "dayOfWeek": 4,
+    "timeSlot": "10:00 - 10:45",
+    "subject": "Science"
   }
 ]

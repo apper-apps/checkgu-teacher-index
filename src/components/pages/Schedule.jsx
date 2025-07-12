@@ -13,6 +13,153 @@ import { scheduleService } from "@/services/api/scheduleService";
 import { settingsService } from "@/services/api/settingsService";
 import { classService } from "@/services/api/classService";
 
+// Subject Schedule Manager Component
+const SubjectScheduleManager = ({ subjectSchedules, onChange, availableSubjects, days, timeSlots }) => {
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
+
+  const handleAddSchedule = () => {
+    if (!selectedSubject || selectedDays.length === 0 || selectedTimeSlots.length === 0) {
+      return;
+    }
+
+    const newSchedule = {
+      id: Date.now(),
+      subject: selectedSubject,
+      days: selectedDays,
+      timeSlots: selectedTimeSlots
+    };
+
+    onChange([...subjectSchedules, newSchedule]);
+    setSelectedSubject("");
+    setSelectedDays([]);
+    setSelectedTimeSlots([]);
+  };
+
+  const handleRemoveSchedule = (scheduleId) => {
+    onChange(subjectSchedules.filter(s => s.id !== scheduleId));
+  };
+
+  const toggleDay = (dayIndex) => {
+    setSelectedDays(prev => 
+      prev.includes(dayIndex) 
+        ? prev.filter(d => d !== dayIndex)
+        : [...prev, dayIndex]
+    );
+  };
+
+  const toggleTimeSlot = (timeSlot) => {
+    setSelectedTimeSlots(prev => 
+      prev.includes(timeSlot) 
+        ? prev.filter(t => t !== timeSlot)
+        : [...prev, timeSlot]
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Add New Subject Schedule */}
+      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <h4 className="font-medium mb-3">Add Subject Teaching Schedule</h4>
+        
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">Subject</label>
+            <Select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="w-full"
+            >
+              <option value="">Select a subject</option>
+              {availableSubjects.map(subject => (
+                <option key={subject} value={subject}>{subject}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Teaching Days</label>
+            <div className="flex flex-wrap gap-2">
+              {days.map((day, index) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => toggleDay(index)}
+                  className={`px-3 py-1 text-sm rounded border ${
+                    selectedDays.includes(index)
+                      ? 'bg-primary-500 text-white border-primary-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Time Slots</label>
+            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+              {timeSlots.map(timeSlot => (
+                <button
+                  key={timeSlot}
+                  type="button"
+                  onClick={() => toggleTimeSlot(timeSlot)}
+                  className={`px-2 py-1 text-xs rounded border text-left ${
+                    selectedTimeSlots.includes(timeSlot)
+                      ? 'bg-primary-500 text-white border-primary-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {timeSlot}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            onClick={handleAddSchedule}
+            disabled={!selectedSubject || selectedDays.length === 0 || selectedTimeSlots.length === 0}
+            className="w-full"
+          >
+            <ApperIcon name="Plus" size={16} className="mr-2" />
+            Add Subject Schedule
+          </Button>
+        </div>
+      </div>
+
+      {/* Current Subject Schedules */}
+      {subjectSchedules.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="font-medium">Registered Subject Schedules</h4>
+          {subjectSchedules.map(schedule => (
+            <div key={schedule.id} className="border border-gray-200 rounded-lg p-3 bg-white">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="font-medium text-primary-700">{schedule.subject}</div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <div>Days: {schedule.days.map(d => days[d]).join(', ')}</div>
+                    <div>Times: {schedule.timeSlots.length} slots ({schedule.timeSlots.length * schedule.days.length} total periods)</div>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRemoveSchedule(schedule.id)}
+                >
+                  <ApperIcon name="Trash" size={14} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 const Schedule = () => {
   const [classes, setClasses] = useState([]);
   const [schedules, setSchedules] = useState([]);
@@ -27,10 +174,10 @@ const [dailySchedule, setDailySchedule] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingClassLevel, setEditingClassLevel] = useState(null);
-  const [newClass, setNewClass] = useState({
+const [newClass, setNewClass] = useState({
     name: "",
     gradeLevel: "",
-    subjects: []
+    subjectSchedules: []
   });
   const [newClassLevel, setNewClassLevel] = useState({
     name: "",
@@ -119,12 +266,36 @@ const getTimeSlotsForDay = (dayIndex) => {
     return generateTimeSlots(startTime, endTime, schedulePreferences?.classPeriodMinutes || 45);
   };
 
-  const handleCreateClass = async (e) => {
+const handleCreateClass = async (e) => {
     e.preventDefault();
     try {
-      await classService.create(newClass);
-      toast.success("Class created successfully!");
-      setNewClass({ name: "", gradeLevel: "", subjects: [] });
+      // Create class with subject list extracted from schedules
+      const subjects = [...new Set(newClass.subjectSchedules.map(s => s.subject))];
+      const classData = {
+        name: newClass.name,
+        gradeLevel: newClass.gradeLevel,
+        subjects: subjects
+      };
+      
+      const createdClass = await classService.create(classData);
+      
+      // Create individual schedule entries for each subject schedule
+      for (const subjectSchedule of newClass.subjectSchedules) {
+        for (const dayIndex of subjectSchedule.days) {
+          for (const timeSlot of subjectSchedule.timeSlots) {
+            await scheduleService.create({
+              classId: createdClass.Id,
+              className: createdClass.name,
+              dayOfWeek: dayIndex,
+              timeSlot: timeSlot,
+              subject: subjectSchedule.subject
+            });
+          }
+        }
+      }
+      
+      toast.success("Class and subject schedules created successfully!");
+      setNewClass({ name: "", gradeLevel: "", subjectSchedules: [] });
       setShowAddClass(false);
       loadData();
     } catch (err) {
@@ -916,39 +1087,20 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                     value={newClass.gradeLevel}
                     onChange={(e) => setNewClass({...newClass, gradeLevel: e.target.value})}
                     required
-                  >
-                    <option value="">Select Grade</option>
+<option value="">Select Grade</option>
                     {classLevels.map(level => (
                       <option key={level.Id} value={level.name}>{level.name}</option>
                     ))}
                   </Select>
                 </FormField>
-                <FormField label="Subjects">
-                  <div className="grid grid-cols-2 gap-2">
-                    {subjects.map(subject => (
-                      <label key={subject} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={newClass.subjects.includes(subject)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setNewClass({
-                                ...newClass,
-                                subjects: [...newClass.subjects, subject]
-                              });
-                            } else {
-                              setNewClass({
-                                ...newClass,
-                                subjects: newClass.subjects.filter(s => s !== subject)
-                              });
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <span className="text-sm">{subject}</span>
-                      </label>
-                    ))}
-                  </div>
+                <FormField label="Subject Registration">
+                  <SubjectScheduleManager
+                    subjectSchedules={newClass.subjectSchedules}
+                    onChange={(schedules) => setNewClass({...newClass, subjectSchedules: schedules})}
+                    availableSubjects={subjects}
+                    days={days}
+                    timeSlots={getTimeSlotsForDay(0)}
+                  />
                 </FormField>
                 <div className="flex gap-3 pt-4">
                   <Button type="submit" className="flex-1">
@@ -957,7 +1109,10 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setShowAddClass(false)}
+                    onClick={() => {
+                      setShowAddClass(false);
+                      setNewClass({ name: "", gradeLevel: "", subjectSchedules: [] });
+                    }}
                   >
                     Cancel
                   </Button>
