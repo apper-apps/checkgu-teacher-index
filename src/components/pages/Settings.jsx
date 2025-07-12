@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
@@ -11,34 +11,11 @@ import Calendar from "@/components/pages/Calendar";
 import Schedule from "@/components/pages/Schedule";
 import FormField from "@/components/molecules/FormField";
 import { settingsService } from "@/services/api/settingsService";
+import { useUser } from "@/contexts/UserContext";
 
 const Settings = () => {
+  const { userProfile, updateUserProfile, loading: profileLoading } = useUser();
   const [activeTab, setActiveTab] = useState("profile");
-  const [userProfile, setUserProfile] = useState({
-    name: "Ms. Johnson",
-    email: "sarah.johnson@greenwood.edu",
-    phone: "+1 (555) 123-4567",
-    role: "Teacher",
-    department: "Elementary"
-  });
-  const [profileLoading, setProfileLoading] = useState(false);
-
-  // Load user profile on component mount
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      try {
-        setProfileLoading(true);
-        const profile = await settingsService.getUserProfile();
-        setUserProfile(profile);
-      } catch (err) {
-        toast.error("Failed to load user profile");
-      } finally {
-        setProfileLoading(false);
-      }
-    };
-
-    loadUserProfile();
-  }, []);
   const [notificationPreferences, setNotificationPreferences] = useState({
     classReminders: true,
     processingComplete: true,
@@ -112,11 +89,9 @@ const tabs = [
 const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
-      const updatedProfile = await settingsService.updateUserProfile(userProfile);
-      setUserProfile(updatedProfile);
-      toast.success("Profile updated successfully!");
+      await updateUserProfile(userProfile);
     } catch (err) {
-      toast.error(err.message || "Failed to update profile");
+      // Error handling is done in UserContext
     }
   };
 const handleSaveSchool = async (e) => {
@@ -394,19 +369,12 @@ const handleSaveSchedulePreferences = async (e) => {
     }
   };
 
-  const handleResetAllData = async () => {
+const handleResetAllData = async () => {
     if (confirm("Are you sure you want to reset all data? This action cannot be undone.")) {
       try {
         toast.info("Resetting all data...");
         setTimeout(() => {
           // Reset to default values
-          setUserProfile({
-            name: "Ms. Johnson",
-            email: "sarah.johnson@greenwood.edu",
-            phone: "+1 (555) 123-4567",
-            role: "Teacher",
-            department: "Elementary"
-          });
           setNotificationPreferences({
             classReminders: true,
             processingComplete: true,
@@ -426,31 +394,31 @@ const handleSaveSchedulePreferences = async (e) => {
         return (
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Full Name">
+<FormField label="Full Name">
                 <Input
                   value={userProfile.name}
-                  onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
+                  onChange={(e) => updateUserProfile({...userProfile, name: e.target.value})}
                   required
                 />
               </FormField>
-              <FormField label="Email Address">
+<FormField label="Email Address">
                 <Input
                   type="email"
                   value={userProfile.email}
-                  onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
+                  onChange={(e) => updateUserProfile({...userProfile, email: e.target.value})}
                   required
                 />
               </FormField>
-              <FormField label="Phone Number">
+<FormField label="Phone Number">
                 <Input
                   value={userProfile.phone}
-                  onChange={(e) => setUserProfile({...userProfile, phone: e.target.value})}
+                  onChange={(e) => updateUserProfile({...userProfile, phone: e.target.value})}
                 />
               </FormField>
-              <FormField label="Role">
+<FormField label="Role">
                 <Select
                   value={userProfile.role}
-                  onChange={(e) => setUserProfile({...userProfile, role: e.target.value})}
+                  onChange={(e) => updateUserProfile({...userProfile, role: e.target.value})}
                 >
                   <option value="Teacher">Teacher</option>
                   <option value="Head Teacher">Head Teacher</option>
@@ -458,10 +426,10 @@ const handleSaveSchedulePreferences = async (e) => {
                   <option value="Substitute Teacher">Substitute Teacher</option>
                 </Select>
               </FormField>
-              <FormField label="Department">
+<FormField label="Department">
                 <Select
                   value={userProfile.department}
-                  onChange={(e) => setUserProfile({...userProfile, department: e.target.value})}
+                  onChange={(e) => updateUserProfile({...userProfile, department: e.target.value})}
                 >
                   <option value="Elementary">Elementary</option>
                   <option value="Middle School">Middle School</option>
@@ -470,9 +438,9 @@ const handleSaveSchedulePreferences = async (e) => {
                 </Select>
               </FormField>
             </div>
-            <Button type="submit">
+<Button type="submit" disabled={profileLoading}>
               <ApperIcon name="Save" size={16} className="mr-2" />
-              Save Profile
+              {profileLoading ? "Saving..." : "Save Profile"}
             </Button>
           </form>
         );
