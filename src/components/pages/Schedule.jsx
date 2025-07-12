@@ -726,7 +726,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
         </div>
       )}
 
-      {/* Daily Schedule Configuration Tab */}
+{/* Daily Schedule Configuration Tab */}
       {activeTab === "daily" && (
         <Card>
           <CardHeader>
@@ -922,13 +922,12 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                       )}
                     </Button>
                   </div>
-</div>
+                </div>
               )}
             </CardContent>
           </Card>
         </Card>
       )}
-
       {/* Class Levels Management Tab */}
 {/* Class Levels Management Tab */}
       {activeTab === "levels" && (
