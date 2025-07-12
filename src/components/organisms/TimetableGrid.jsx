@@ -1,21 +1,31 @@
-import { useState, useEffect } from "react";
-import { startOfWeek, addDays, format, isToday, addWeeks, subWeeks } from "date-fns";
-import TimeSlot from "@/components/molecules/TimeSlot";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
-import ApperIcon from "@/components/ApperIcon";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import { settingsService } from "@/services/api/settingsService";
+import React, { useEffect, useState } from "react";
+import { addDays, addWeeks, format, isToday, startOfWeek, subWeeks } from "date-fns";
 import { calculateAcademicWeek } from "@/utils/academicWeek";
+import ApperIcon from "@/components/ApperIcon";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
+import Input from "@/components/atoms/Input";
+import TimeSlot from "@/components/molecules/TimeSlot";
+import schedulesData from "@/services/mockData/schedules.json";
+import classesData from "@/services/mockData/classes.json";
+import lessonPlansData from "@/services/mockData/lessonPlans.json";
+import studentsData from "@/services/mockData/students.json";
+import { settingsService } from "@/services/api/settingsService";
 
 const TimetableGrid = ({ schedules = [], onSlotClick }) => {
   const [selectedDay, setSelectedDay] = useState(0);
-const [currentWeek, setCurrentWeek] = useState(new Date());
-const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [academicCalendar, setAcademicCalendar] = useState(null);
   const [dailySchedule, setDailySchedule] = useState(null);
-useEffect(() => {
+  
+  // Default schedule preferences fallback
+  const schedulePreferences = {
+    classPeriodMinutes: 45
+  };
+
+  useEffect(() => {
     loadAcademicCalendar();
     loadDailySchedule();
   }, []);
@@ -65,13 +75,12 @@ const loadAcademicCalendar = async () => {
   };
 
   const days = getDaysArray();
-  
+
   // Generate time slots based on daily schedule working hours
-  const generateTimeSlots = (startTime, endTime, duration = 45) => {
+  const generateTimeSlots = (startTime, endTime, duration) => {
     const slots = [];
     const start = new Date(`2000-01-01T${startTime}:00`);
     const end = new Date(`2000-01-01T${endTime}:00`);
-    
     let slotStart = new Date(start);
     
     while (slotStart < end) {
@@ -95,23 +104,25 @@ const loadAcademicCalendar = async () => {
   const getTimeSlotsForDay = (dayIndex) => {
     if (!dailySchedule) {
       // Fallback to default schedule if daily schedule not loaded
-      return generateTimeSlots("08:00", "16:00");
+      const duration = schedulePreferences?.classPeriodMinutes || 45;
+      return generateTimeSlots("08:00", "16:00", duration);
     }
-    
     const dayName = days[dayIndex];
     const daySchedule = dailySchedule[dayName];
     
     if (!daySchedule || !daySchedule.enabled) {
       return []; // No slots for disabled days
-    }
+}
     
-    return generateTimeSlots(daySchedule.startTime, daySchedule.endTime);
+    const duration = schedulePreferences?.classPeriodMinutes || 45;
+    return generateTimeSlots(daySchedule.startTime, daySchedule.endTime, duration);
   };
 
-// Get time slots that respect each day's individual working hours
-  const getAllTimeSlots = () => {
+  // Get time slots that respect each day's individual working hours
+const getAllTimeSlots = () => {
     if (!dailySchedule) {
-      return generateTimeSlots("08:00", "16:00");
+      const duration = schedulePreferences?.classPeriodMinutes || 45;
+      return generateTimeSlots("08:00", "16:00", duration);
     }
     
     // Find the earliest start time and latest end time among enabled days
@@ -140,20 +151,23 @@ const loadAcademicCalendar = async () => {
     
     // If no enabled days found, return default
     if (earliestStart === "23:59" || latestEnd === "00:00") {
-      return generateTimeSlots("08:00", "16:00");
+      const duration = schedulePreferences?.classPeriodMinutes || 45;
+      return generateTimeSlots("08:00", "16:00", duration);
     }
     
-    return generateTimeSlots(earliestStart, latestEnd);
+    const duration = schedulePreferences?.classPeriodMinutes || 45;
+    return generateTimeSlots(earliestStart, latestEnd, duration);
   };
-
+  
   const timeSlots = getAllTimeSlots();
 
-const getWeekDates = () => {
+  const getWeekDates = () => {
     const weekStartsOn = academicCalendar?.weekStartsOnSunday ? 0 : 1;
     const startDate = startOfWeek(currentWeek, { weekStartsOn });
     return days.map((_, index) => addDays(startDate, index));
   };
-const getAcademicWeekNumber = () => {
+  
+  const getAcademicWeekNumber = () => {
     if (!academicCalendar?.termStart) return null;
     return calculateAcademicWeek(currentWeek, academicCalendar.termStart, academicCalendar.weekStartsOnSunday);
   };
@@ -167,7 +181,6 @@ const getAcademicWeekNumber = () => {
     const weekDates = getWeekDates();
     return isToday(weekDates[dayIndex]);
   };
-
 const getScheduleForSlot = (dayIndex, timeIndex) => {
     const dayTimeSlots = getTimeSlotsForDay(dayIndex);
     const timeSlot = dayTimeSlots[timeIndex];
@@ -197,6 +210,7 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
     
     return slotMinutes >= endMinutes;
   };
+
   const handlePreviousWeek = () => {
     setCurrentWeek(prev => subWeeks(prev, 1));
   };
@@ -207,7 +221,7 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
 
   const weekDates = getWeekDates();
 
-// Desktop view
+  // Desktop view
   const DesktopGrid = () => (
     <div className="hidden md:block">
       <div className="grid grid-cols-6 gap-4">
@@ -237,12 +251,12 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
           );
         })}
         
-{timeSlots.map((timeSlot, timeIndex) => (
+        {timeSlots.map((timeSlot, timeIndex) => (
           <div key={timeSlot} className="contents">
             <div className="py-3 text-sm text-gray-600 font-medium">
               {timeSlot}
             </div>
-{days.map((day, dayIndex) => {
+            {days.map((day, dayIndex) => {
               const dayTimeSlots = getTimeSlotsForDay(dayIndex);
               const dayTimeIndex = dayTimeSlots.indexOf(timeSlot);
               const schedule = dayTimeIndex >= 0 ? getScheduleForSlot(dayIndex, dayTimeIndex) : null;
@@ -271,7 +285,7 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
   // Mobile view
   const MobileView = () => (
     <div className="md:hidden">
-<div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
 {days.map((day, index) => {
           const dayDate = weekDates[index];
           const isBreak = isBreakDay(dayDate);
@@ -306,7 +320,7 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
       
       <Card>
         <CardHeader>
-<CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <ApperIcon name="Calendar" size={20} className="text-primary-600" />
             <div>
               <div>{days[selectedDay]}</div>
@@ -318,7 +332,7 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-{getTimeSlotsForDay(selectedDay).map((timeSlot, timeIndex) => {
+            {getTimeSlotsForDay(selectedDay).map((timeSlot, timeIndex) => {
               const schedule = getScheduleForSlot(selectedDay, timeIndex);
               return (
                 <TimeSlot
@@ -354,13 +368,13 @@ return (
           Previous Week
         </Button>
         
-<div className="text-center relative">
+        <div className="text-center relative">
           <div className="text-lg font-semibold text-gray-900">
             {getAcademicWeekNumber() ? `Week ${getAcademicWeekNumber()}` : 'Week'} of {format(weekDates[0], 'MMMM dd, yyyy')}
           </div>
           <div 
             className="text-sm text-gray-600 cursor-pointer hover:text-primary-600 transition-colors"
-onClick={() => setShowDatePicker(!showDatePicker)}
+            onClick={() => setShowDatePicker(!showDatePicker)}
           >
             {format(weekDates[0], 'MMM dd')} - {format(weekDates[weekDates.length - 1], 'MMM dd, yyyy')}
             <ApperIcon name="CalendarDays" size={14} className="inline-block ml-1" />
