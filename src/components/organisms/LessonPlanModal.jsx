@@ -462,10 +462,52 @@ const CategoryEditModal = ({ category, onSave, onClose }) => {
     name: category?.name || "",
     description: category?.description || ""
   });
+  
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    } else if (formData.name.trim().length > 50) {
+      newErrors.name = "Name must be less than 50 characters";
+    }
+    
+    if (formData.description && formData.description.length > 200) {
+      newErrors.description = "Description must be less than 200 characters";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    
+    if (!validateForm()) {
+      toast.error("Please fix the errors before submitting");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      await onSave({
+        ...formData,
+        name: formData.name.trim(),
+        description: formData.description.trim()
+      });
+      toast.success("Category saved successfully");
+    } catch (error) {
+      toast.error("Failed to save category");
+      console.error("Category save error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -473,6 +515,14 @@ const CategoryEditModal = ({ category, onSave, onClose }) => {
       ...prev,
       [field]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ""
+      }));
+    }
   };
 
   return (
@@ -490,35 +540,61 @@ const CategoryEditModal = ({ category, onSave, onClose }) => {
                 <ApperIcon name="Edit" size={20} className="text-primary-600" />
                 Edit Category
               </CardTitle>
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              <Button variant="ghost" size="sm" onClick={onClose} disabled={isSubmitting}>
                 <ApperIcon name="X" size={16} />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <FormField label="Category Name">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <FormField 
+                label="Category Name" 
+                error={errors.name}
+                required
+              >
                 <Input
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                   placeholder="Enter category name"
-                  required
+                  error={!!errors.name}
+                  disabled={isSubmitting}
+                  maxLength={50}
+                  aria-describedby={errors.name ? "name-error" : undefined}
+                  aria-invalid={!!errors.name}
                 />
               </FormField>
-              <FormField label="Description">
+              <FormField 
+                label="Description"
+                error={errors.description}
+              >
                 <Textarea
                   value={formData.description}
                   onChange={(e) => handleChange("description", e.target.value)}
                   placeholder="Enter category description"
                   rows={3}
+                  error={!!errors.description}
+                  disabled={isSubmitting}
+                  maxLength={200}
+                  aria-describedby={errors.description ? "description-error" : undefined}
+                  aria-invalid={!!errors.description}
                 />
               </FormField>
               <div className="flex gap-3 pt-4">
-                <Button type="submit" className="flex-1">
+                <Button 
+                  type="submit" 
+                  className="flex-1" 
+                  disabled={isSubmitting}
+                  loading={isSubmitting}
+                >
                   <ApperIcon name="Save" size={16} className="mr-2" />
-                  Save Changes
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
-                <Button type="button" variant="outline" onClick={onClose}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
               </div>

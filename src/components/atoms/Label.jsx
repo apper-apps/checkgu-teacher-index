@@ -1,19 +1,33 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { cn } from "@/utils/cn";
 
-const Label = React.forwardRef(({ className, ...props }, ref) => {
-  return (
-    <label
-      ref={ref}
-      className={cn(
-        "block text-sm font-medium text-gray-700 mb-2",
-        className
-      )}
-      {...props}
-    />
-  );
-});
+const Label = React.forwardRef(({ 
+  className,
+  required = false,
+  children,
+  ...props 
+}, ref) => (
+  <label
+    ref={ref}
+    className={cn(
+      "block text-sm font-medium text-gray-700 mb-1",
+      className
+    )}
+    {...props}
+  >
+    {children}
+    {required && (
+      <span 
+        className="text-red-500 ml-1" 
+        aria-label="required"
+        title="This field is required"
+      >
+        *
+      </span>
+    )}
+  </label>
+))
 
-Label.displayName = "Label";
+Label.displayName = "Label"
 
-export default Label;
+export default Label
