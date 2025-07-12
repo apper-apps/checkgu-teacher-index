@@ -2,7 +2,7 @@
   {
     "Id": 1,
     "name": "4A",
-    "gradeLevel": 4,
+    "gradeLevel": "Grade 4",
     "subjects": ["Mathematics", "English", "Science", "History", "Art", "Physical Education", "Music"],
     "teacherId": 1,
     "studentCount": 24
@@ -10,7 +10,7 @@
   {
     "Id": 2,
     "name": "4B",
-    "gradeLevel": 4,
+    "gradeLevel": "Grade 4",
     "subjects": ["Mathematics", "English", "Science", "Geography", "Art", "Physical Education", "Music"],
     "teacherId": 1,
     "studentCount": 22
@@ -18,7 +18,7 @@
   {
     "Id": 3,
     "name": "5A",
-    "gradeLevel": 5,
+    "gradeLevel": "Grade 5",
     "subjects": ["Mathematics", "English", "Science", "History", "Geography", "Art", "Physical Education"],
     "teacherId": 2,
     "studentCount": 26
@@ -26,7 +26,7 @@
   {
     "Id": 4,
     "name": "5B",
-    "gradeLevel": 5,
+    "gradeLevel": "Grade 5",
     "subjects": ["Mathematics", "English", "Science", "History", "Geography", "Music", "Physical Education"],
     "teacherId": 2,
     "studentCount": 25
@@ -34,7 +34,7 @@
   {
     "Id": 5,
     "name": "3A",
-    "gradeLevel": 3,
+    "gradeLevel": "Grade 3",
     "subjects": ["Mathematics", "English", "Science", "Art", "Music", "Physical Education"],
     "teacherId": 3,
     "studentCount": 20

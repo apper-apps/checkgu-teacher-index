@@ -19,24 +19,32 @@ export const classService = {
     return { ...classItem };
   },
 
-  async create(classData) {
+async create(classData) {
     await delay(400);
     const newClass = {
       ...classData,
-      Id: Math.max(...classes.map(c => c.Id), 0) + 1
+      Id: Math.max(...classes.map(c => c.Id), 0) + 1,
+      subjects: classData.subjects || [],
+      teacherId: classData.teacherId || null,
+      studentCount: classData.studentCount || 0
     };
     classes.push(newClass);
     return { ...newClass };
   },
 
-  async update(id, classData) {
+async update(id, classData) {
     await delay(300);
     const index = classes.findIndex(c => c.Id === parseInt(id));
     if (index === -1) {
       throw new Error("Class not found");
     }
-    classes[index] = { ...classes[index], ...classData };
-    return { ...classes[index] };
+    const updatedClass = {
+      ...classes[index],
+      ...classData,
+      studentCount: classData.studentCount !== undefined ? classData.studentCount : classes[index].studentCount
+    };
+    classes[index] = updatedClass;
+    return { ...updatedClass };
   },
 
   async delete(id) {
