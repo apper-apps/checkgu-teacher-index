@@ -628,7 +628,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
         </div>
       )}
 
-      {/* Weekly Schedule Tab */}
+{/* Weekly Schedule Tab */}
       {activeTab === "weekly" && (
         <div className="space-y-6">
           {/* Weekly Schedule Management */}
@@ -661,71 +661,8 @@ const handleDefaultWorkingHoursChange = (field, value) => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Schedule Grid */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ApperIcon name="Calendar" size={24} className="text-primary-600" />
-                Weekly Schedule Grid
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border border-gray-200 rounded-lg">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="p-3 text-left">Time</th>
-                      {days.map(day => (
-                        <th key={day} className="p-3 text-center">{day}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getTimeSlotsForDay(0).map(timeSlot => (
-                      <tr key={timeSlot} className="border-t">
-                        <td className="p-3 font-medium text-sm">{timeSlot}</td>
-                        {days.map((day, dayIndex) => {
-                          const dayTimeSlots = getTimeSlotsForDay(dayIndex);
-                          const isSlotAvailable = dayTimeSlots.includes(timeSlot);
-                          
-                          return (
-                            <td key={day} className="p-3">
-                              {isSlotAvailable ? (
-                                <Select
-                                  value=""
-                                  onChange={(e) => {
-                                    if (e.target.value) {
-                                      toast.success(`${e.target.value} scheduled for ${day} at ${timeSlot}`);
-                                    }
-                                  }}
-                                  className="w-full text-sm"
-                                >
-                                  <option value="">-</option>
-                                  {subjects.map(subject => (
-                                    <option key={subject} value={subject}>
-                                      {subject}
-                                    </option>
-                                  ))}
-                                </Select>
-                              ) : (
-                                <div className="bg-gray-100 p-2 text-xs text-gray-500 rounded text-center">
-                                  Not Available
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
-
 {/* Daily Schedule Configuration Tab */}
       {activeTab === "daily" && (
         <Card>
@@ -969,7 +906,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                         </p>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {schedulePreferences.gradeLevels.map((level, index) => (
                           <div key={level.Id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                             <div className="flex items-center gap-3 mb-3">
@@ -1001,6 +938,66 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                               />
                               <div className="text-xs text-gray-500 mt-1">
                                 This name will appear in schedules and class creation
+                              </div>
+                            </FormField>
+
+                            <FormField label="Number of Classes" className="mt-3">
+                              <div className="flex items-center gap-3">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (level.numberOfClasses > 1) {
+                                      const updatedLevels = schedulePreferences.gradeLevels.map(l => 
+                                        l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses - 1 } : l
+                                      );
+                                      setSchedulePreferences(prev => ({
+                                        ...prev,
+                                        gradeLevels: updatedLevels
+                                      }));
+                                      setHasUnsavedChanges(true);
+                                    }
+                                  }}
+                                  disabled={level.numberOfClasses <= 1}
+                                  className="w-8 h-8 p-0 flex items-center justify-center"
+                                >
+                                  <ApperIcon name="Minus" size={14} />
+                                </Button>
+                                
+                                <div className="flex-1 text-center">
+                                  <span className="text-lg font-semibold text-gray-900">
+                                    {level.numberOfClasses}
+                                  </span>
+                                  <div className="text-xs text-gray-500">
+                                    {level.numberOfClasses === 1 ? 'class' : 'classes'}
+                                  </div>
+                                </div>
+                                
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (level.numberOfClasses < 10) {
+                                      const updatedLevels = schedulePreferences.gradeLevels.map(l => 
+                                        l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses + 1 } : l
+                                      );
+                                      setSchedulePreferences(prev => ({
+                                        ...prev,
+                                        gradeLevels: updatedLevels
+                                      }));
+                                      setHasUnsavedChanges(true);
+                                    }
+                                  }}
+                                  disabled={level.numberOfClasses >= 10}
+                                  className="w-8 h-8 p-0 flex items-center justify-center"
+                                >
+                                  <ApperIcon name="Plus" size={14} />
+                                </Button>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                Maximum 10 classes per grade level
                               </div>
                             </FormField>
                           </div>
