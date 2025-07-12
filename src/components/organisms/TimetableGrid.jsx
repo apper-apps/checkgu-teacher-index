@@ -15,11 +15,18 @@ const [currentWeek, setCurrentWeek] = useState(new Date());
 const [showDatePicker, setShowDatePicker] = useState(false);
   const [academicCalendar, setAcademicCalendar] = useState(null);
   const [dailySchedule, setDailySchedule] = useState(null);
-  
-  useEffect(() => {
+useEffect(() => {
     loadAcademicCalendar();
     loadDailySchedule();
   }, []);
+
+  // Reload settings when they change to ensure persistence
+  useEffect(() => {
+    if (academicCalendar || dailySchedule) {
+      // Force re-render when settings are updated
+      setCurrentWeek(prev => new Date(prev));
+    }
+  }, [academicCalendar, dailySchedule]);
 const loadAcademicCalendar = async () => {
     try {
       const calendar = await settingsService.getAcademicCalendar();
@@ -51,12 +58,11 @@ const loadAcademicCalendar = async () => {
 
 // Get days array based on week start preference
   const getDaysArray = () => {
-    const allDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     if (academicCalendar?.weekStartsOnSunday) {
       return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
     }
     return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-};
+  };
 
   const days = getDaysArray();
   
@@ -354,9 +360,9 @@ return (
           </div>
           <div 
             className="text-sm text-gray-600 cursor-pointer hover:text-primary-600 transition-colors"
-            onClick={() => setShowDatePicker(!showDatePicker)}
+onClick={() => setShowDatePicker(!showDatePicker)}
           >
-            {format(weekDates[0], 'MMM dd')} - {format(weekDates[4], 'MMM dd, yyyy')}
+            {format(weekDates[0], 'MMM dd')} - {format(weekDates[weekDates.length - 1], 'MMM dd, yyyy')}
             <ApperIcon name="CalendarDays" size={14} className="inline-block ml-1" />
           </div>
           {showDatePicker && (
