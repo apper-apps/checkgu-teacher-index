@@ -58,7 +58,7 @@ const mockDailySchedule = {
   Tuesday: { enabled: true, startTime: "08:00", endTime: "16:00" },
   Wednesday: { enabled: true, startTime: "08:00", endTime: "16:00" },
   Thursday: { enabled: true, startTime: "08:00", endTime: "16:00" },
-  Friday: { enabled: true, startTime: "08:00", endTime: "15:00" }
+  Friday: { enabled: true, startTime: "08:00", endTime: "16:00" }
 };
 
 const mockClassLevels = [
