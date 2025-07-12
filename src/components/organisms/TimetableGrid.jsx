@@ -187,6 +187,8 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
     
     if (!timeSlot) return null;
     
+    // Match dayIndex with schedules.dayOfWeek correctly
+    // dayIndex corresponds to days array position, schedules use same indexing
     const schedule = schedules.find(
       (s) => s.dayOfWeek === dayIndex && s.timeSlot === timeSlot
     );
