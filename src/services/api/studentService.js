@@ -53,6 +53,75 @@ export const studentService = {
 return true;
   },
 
+  async bulkDelete(studentIds) {
+    await delay(400);
+    const deletedCount = studentIds.length;
+    
+    studentIds.forEach(id => {
+      const index = students.findIndex(s => s.Id === parseInt(id));
+      if (index !== -1) {
+        students.splice(index, 1);
+      }
+    });
+    
+    return { deleted: deletedCount };
+  },
+
+  async generateParentLink(studentId) {
+    await delay(300);
+    const student = students.find(s => s.Id === parseInt(studentId));
+    if (!student) {
+      throw new Error("Student not found");
+    }
+    
+    // Generate secure token (in real app, this would be cryptographically secure)
+    const token = btoa(`${studentId}_${Date.now()}_${Math.random()}`).replace(/[+/=]/g, '');
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 30); // 30 days expiration
+    
+    // Store token (in real app, this would be in a database)
+    const parentTokens = JSON.parse(localStorage.getItem('parentTokens') || '{}');
+    parentTokens[token] = {
+      studentId: parseInt(studentId),
+      guardianEmail: student.guardianEmail,
+      expiresAt: expirationDate.toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('parentTokens', JSON.stringify(parentTokens));
+    
+    return `${window.location.origin}/parent/${token}`;
+  },
+
+  async validateParentToken(token) {
+    await delay(200);
+    
+    try {
+      const parentTokens = JSON.parse(localStorage.getItem('parentTokens') || '{}');
+      const tokenData = parentTokens[token];
+      
+      if (!tokenData) {
+        return { valid: false, reason: 'Token not found' };
+      }
+      
+      const now = new Date();
+      const expiresAt = new Date(tokenData.expiresAt);
+      
+      if (now > expiresAt) {
+        // Clean up expired token
+        delete parentTokens[token];
+        localStorage.setItem('parentTokens', JSON.stringify(parentTokens));
+        return { valid: false, reason: 'Token expired' };
+      }
+      
+      return { 
+        valid: true, 
+        studentId: tokenData.studentId,
+        guardianEmail: tokenData.guardianEmail 
+      };
+    } catch (error) {
+      return { valid: false, reason: 'Token validation error' };
+    }
+  },
   async importStudents(file, onProgress) {
     await delay(500);
     

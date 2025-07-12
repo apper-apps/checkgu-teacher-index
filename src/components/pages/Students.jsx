@@ -21,11 +21,17 @@ const Students = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddStudent, setShowAddStudent] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-const [showStudentDetails, setShowStudentDetails] = useState(false);
+const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [showEditStudent, setShowEditStudent] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
   const [activeTab, setActiveTab] = useState('details');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showParentLinkModal, setShowParentLinkModal] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [bulkDeleteStudents, setBulkDeleteStudents] = useState([]);
+  const [parentLink, setParentLink] = useState("");
   const [importFile, setImportFile] = useState(null);
   const [importProgress, setImportProgress] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
@@ -78,11 +84,69 @@ const [showStudentDetails, setShowStudentDetails] = useState(false);
     } catch (err) {
       toast.error("Failed to add student");
     }
+};
+
+  const handleUpdateStudent = async (e) => {
+    e.preventDefault();
+    try {
+      await studentService.update(editingStudent.Id, editingStudent);
+      toast.success("Student updated successfully!");
+      setShowEditStudent(false);
+      setEditingStudent(null);
+      loadData();
+    } catch (err) {
+      toast.error("Failed to update student");
+    }
   };
 
   const handleStudentClick = (student) => {
     setSelectedStudent(student);
     setShowStudentDetails(true);
+  };
+
+  const handleEditStudent = (student) => {
+    setEditingStudent({ ...student });
+    setShowEditStudent(true);
+    setShowStudentDetails(false);
+  };
+
+  const handleBulkDelete = (studentIds) => {
+    setBulkDeleteStudents(studentIds);
+    setShowBulkDeleteModal(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      await studentService.bulkDelete(bulkDeleteStudents);
+      toast.success(`Successfully deleted ${bulkDeleteStudents.length} student(s)`);
+      setShowBulkDeleteModal(false);
+      setBulkDeleteStudents([]);
+      loadData();
+    } catch (err) {
+      toast.error("Failed to delete students");
+    }
+  };
+
+  const handleGenerateParentLink = async (student) => {
+    try {
+      const link = await studentService.generateParentLink(student.Id);
+      setParentLink(link);
+      setSelectedStudent(student);
+      setShowParentLinkModal(true);
+      setShowStudentDetails(false);
+      toast.success("Parent link generated successfully!");
+    } catch (err) {
+      toast.error("Failed to generate parent link");
+    }
+  };
+
+  const copyParentLink = async () => {
+    try {
+      await navigator.clipboard.writeText(parentLink);
+      toast.success("Link copied to clipboard!");
+    } catch (err) {
+      toast.error("Failed to copy link");
+    }
   };
 
 const handleAttendanceUpdate = async (studentId, date, isPresent) => {
@@ -221,9 +285,10 @@ return (
       </div>
 
       {/* Student List */}
-      <StudentList
+<StudentList
         students={students}
         onStudentClick={handleStudentClick}
+        onBulkDelete={handleBulkDelete}
       />
 
       {/* Add Student Modal */}
@@ -385,14 +450,22 @@ return (
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
-                      <Button variant="outline" className="flex-1">
+<div className="flex gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleEditStudent(selectedStudent)}
+                      >
                         <ApperIcon name="Edit" size={16} className="mr-2" />
                         Edit Student
                       </Button>
-                      <Button variant="outline" className="flex-1">
-                        <ApperIcon name="FileText" size={16} className="mr-2" />
-                        View Report
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => handleGenerateParentLink(selectedStudent)}
+                      >
+                        <ApperIcon name="Link" size={16} className="mr-2" />
+                        Parent Link
                       </Button>
                     </div>
                   </div>
@@ -611,6 +684,182 @@ return (
                     className="flex-1"
                   >
                     Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+</div>
+      )}
+
+      {/* Edit Student Modal */}
+      {showEditStudent && editingStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle>Edit Student</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateStudent} className="space-y-4">
+                <FormField label="Student Name">
+                  <Input
+                    value={editingStudent.name}
+                    onChange={(e) => setEditingStudent({...editingStudent, name: e.target.value})}
+                    placeholder="Enter student name"
+                    required
+                  />
+                </FormField>
+                <FormField label="Student ID">
+                  <Input
+                    value={editingStudent.studentId}
+                    onChange={(e) => setEditingStudent({...editingStudent, studentId: e.target.value})}
+                    placeholder="Enter student ID"
+                    required
+                  />
+                </FormField>
+                <FormField label="Class">
+                  <Select
+                    value={editingStudent.classId}
+                    onChange={(e) => setEditingStudent({...editingStudent, classId: parseInt(e.target.value)})}
+                    required
+                  >
+                    <option value="">Select Class</option>
+                    {classes.map(cls => (
+                      <option key={cls.Id} value={cls.Id}>
+                        {cls.name} - Grade {cls.gradeLevel}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+                <FormField label="Guardian Name">
+                  <Input
+                    value={editingStudent.guardianName}
+                    onChange={(e) => setEditingStudent({...editingStudent, guardianName: e.target.value})}
+                    placeholder="Enter guardian name"
+                    required
+                  />
+                </FormField>
+                <FormField label="Guardian Phone">
+                  <Input
+                    value={editingStudent.guardianPhone}
+                    onChange={(e) => setEditingStudent({...editingStudent, guardianPhone: e.target.value})}
+                    placeholder="Enter phone number"
+                    required
+                  />
+                </FormField>
+                <FormField label="Guardian Email">
+                  <Input
+                    type="email"
+                    value={editingStudent.guardianEmail}
+                    onChange={(e) => setEditingStudent({...editingStudent, guardianEmail: e.target.value})}
+                    placeholder="Enter email address"
+                  />
+                </FormField>
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit" className="flex-1">
+                    Update Student
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowEditStudent(false);
+                      setEditingStudent(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <ApperIcon name="AlertTriangle" size={24} />
+                Confirm Bulk Delete
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  Are you sure you want to delete {bulkDeleteStudents.length} student{bulkDeleteStudents.length > 1 ? 's' : ''}? 
+                  This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={confirmBulkDelete}
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                  >
+                    Delete Students
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowBulkDeleteModal(false);
+                      setBulkDeleteStudents([]);
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Parent Link Modal */}
+      {showParentLinkModal && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="Link" size={24} className="text-primary-600" />
+                Parent Access Link
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Share this secure link with {selectedStudent.guardianName} to access {selectedStudent.name}'s records:
+                  </p>
+                  <div className="p-3 bg-gray-50 rounded-md border">
+                    <p className="text-sm font-mono break-all text-gray-800">{parentLink}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                  <div className="flex items-start gap-2">
+                    <ApperIcon name="AlertTriangle" size={16} className="text-yellow-600 mt-0.5" />
+                    <div className="text-sm text-yellow-800">
+                      <p className="font-medium">Security Notice:</p>
+                      <p>This link expires in 30 days and can only be used by the registered guardian.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button onClick={copyParentLink} className="flex-1">
+                    <ApperIcon name="Copy" size={16} className="mr-2" />
+                    Copy Link
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowParentLinkModal(false);
+                      setParentLink("");
+                    }}
+                  >
+                    Close
                   </Button>
                 </div>
               </div>

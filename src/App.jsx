@@ -13,10 +13,11 @@ function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-background">
-        <Routes>
-<Route path="/" element={<Layout />}>
+<Routes>
+          <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="parent-dashboard" element={<ParentDashboard />} />
+            <Route path="parent/:token" element={<ParentDashboard />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="schedule" element={<Schedule />} />
             <Route path="students" element={<Students />} />

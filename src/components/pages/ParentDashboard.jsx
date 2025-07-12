@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
 import Loading from "@/components/ui/Loading";
@@ -9,18 +10,45 @@ import { scheduleService } from "@/services/api/scheduleService";
 import { toast } from "react-toastify";
 
 const ParentDashboard = () => {
+  const { token } = useParams();
   const [childData, setChildData] = useState(null);
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [authError, setAuthError] = useState(null);
 
   // Mock child ID - in real app this would come from authentication/context
   const childId = 1;
 
-  useEffect(() => {
-    loadChildData();
-    loadSchedules();
-  }, []);
+useEffect(() => {
+    if (token) {
+      validateTokenAndLoadData();
+    } else {
+      loadChildData();
+      loadSchedules();
+    }
+  }, [token]);
+
+  const validateTokenAndLoadData = async () => {
+    try {
+      setLoading(true);
+      setAuthError(null);
+      
+      const result = await studentService.validateParentToken(token);
+      if (result.valid) {
+        const child = await studentService.getById(result.studentId);
+        setChildData(child);
+        loadSchedules();
+      } else {
+        setAuthError("Invalid or expired access link. Please contact the school for a new link.");
+      }
+    } catch (err) {
+      setAuthError("Access denied. The link may have expired or is invalid.");
+      toast.error("Failed to authenticate parent access");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadChildData = async () => {
     try {
@@ -84,8 +112,9 @@ const ParentDashboard = () => {
     };
   };
 
-  if (loading) return <Loading />;
-  if (error) return <Error message={error} onRetry={() => { loadChildData(); loadSchedules(); }} />;
+if (loading) return <Loading />;
+  if (authError) return <Error message={authError} />;
+  if (error) return <Error message={error} onRetry={() => { token ? validateTokenAndLoadData() : loadChildData(); loadSchedules(); }} />;
   if (!childData) return <Error message="Child information not found" />;
 
   const attendanceStats = getAttendanceStats();
@@ -93,13 +122,20 @@ const ParentDashboard = () => {
   const gradeBadge = getGradeBadge(childData.overallGrade);
   const weeklySchedule = getWeeklySchedule();
 
-  return (
+return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Parent Dashboard</h1>
-          <p className="text-gray-600">Monitor your child's academic progress and attendance</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {token ? "Secure Parent Access" : "Parent Dashboard"}
+          </h1>
+          <p className="text-gray-600">
+            {token 
+              ? `Viewing ${childData.name}'s academic progress and attendance`
+              : "Monitor your child's academic progress and attendance"
+            }
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <ApperIcon name="Calendar" size={20} className="text-primary-600" />
