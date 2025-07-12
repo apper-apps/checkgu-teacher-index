@@ -275,26 +275,9 @@ return null;
       if (start <= end) {
         slots.push(`${slotStart} - ${slotEnd}`);
       }
-    }
+}
     return slots;
   };
-
-const getTimeSlotsForDay = (dayIndex) => {
-    const dayName = days[dayIndex];
-    const daySchedule = dailySchedule[dayName];
-    
-    // If day is explicitly disabled, return empty slots
-    if (daySchedule && !daySchedule.enabled) {
-      return [];
-    }
-    
-    // Use day-specific schedule if available, otherwise use individual day defaults
-    const startTime = daySchedule?.startTime || schedulePreferences?.defaultWorkingHours?.start || "08:00";
-    const endTime = daySchedule?.endTime || schedulePreferences?.defaultWorkingHours?.end || "16:00";
-    
-    return generateTimeSlots(startTime, endTime, schedulePreferences?.classPeriodMinutes || 45);
-  };
-
 const handleCreateClass = async (e) => {
     e.preventDefault();
     try {
@@ -647,10 +630,10 @@ const handleDeleteClassLevel = async (levelId) => {
                                   </span>
                                 ))}
                               </div>
-                            </td>
+</td>
                             <td className="py-2">{classSchedules.length}</td>
                           </tr>
-);
+                        );
                       })}
                     </tbody>
                   </table>
@@ -786,9 +769,9 @@ const handleDeleteClassLevel = async (levelId) => {
                     ) : (
                       <>
                         <ApperIcon name="Save" size={16} />
-                        Save Changes
+Save Changes
                       </>
-)}
+                    )}
                   </Button>
                 </div>
               )}
@@ -815,13 +798,14 @@ const handleDeleteClassLevel = async (levelId) => {
                       className="bg-white"
                     />
                   </FormField>
-                  <FormField label="Default End Time">
+<FormField label="Default End Time">
                     <Input
                       type="time"
                       value={schedulePreferences?.defaultWorkingHours?.end || "16:00"}
                       onChange={(e) => handleDefaultWorkingHoursChange("end", e.target.value)}
                       className="bg-white"
-</FormField>
+                    />
+                  </FormField>
                   <FormField label="Class Period Duration (minutes)">
                     <Input
                       type="number"
@@ -880,8 +864,8 @@ const handleDeleteClassLevel = async (levelId) => {
                       
                       {daySchedule.enabled !== false && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField label={
-<div className="flex items-center gap-2">
+<FormField label={
+                            <div className="flex items-center gap-2">
                               <span>Start Time</span>
                               {isUsingDefaultStart && (
                                 <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
@@ -952,16 +936,17 @@ const handleDeleteClassLevel = async (levelId) => {
                         </>
                       )}
                     </Button>
-                  </div>
 </div>
+                </div>
               )}
             </CardContent>
           </Card>
         )}
+
       {/* Class Levels Management Tab */}
-      {activeTab === "levels" && (
+{activeTab === "levels" && (
         <div className="space-y-6">
-{/* Grade Level Configuration */}
+          {/* Grade Level Configuration */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -1120,9 +1105,9 @@ const handleDeleteClassLevel = async (levelId) => {
                     ))}
                   </div>
                 )}
-              </div>
+</div>
             </CardContent>
-</Card>
+          </Card>
         </div>
       )}
 
@@ -1141,9 +1126,9 @@ const handleDeleteClassLevel = async (levelId) => {
                     onChange={(e) => setNewClass({...newClass, name: e.target.value})}
                     placeholder="e.g., 4A"
                     required
-                  />
+/>
                 </FormField>
-<FormField label="Grade Level">
+                <FormField label="Grade Level">
                   <Select
                     value={newClass.gradeLevel}
                     onChange={(e) => setNewClass({...newClass, gradeLevel: e.target.value})}
