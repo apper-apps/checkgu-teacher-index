@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import { cn } from "@/utils/cn";
@@ -6,6 +7,7 @@ import { cn } from "@/utils/cn";
 const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
   const [currentTerm] = useState("Fall 2024");
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const navigate = useNavigate();
   return (
 <header className={cn("bg-white border-b border-gray-200 px-3 sm:px-4 py-3", className)}>
       <div className="flex items-center justify-between">
@@ -52,12 +54,24 @@ const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
                   <p className="text-xs text-gray-500">
                     {userProfile?.roleDisplay || "Teacher - Elementary"}
                   </p>
-                </div>
-                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+</div>
+                <button 
+                  onClick={() => {
+                    navigate('/settings');
+                    setUserDropdownOpen(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
                   <ApperIcon name="User" size={16} />
                   Profile
                 </button>
-                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    navigate('/settings');
+                    setUserDropdownOpen(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
                   <ApperIcon name="Settings" size={16} />
                   Settings
                 </button>

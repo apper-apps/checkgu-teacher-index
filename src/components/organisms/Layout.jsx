@@ -1,24 +1,26 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
-import Header from "@/components/organisms/Header";
 import Sidebar from "@/components/organisms/Sidebar";
-const Layout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+import Header from "@/components/organisms/Header";
+import { useUser } from "@/contexts/UserContext";
+
+function Layout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { userProfile, schoolProfile } = useUser();
-  const handleMenuToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   const handleSidebarClose = () => {
-    setSidebarOpen(false);
+    setIsSidebarOpen(false);
   };
 
-return (
+  const handleMenuToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        <Sidebar 
-          isOpen={sidebarOpen} 
+<Sidebar 
+          isOpen={isSidebarOpen} 
           onClose={handleSidebarClose} 
           schoolProfile={schoolProfile} 
         />
