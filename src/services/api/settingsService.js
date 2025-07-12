@@ -199,7 +199,7 @@ export const settingsService = {
     return { ...classes[index] };
   },
 
-  async deleteClass(id) {
+async deleteClass(id) {
     await delay(200);
     const index = classes.findIndex(c => c.Id === parseInt(id));
     if (index === -1) {
@@ -207,7 +207,121 @@ export const settingsService = {
     }
     classes.splice(index, 1);
     return true;
-}
+  },
+
+  // Holiday Management Methods
+  async getHolidays() {
+    await delay(200);
+    return [...mockHolidays];
+  },
+
+  async addHoliday(holidayData) {
+    await delay(400);
+    const newHoliday = { 
+      ...holidayData, 
+      Id: nextHolidayId++,
+      isSchoolHoliday: holidayData.isSchoolHoliday || false
+    };
+    mockHolidays.push(newHoliday);
+    return { ...newHoliday };
+  },
+
+  async updateHoliday(id, holidayData) {
+    await delay(300);
+    const index = mockHolidays.findIndex(h => h.Id === parseInt(id));
+    if (index === -1) {
+      throw new Error("Holiday not found");
+    }
+    mockHolidays[index] = { ...mockHolidays[index], ...holidayData };
+    return { ...mockHolidays[index] };
+  },
+
+  async deleteHoliday(id) {
+    await delay(200);
+    const index = mockHolidays.findIndex(h => h.Id === parseInt(id));
+    if (index === -1) {
+      throw new Error("Holiday not found");
+    }
+    mockHolidays.splice(index, 1);
+    return true;
+  },
+
+  async addMultipleHolidays(holidaysData) {
+    await delay(400);
+    const newHolidays = holidaysData.map(holiday => ({
+      ...holiday,
+      Id: nextHolidayId++,
+      isSchoolHoliday: holiday.isSchoolHoliday || false
+    }));
+    mockHolidays.push(...newHolidays);
+    return [...newHolidays];
+  },
+
+  async toggleSchoolHoliday(id) {
+    await delay(300);
+    const index = mockHolidays.findIndex(h => h.Id === parseInt(id));
+    if (index === -1) {
+      throw new Error("Holiday not found");
+    }
+    mockHolidays[index].isSchoolHoliday = !mockHolidays[index].isSchoolHoliday;
+    return { ...mockHolidays[index] };
+  },
+
+  async toggleSchoolHolidays(ids) {
+    await delay(300);
+    const updatedHolidays = [];
+    ids.forEach(id => {
+      const index = mockHolidays.findIndex(h => h.Id === parseInt(id));
+      if (index !== -1) {
+        mockHolidays[index].isSchoolHoliday = !mockHolidays[index].isSchoolHoliday;
+        updatedHolidays.push({ ...mockHolidays[index] });
+      }
+    });
+    return updatedHolidays;
+  },
+
+  async processCSV(csvData) {
+    await delay(400);
+    try {
+      const lines = csvData.trim().split('\n');
+      const holidays = [];
+      
+      for (const line of lines) {
+        const [name, date, description, isSchoolHoliday] = line.split(',');
+        
+        if (!name || !date) {
+          continue;
+        }
+        
+        // Validate date format
+        const dateObj = new Date(date.trim());
+        if (isNaN(dateObj.getTime())) {
+          continue;
+        }
+        
+        holidays.push({
+          name: name.trim(),
+          date: date.trim(),
+          description: description?.trim() || '',
+          isSchoolHoliday: isSchoolHoliday?.trim().toLowerCase() === 'true'
+        });
+      }
+      
+      if (holidays.length === 0) {
+        return { success: false, error: 'No valid holidays found in CSV' };
+      }
+      
+      const newHolidays = holidays.map(holiday => ({
+        ...holiday,
+        Id: nextHolidayId++
+      }));
+      
+      mockHolidays.push(...newHolidays);
+      return { success: true, holidays: [...newHolidays] };
+    } catch (error) {
+      return { success: false, error: 'Invalid CSV format' };
+    }
+  }
 };
 
 // Additional mock data for extended functionality
