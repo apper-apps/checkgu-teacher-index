@@ -65,10 +65,13 @@ const SubjectScheduleManager = ({ subjectSchedules, onChange, availableSubjects,
         
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Subject</label>
+<label className="block text-sm font-medium mb-1">Subject</label>
             <Select
               value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
+              onChange={(e) => {
+                setSelectedSubject(e.target.value);
+                setSelectedDays([]); // Clear selected days when subject changes
+              }}
               className="w-full"
             >
               <option value="">Select a subject</option>
@@ -97,24 +100,50 @@ const SubjectScheduleManager = ({ subjectSchedules, onChange, availableSubjects,
               ))}
             </div>
           </div>
-
-          <div>
+<div>
             <label className="block text-sm font-medium mb-1">Time Slots</label>
             <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-              {timeSlots.map(timeSlot => (
-                <button
-                  key={timeSlot}
-                  type="button"
-                  onClick={() => toggleTimeSlot(timeSlot)}
-                  className={`px-2 py-1 text-xs rounded border text-left ${
-                    selectedTimeSlots.includes(timeSlot)
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {timeSlot}
-                </button>
-              ))}
+              {(() => {
+                // Generate dynamic time slots based on selected days and daily schedule
+                if (selectedDays.length === 0) {
+                  return timeSlots.map(timeSlot => (
+                    <button
+                      key={timeSlot}
+                      type="button"
+                      onClick={() => toggleTimeSlot(timeSlot)}
+                      className={`px-2 py-1 text-xs rounded border text-left ${
+                        selectedTimeSlots.includes(timeSlot)
+                          ? 'bg-primary-500 text-white border-primary-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {timeSlot}
+                    </button>
+                  ));
+                }
+                
+                // Get all available time slots for selected days
+                const availableTimeSlots = new Set();
+                selectedDays.forEach(dayIndex => {
+                  const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                  dayTimeSlots.forEach(slot => availableTimeSlots.add(slot));
+                });
+                
+                return Array.from(availableTimeSlots).map(timeSlot => (
+                  <button
+                    key={timeSlot}
+                    type="button"
+                    onClick={() => toggleTimeSlot(timeSlot)}
+                    className={`px-2 py-1 text-xs rounded border text-left ${
+                      selectedTimeSlots.includes(timeSlot)
+                        ? 'bg-primary-500 text-white border-primary-500'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {timeSlot}
+                  </button>
+                ));
+              })()}
             </div>
           </div>
 
@@ -651,12 +680,20 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                   </p>
                 </div>
 
-                <SubjectScheduleManager
+<SubjectScheduleManager
                   subjectSchedules={[]}
                   onChange={() => {}}
                   availableSubjects={subjects}
                   days={days}
-                  timeSlots={getTimeSlotsForDay(0)}
+                  timeSlots={(() => {
+                    // Get all available time slots across all enabled days
+                    const allTimeSlots = new Set();
+                    days.forEach((_, dayIndex) => {
+                      const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                      dayTimeSlots.forEach(slot => allTimeSlots.add(slot));
+                    });
+                    return Array.from(allTimeSlots);
+                  })()}
                 />
               </div>
             </CardContent>
@@ -1122,12 +1159,20 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                   </Select>
                 </FormField>
                 <FormField label="Subject Registration">
-                  <SubjectScheduleManager
+<SubjectScheduleManager
                     subjectSchedules={newClass.subjectSchedules}
                     onChange={(schedules) => setNewClass({...newClass, subjectSchedules: schedules})}
                     availableSubjects={subjects}
                     days={days}
-                    timeSlots={getTimeSlotsForDay(0)}
+                    timeSlots={(() => {
+                      // Get all available time slots across all enabled days
+                      const allTimeSlots = new Set();
+                      days.forEach((_, dayIndex) => {
+                        const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                        dayTimeSlots.forEach(slot => allTimeSlots.add(slot));
+                      });
+                      return Array.from(allTimeSlots);
+                    })()}
                   />
                 </FormField>
                 <div className="flex gap-3 pt-4">
