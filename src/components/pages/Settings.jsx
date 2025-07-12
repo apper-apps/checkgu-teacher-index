@@ -859,42 +859,7 @@ case "schedule":
                   </div>
                 </FormField>
               </div>
-            </div>
-            
-            <div className="border-t pt-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Default Working Hours</h3>
-              <div className="text-sm text-gray-600 mb-4">
-                Configure the default working hours for your schedule
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Start Time">
-                  <Input
-                    type="time"
-                    value={schedulePreferences.defaultWorkingHours.start}
-                    onChange={(e) => setSchedulePreferences({
-                      ...schedulePreferences,
-                      defaultWorkingHours: {
-                        ...schedulePreferences.defaultWorkingHours,
-                        start: e.target.value
-                      }
-                    })}
-                  />
-                </FormField>
-                <FormField label="End Time">
-                  <Input
-                    type="time"
-                    value={schedulePreferences.defaultWorkingHours.end}
-                    onChange={(e) => setSchedulePreferences({
-                      ...schedulePreferences,
-                      defaultWorkingHours: {
-                        ...schedulePreferences.defaultWorkingHours,
-                        end: e.target.value
-                      }
-                    })}
-                  />
-                </FormField>
-              </div>
-            </div>
+</div>
             
             <Button type="submit">
               <ApperIcon name="Save" size={16} className="mr-2" />
