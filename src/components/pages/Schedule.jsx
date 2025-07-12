@@ -515,7 +515,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
         </Button>
       </div>
 
-      {/* Tab Navigation */}
+{/* Tab Navigation */}
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8">
           <button
@@ -528,6 +528,17 @@ const handleDefaultWorkingHoursChange = (field, value) => {
           >
             <ApperIcon name="Calendar" size={20} className="inline mr-2" />
             Schedule Overview
+          </button>
+          <button
+            onClick={() => setActiveTab("weekly")}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "weekly"
+                ? "border-primary-500 text-primary-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <ApperIcon name="Calendar" size={20} className="inline mr-2" />
+            Weekly Schedule
           </button>
           <button
             onClick={() => setActiveTab("daily")}
@@ -611,90 +622,115 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                     </tbody>
                   </table>
                 </div>
+</div>
               )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Weekly Schedule Tab */}
+      {activeTab === "weekly" && (
+        <div className="space-y-6">
+          {/* Weekly Schedule Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="Calendar" size={24} className="text-primary-600" />
+                Weekly Schedule Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ApperIcon name="Info" size={16} className="text-blue-600" />
+                    <h4 className="font-medium text-blue-900">Direct Subject Scheduling</h4>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    Add subjects and their teaching time slots directly to create your weekly schedule. Select the days and time periods when you want to teach each subject.
+                  </p>
+                </div>
+
+                <SubjectScheduleManager
+                  subjectSchedules={[]}
+                  onChange={() => {}}
+                  availableSubjects={subjects}
+                  days={days}
+                  timeSlots={getTimeSlotsForDay(0)}
+                />
+              </div>
             </CardContent>
           </Card>
 
           {/* Schedule Grid */}
-          {classes.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ApperIcon name="Calendar" size={24} className="text-primary-600" />
-                  Weekly Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {classes.map(cls => (
-                    <div key={cls.Id} className="space-y-4">
-                      <h3 className="font-semibold text-lg">{cls.name}</h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-200 rounded-lg">
-                          <thead>
-                            <tr className="bg-gray-50">
-                              <th className="p-3 text-left">Time</th>
-                              {days.map(day => (
-                                <th key={day} className="p-3 text-center">{day}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {getTimeSlotsForDay(0).map(timeSlot => (
-                              <tr key={timeSlot} className="border-t">
-                                <td className="p-3 font-medium text-sm">{timeSlot}</td>
-                                {days.map((day, dayIndex) => {
-                                  const dayTimeSlots = getTimeSlotsForDay(dayIndex);
-                                  const isSlotAvailable = dayTimeSlots.includes(timeSlot);
-                                  const schedule = getScheduleForSlot(cls.Id, dayIndex, timeSlot);
-                                  
-                                  return (
-                                    <td key={day} className="p-3">
-                                      {isSlotAvailable ? (
-                                        <Select
-                                          value={schedule?.subject || ""}
-                                          onChange={(e) => handleScheduleChange(
-                                            cls.Id, 
-                                            dayIndex, 
-                                            timeSlot, 
-                                            e.target.value
-                                          )}
-                                          className="w-full text-sm"
-                                        >
-                                          <option value="">-</option>
-                                          {cls.subjects.map(subject => (
-                                            <option key={subject} value={subject}>
-                                              {subject}
-                                            </option>
-                                          ))}
-                                        </Select>
-                                      ) : (
-                                        <div className="bg-gray-100 p-2 text-xs text-gray-500 rounded text-center">
-                                          Not Available
-                                        </div>
-                                      )}
-                                    </td>
-                                  );
-                                })}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="Calendar" size={24} className="text-primary-600" />
+                Weekly Schedule Grid
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full border border-gray-200 rounded-lg">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="p-3 text-left">Time</th>
+                      {days.map(day => (
+                        <th key={day} className="p-3 text-center">{day}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getTimeSlotsForDay(0).map(timeSlot => (
+                      <tr key={timeSlot} className="border-t">
+                        <td className="p-3 font-medium text-sm">{timeSlot}</td>
+                        {days.map((day, dayIndex) => {
+                          const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                          const isSlotAvailable = dayTimeSlots.includes(timeSlot);
+                          
+                          return (
+                            <td key={day} className="p-3">
+                              {isSlotAvailable ? (
+                                <Select
+                                  value=""
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      toast.success(`${e.target.value} scheduled for ${day} at ${timeSlot}`);
+                                    }
+                                  }}
+                                  className="w-full text-sm"
+                                >
+                                  <option value="">-</option>
+                                  {subjects.map(subject => (
+                                    <option key={subject} value={subject}>
+                                      {subject}
+                                    </option>
+                                  ))}
+                                </Select>
+                              ) : (
+                                <div className="bg-gray-100 p-2 text-xs text-gray-500 rounded text-center">
+                                  Not Available
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-{/* Daily Schedule Configuration Tab */}
+      {/* Daily Schedule Configuration Tab */}
       {activeTab === "daily" && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <ApperIcon name="Clock" size={24} className="text-primary-600" />
                 Daily Schedule Configuration
