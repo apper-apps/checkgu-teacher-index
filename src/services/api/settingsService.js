@@ -381,10 +381,81 @@ updateSchedulePreferences: async (preferencesData) => {
     });
 },
 
-  updateNotificationPreferences: async (preferencesData) => {
+updateNotificationPreferences: async (preferencesData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ ...preferencesData });
+      }, 200);
+    });
+  },
+
+  // User Profile Management
+  getUserProfile: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const userProfile = {
+          name: "Ms. Johnson",
+          email: "sarah.johnson@greenwood.edu",
+          phone: "+1 (555) 123-4567",
+          role: "Teacher",
+          department: "Elementary"
+        };
+        resolve({ ...userProfile });
+      }, 100);
+    });
+  },
+
+  updateUserProfile: async (profileData) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          // Validate required fields
+          if (!profileData.name || profileData.name.trim().length === 0) {
+            reject(new Error("Name is required"));
+            return;
+          }
+
+          if (!profileData.email || profileData.email.trim().length === 0) {
+            reject(new Error("Email is required"));
+            return;
+          }
+
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(profileData.email.trim())) {
+            reject(new Error("Invalid email format"));
+            return;
+          }
+
+          // Validate name length
+          if (profileData.name.trim().length > 100) {
+            reject(new Error("Name must be 100 characters or less"));
+            return;
+          }
+
+          // Validate phone format if provided
+          if (profileData.phone && profileData.phone.trim().length > 0) {
+            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+            const cleanPhone = profileData.phone.replace(/[\s\-\(\)]/g, '');
+            if (!phoneRegex.test(cleanPhone)) {
+              reject(new Error("Invalid phone number format"));
+              return;
+            }
+          }
+
+          // Simulate successful update
+          const updatedProfile = {
+            name: profileData.name.trim(),
+            email: profileData.email.trim().toLowerCase(),
+            phone: profileData.phone?.trim() || "",
+            role: profileData.role || "Teacher",
+            department: profileData.department || "Elementary"
+          };
+
+          resolve(updatedProfile);
+        } catch (error) {
+          reject(error);
+        }
       }, 200);
     });
   }

@@ -21,7 +21,24 @@ const Settings = () => {
     role: "Teacher",
     department: "Elementary"
   });
+  const [profileLoading, setProfileLoading] = useState(false);
 
+  // Load user profile on component mount
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        setProfileLoading(true);
+        const profile = await settingsService.getUserProfile();
+        setUserProfile(profile);
+      } catch (err) {
+        toast.error("Failed to load user profile");
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadUserProfile();
+  }, []);
   const [notificationPreferences, setNotificationPreferences] = useState({
     classReminders: true,
     processingComplete: true,
@@ -92,13 +109,14 @@ const tabs = [
     { id: "export", label: "Export & Import", icon: "Download" }
   ];
 
-  const handleSaveProfile = async (e) => {
+const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
-      // In a real app, this would save to a service
+      const updatedProfile = await settingsService.updateUserProfile(userProfile);
+      setUserProfile(updatedProfile);
       toast.success("Profile updated successfully!");
     } catch (err) {
-      toast.error("Failed to update profile");
+      toast.error(err.message || "Failed to update profile");
     }
   };
 const handleSaveSchool = async (e) => {
