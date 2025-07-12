@@ -105,6 +105,7 @@ const SubjectScheduleManager = ({ subjectSchedules, onChange, availableSubjects,
               onChange={(e) => {
                 setSelectedSubject(e.target.value);
                 setSelectedDays([]); // Clear selected days when subject changes
+                setSelectedTimeSlots([]); // Clear selected time slots when subject changes
               }}
               className="w-full"
             >
@@ -953,112 +954,304 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                   </div>
                 </div>
 
-                {/* Individual Grade Level Customization */}
+{/* Individual Grade Level Customization */}
                 {schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length > 0 ? (
                   <div className="space-y-4">
                     <div className="border-t pt-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">Customize Grade Level Names</h4>
+                      <h4 className="font-semibold text-gray-900 mb-2">Customize Grade Level Names & Classes</h4>
                       <p className="text-gray-600 mb-4">
-                        Customize each grade level name to match your school's convention (e.g., "Tahun 1", "Kindergarten", "Form 1", etc.). Changes will be reflected throughout the application.
+                        Customize each grade level name and configure individual class names with detailed information. Each class can have multiple fields including room numbers, teacher assignments, and capacity.
                       </p>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {schedulePreferences.gradeLevels.map((level, index) => (
-                        <div key={level.Id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
-                              <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
+                    <div className="space-y-6">
+                      {schedulePreferences.gradeLevels.map((level, index) => {
+                        // Initialize classes array if not exists
+                        const levelClasses = level.classes || Array.from({ length: level.numberOfClasses }, (_, i) => ({
+                          Id: i + 1,
+                          name: `${level.name} ${String.fromCharCode(65 + i)}`,
+                          roomNumber: '',
+                          capacity: '',
+                          teacherAssigned: '',
+                          description: ''
+                        }));
+
+                        return (
+                          <div key={level.Id} className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="flex items-center justify-center w-10 h-10 bg-primary-100 rounded-full">
+                                <span className="text-lg font-semibold text-primary-700">{index + 1}</span>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900">Level {index + 1}</h4>
+                                <p className="text-sm text-gray-500">{level.numberOfClasses} classes configured</p>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900">Level {index + 1}</h4>
-                              <p className="text-xs text-gray-500">{level.numberOfClasses} classes</p>
+                            
+                            {/* Grade Level Name */}
+                            <div className="mb-6">
+                              <FormField label="Grade Level Name">
+                                <Input
+                                  value={level.name}
+                                  onChange={(e) => {
+                                    const updatedLevels = schedulePreferences.gradeLevels.map(l => 
+                                      l.Id === level.Id ? { ...l, name: e.target.value } : l
+                                    );
+                                    setSchedulePreferences(prev => ({
+                                      ...prev,
+                                      gradeLevels: updatedLevels
+                                    }));
+                                    setHasUnsavedChanges(true);
+                                  }}
+                                  placeholder={`Level Grade ${index + 1}`}
+                                  required
+                                  className="font-medium"
+                                />
+                                <div className="text-xs text-gray-500 mt-1">
+                                  This name will appear in schedules and class creation
+                                </div>
+                              </FormField>
+                            </div>
+
+                            {/* Number of Classes Control */}
+                            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                              <FormField label="Number of Classes">
+                                <div className="flex items-center gap-3">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (level.numberOfClasses > 1) {
+                                        const updatedLevels = schedulePreferences.gradeLevels.map(l => {
+                                          if (l.Id === level.Id) {
+                                            // Remove the last class from classes array
+                                            const updatedClasses = (l.classes || levelClasses).slice(0, -1);
+                                            return { 
+                                              ...l, 
+                                              numberOfClasses: l.numberOfClasses - 1,
+                                              classes: updatedClasses
+                                            };
+                                          }
+                                          return l;
+                                        });
+                                        setSchedulePreferences(prev => ({
+                                          ...prev,
+                                          gradeLevels: updatedLevels
+                                        }));
+                                        setHasUnsavedChanges(true);
+                                      }
+                                    }}
+                                    disabled={level.numberOfClasses <= 1}
+                                    className="w-10 h-10 p-0 flex items-center justify-center"
+                                  >
+                                    <ApperIcon name="Minus" size={16} />
+                                  </Button>
+                                  
+                                  <div className="flex-1 text-center">
+                                    <span className="text-xl font-bold text-gray-900">
+                                      {level.numberOfClasses}
+                                    </span>
+                                    <div className="text-xs text-gray-500">
+                                      {level.numberOfClasses === 1 ? 'class' : 'classes'}
+                                    </div>
+                                  </div>
+                                  
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (level.numberOfClasses < 10) {
+                                        const updatedLevels = schedulePreferences.gradeLevels.map(l => {
+                                          if (l.Id === level.Id) {
+                                            // Add a new class to classes array
+                                            const currentClasses = l.classes || levelClasses;
+                                            const newClass = {
+                                              Id: currentClasses.length + 1,
+                                              name: `${l.name} ${String.fromCharCode(65 + currentClasses.length)}`,
+                                              roomNumber: '',
+                                              capacity: '',
+                                              teacherAssigned: '',
+                                              description: ''
+                                            };
+                                            return { 
+                                              ...l, 
+                                              numberOfClasses: l.numberOfClasses + 1,
+                                              classes: [...currentClasses, newClass]
+                                            };
+                                          }
+                                          return l;
+                                        });
+                                        setSchedulePreferences(prev => ({
+                                          ...prev,
+                                          gradeLevels: updatedLevels
+                                        }));
+                                        setHasUnsavedChanges(true);
+                                      }
+                                    }}
+                                    disabled={level.numberOfClasses >= 10}
+                                    className="w-10 h-10 p-0 flex items-center justify-center"
+                                  >
+                                    <ApperIcon name="Plus" size={16} />
+                                  </Button>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1 text-center">
+                                  Maximum 10 classes per grade level
+                                </div>
+                              </FormField>
+                            </div>
+
+                            {/* Individual Class Configuration */}
+                            <div className="space-y-4">
+                              <h5 className="font-medium text-gray-900 flex items-center gap-2">
+                                <ApperIcon name="Users" size={18} className="text-primary-600" />
+                                Individual Class Configuration
+                              </h5>
+                              
+                              <div className="grid grid-cols-1 gap-4">
+                                {levelClasses.map((classItem, classIndex) => (
+                                  <div key={classItem.Id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <div className="flex items-center justify-center w-6 h-6 bg-primary-500 text-white rounded-full text-xs font-bold">
+                                        {String.fromCharCode(65 + classIndex)}
+                                      </div>
+                                      <span className="font-medium text-gray-900">Class {classIndex + 1}</span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      <FormField label="Class Name">
+                                        <Input
+                                          value={classItem.name}
+                                          onChange={(e) => {
+                                            const updatedLevels = schedulePreferences.gradeLevels.map(l => {
+                                              if (l.Id === level.Id) {
+                                                const updatedClasses = (l.classes || levelClasses).map(c => 
+                                                  c.Id === classItem.Id ? { ...c, name: e.target.value } : c
+                                                );
+                                                return { ...l, classes: updatedClasses };
+                                              }
+                                              return l;
+                                            });
+                                            setSchedulePreferences(prev => ({
+                                              ...prev,
+                                              gradeLevels: updatedLevels
+                                            }));
+                                            setHasUnsavedChanges(true);
+                                          }}
+                                          placeholder={`${level.name} ${String.fromCharCode(65 + classIndex)}`}
+                                          className="text-sm"
+                                        />
+                                      </FormField>
+                                      
+                                      <FormField label="Room Number">
+                                        <Input
+                                          value={classItem.roomNumber}
+                                          onChange={(e) => {
+                                            const updatedLevels = schedulePreferences.gradeLevels.map(l => {
+                                              if (l.Id === level.Id) {
+                                                const updatedClasses = (l.classes || levelClasses).map(c => 
+                                                  c.Id === classItem.Id ? { ...c, roomNumber: e.target.value } : c
+                                                );
+                                                return { ...l, classes: updatedClasses };
+                                              }
+                                              return l;
+                                            });
+                                            setSchedulePreferences(prev => ({
+                                              ...prev,
+                                              gradeLevels: updatedLevels
+                                            }));
+                                            setHasUnsavedChanges(true);
+                                          }}
+                                          placeholder="e.g., Room 101"
+                                          className="text-sm"
+                                        />
+                                      </FormField>
+                                      
+                                      <FormField label="Class Capacity">
+                                        <Input
+                                          type="number"
+                                          value={classItem.capacity}
+                                          onChange={(e) => {
+                                            const updatedLevels = schedulePreferences.gradeLevels.map(l => {
+                                              if (l.Id === level.Id) {
+                                                const updatedClasses = (l.classes || levelClasses).map(c => 
+                                                  c.Id === classItem.Id ? { ...c, capacity: e.target.value } : c
+                                                );
+                                                return { ...l, classes: updatedClasses };
+                                              }
+                                              return l;
+                                            });
+                                            setSchedulePreferences(prev => ({
+                                              ...prev,
+                                              gradeLevels: updatedLevels
+                                            }));
+                                            setHasUnsavedChanges(true);
+                                          }}
+                                          placeholder="e.g., 25"
+                                          min="1"
+                                          max="50"
+                                          className="text-sm"
+                                        />
+                                      </FormField>
+                                      
+                                      <FormField label="Teacher Assigned">
+                                        <Input
+                                          value={classItem.teacherAssigned}
+                                          onChange={(e) => {
+                                            const updatedLevels = schedulePreferences.gradeLevels.map(l => {
+                                              if (l.Id === level.Id) {
+                                                const updatedClasses = (l.classes || levelClasses).map(c => 
+                                                  c.Id === classItem.Id ? { ...c, teacherAssigned: e.target.value } : c
+                                                );
+                                                return { ...l, classes: updatedClasses };
+                                              }
+                                              return l;
+                                            });
+                                            setSchedulePreferences(prev => ({
+                                              ...prev,
+                                              gradeLevels: updatedLevels
+                                            }));
+                                            setHasUnsavedChanges(true);
+                                          }}
+                                          placeholder="e.g., Ms. Johnson"
+                                          className="text-sm"
+                                        />
+                                      </FormField>
+                                    </div>
+                                    
+                                    <div className="mt-3">
+                                      <FormField label="Class Description">
+                                        <Input
+                                          value={classItem.description}
+                                          onChange={(e) => {
+                                            const updatedLevels = schedulePreferences.gradeLevels.map(l => {
+                                              if (l.Id === level.Id) {
+                                                const updatedClasses = (l.classes || levelClasses).map(c => 
+                                                  c.Id === classItem.Id ? { ...c, description: e.target.value } : c
+                                                );
+                                                return { ...l, classes: updatedClasses };
+                                              }
+                                              return l;
+                                            });
+                                            setSchedulePreferences(prev => ({
+                                              ...prev,
+                                              gradeLevels: updatedLevels
+                                            }));
+                                            setHasUnsavedChanges(true);
+                                          }}
+                                          placeholder="Brief description or notes about this class"
+                                          className="text-sm"
+                                        />
+                                      </FormField>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                          
-                          <FormField label="Grade Level Name">
-                            <Input
-                              value={level.name}
-                              onChange={(e) => {
-                                const updatedLevels = schedulePreferences.gradeLevels.map(l => 
-                                  l.Id === level.Id ? { ...l, name: e.target.value } : l
-                                );
-                                setSchedulePreferences(prev => ({
-                                  ...prev,
-                                  gradeLevels: updatedLevels
-                                }));
-                                setHasUnsavedChanges(true);
-                              }}
-                              placeholder={`Level Grade ${index + 1}`}
-                              required
-                              className="font-medium"
-                            />
-                            <div className="text-xs text-gray-500 mt-1">
-                              This name will appear in schedules and class creation
-                            </div>
-                          </FormField>
-
-                          <FormField label="Number of Classes" className="mt-3">
-                            <div className="flex items-center gap-3">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  if (level.numberOfClasses > 1) {
-                                    const updatedLevels = schedulePreferences.gradeLevels.map(l => 
-                                      l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses - 1 } : l
-                                    );
-                                    setSchedulePreferences(prev => ({
-                                      ...prev,
-                                      gradeLevels: updatedLevels
-                                    }));
-                                    setHasUnsavedChanges(true);
-                                  }
-                                }}
-                                disabled={level.numberOfClasses <= 1}
-                                className="w-8 h-8 p-0 flex items-center justify-center"
-                              >
-                                <ApperIcon name="Minus" size={14} />
-                              </Button>
-                              
-                              <div className="flex-1 text-center">
-                                <span className="text-lg font-semibold text-gray-900">
-                                  {level.numberOfClasses}
-                                </span>
-                                <div className="text-xs text-gray-500">
-                                  {level.numberOfClasses === 1 ? 'class' : 'classes'}
-                                </div>
-                              </div>
-                              
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  if (level.numberOfClasses < 10) {
-                                    const updatedLevels = schedulePreferences.gradeLevels.map(l => 
-                                      l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses + 1 } : l
-                                    );
-                                    setSchedulePreferences(prev => ({
-                                      ...prev,
-                                      gradeLevels: updatedLevels
-                                    }));
-                                    setHasUnsavedChanges(true);
-                                  }
-                                }}
-                                disabled={level.numberOfClasses >= 10}
-                                className="w-8 h-8 p-0 flex items-center justify-center"
-                              >
-                                <ApperIcon name="Plus" size={14} />
-                              </Button>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              Maximum 10 classes per grade level
-                            </div>
-                          </FormField>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     
                     {hasUnsavedChanges && (
@@ -1066,7 +1259,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                         <div className="flex items-center gap-2">
                           <ApperIcon name="AlertCircle" size={16} className="text-amber-600" />
                           <p className="text-sm text-amber-800 font-medium">
-                            You have unsaved changes to grade level configuration. Save your changes to apply them throughout the application.
+                            You have unsaved changes to grade level and class configuration. Save your changes to apply them throughout the application.
                           </p>
                         </div>
                       </div>
