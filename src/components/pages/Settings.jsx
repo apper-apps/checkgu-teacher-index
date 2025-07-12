@@ -81,7 +81,6 @@ const tabs = [
     { id: "profile", label: "User Profile", icon: "User" },
     { id: "school", label: "School Profile", icon: "Building" },
     { id: "calendar", label: "Academic Calendar", icon: "Calendar" },
-    { id: "universalGradeSetup", label: "Universal Grade Level Setup", icon: "GraduationCap" },
     { id: "sync", label: "Calendar Sync", icon: "RefreshCw" },
     { id: "notifications", label: "Notifications", icon: "Bell" },
     { id: "export", label: "Export & Import", icon: "Download" }
@@ -740,136 +739,9 @@ case "calendar":
               Save Academic Calendar
             </Button>
 </form>
-        );
+);
 
-case "universalGradeSetup":
-        return (
-          <form onSubmit={handleSaveSchedulePreferences} className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Universal Grade Level Setup</h3>
-              <p className="text-sm text-gray-600">
-                Customize how grade levels are named throughout the application. 
-                This will affect all grade level displays across the system.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <FormField label="Default Grade Level Name">
-                <Input
-                  value={schedulePreferences.defaultGradeLevelName}
-                  onChange={(e) => setSchedulePreferences({
-                    ...schedulePreferences, 
-                    defaultGradeLevelName: e.target.value
-                  })}
-                  placeholder="e.g., Grade, Tahun, Year, Level"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  This name will be used as the prefix for all grade levels (e.g., "Tahun 1", "Tahun 2")
-                </p>
-              </FormField>
-
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-900">Preview</h4>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-3">Grade levels will appear as:</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                    {schedulePreferences.gradeLevels.map((level, index) => (
-                      <div 
-                        key={level.Id} 
-                        className="px-3 py-2 bg-white border border-gray-200 rounded-md text-center text-sm font-medium"
-                      >
-                        {schedulePreferences.defaultGradeLevelName} {index + 1}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-900">Number of Grade Levels</h4>
-                <FormField label="Total Grade Levels">
-                  <Select
-                    value={schedulePreferences.numberOfLevels}
-                    onChange={(e) => {
-                      const newCount = parseInt(e.target.value);
-                      const newGradeLevels = Array.from({ length: newCount }, (_, index) => ({
-                        Id: index + 1,
-                        name: `${schedulePreferences.defaultGradeLevelName} ${index + 1}`,
-                        numberOfClasses: 2
-                      }));
-                      
-                      setSchedulePreferences({
-                        ...schedulePreferences,
-                        numberOfLevels: newCount,
-                        gradeLevels: newGradeLevels
-                      });
-                    }}
-                  >
-                    <option value={3}>3 Grade Levels</option>
-                    <option value={4}>4 Grade Levels</option>
-                    <option value={5}>5 Grade Levels</option>
-                    <option value={6}>6 Grade Levels</option>
-                    <option value={7}>7 Grade Levels</option>
-                    <option value={8}>8 Grade Levels</option>
-                  </Select>
-                </FormField>
-
-                <FormField label="Classes per Grade Level">
-                  <Select
-                    value={schedulePreferences.numberOfClasses}
-                    onChange={(e) => {
-                      const newClassCount = parseInt(e.target.value);
-                      const updatedGradeLevels = schedulePreferences.gradeLevels.map(level => ({
-                        ...level,
-                        numberOfClasses: newClassCount
-                      }));
-                      
-                      setSchedulePreferences({
-                        ...schedulePreferences,
-                        numberOfClasses: newClassCount,
-                        gradeLevels: updatedGradeLevels
-                      });
-                    }}
-                  >
-                    <option value={1}>1 Class per Grade</option>
-                    <option value={2}>2 Classes per Grade</option>
-                    <option value={3}>3 Classes per Grade</option>
-                    <option value={4}>4 Classes per Grade</option>
-                  </Select>
-                </FormField>
-              </div>
-
-              <div className="border-t pt-4">
-                <FormField label="Default Lesson Duration (minutes)">
-                  <Select
-                    value={schedulePreferences.defaultLessonDuration}
-                    onChange={(e) => setSchedulePreferences({
-                      ...schedulePreferences, 
-                      defaultLessonDuration: parseInt(e.target.value)
-                    })}
-                  >
-                    <option value={15}>15 minutes</option>
-                    <option value={20}>20 minutes</option>
-                    <option value={25}>25 minutes</option>
-                    <option value={30}>30 minutes</option>
-                    <option value={35}>35 minutes</option>
-                    <option value={40}>40 minutes</option>
-                    <option value={45}>45 minutes</option>
-                    <option value={50}>50 minutes</option>
-                    <option value={60}>60 minutes</option>
-                  </Select>
-                </FormField>
-              </div>
-            </div>
-
-            <Button type="submit">
-              <ApperIcon name="Save" size={16} className="mr-2" />
-              Save Grade Level Setup
-            </Button>
-          </form>
-        );
-case "sync":
+      case "sync":
 
 return (
           <form onSubmit={handleSaveSync} className="space-y-4">
