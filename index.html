@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Checkgu - Teacher Management Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,5 +12,12 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <!-- Apper SDK - Load after React app to prevent canvas errors -->
+    <script 
+      src="https://cdn.apper.io/v1/apper-sdk.v1.js" 
+      async 
+      defer
+      onerror="console.warn('Apper SDK failed to load')"
+    ></script>
   </body>
 </html>

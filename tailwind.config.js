@@ -53,9 +53,15 @@ export default {
         'lg': '8px',
         'md': '6px',
       },
-      boxShadow: {
+boxShadow: {
         'card': '0 2px 4px 0 rgba(0, 0, 0, 0.1)',
         'elevated': '0 4px 12px 0 rgba(0, 0, 0, 0.15)',
+      },
+      minWidth: {
+        'canvas-safe': '1px',
+      },
+      minHeight: {
+        'canvas-safe': '1px',
       },
     },
   },
