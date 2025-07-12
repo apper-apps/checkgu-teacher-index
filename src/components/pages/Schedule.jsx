@@ -231,7 +231,7 @@ const [dailySchedule, setDailySchedule] = useState({});
   const [classLevels, setClassLevels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("schedule");
+const [activeTab, setActiveTab] = useState("daily");
 const [showAddClass, setShowAddClass] = useState(false);
   const [showAddClassLevel, setShowAddClassLevel] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -567,15 +567,15 @@ const handleDefaultWorkingHoursChange = (field, value) => {
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8">
           <button
-            onClick={() => setActiveTab("schedule")}
+            onClick={() => setActiveTab("daily")}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "schedule"
+              activeTab === "daily"
                 ? "border-primary-500 text-primary-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
-            <ApperIcon name="Calendar" size={20} className="inline mr-2" />
-            Schedule Overview
+            <ApperIcon name="Clock" size={20} className="inline mr-2" />
+            Daily Schedule
           </button>
           <button
             onClick={() => setActiveTab("weekly")}
@@ -587,17 +587,6 @@ const handleDefaultWorkingHoursChange = (field, value) => {
           >
             <ApperIcon name="Calendar" size={20} className="inline mr-2" />
             Weekly Schedule
-          </button>
-          <button
-            onClick={() => setActiveTab("daily")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "daily"
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <ApperIcon name="Clock" size={20} className="inline mr-2" />
-            Daily Schedule
           </button>
           <button
             onClick={() => setActiveTab("levels")}
@@ -613,158 +602,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
         </nav>
       </div>
 
-      {/* Schedule Overview Tab */}
-      {activeTab === "schedule" && (
-        <div className="space-y-6">
-          {/* Classes Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ApperIcon name="Users" size={24} className="text-primary-600" />
-                Classes Overview
-              </CardTitle>
-            </CardHeader>
-<CardContent>
-              {classes.length === 0 ? (
-                <Empty
-                  title="No classes configured"
-                  description="Create your first class to start building your schedule"
-                  actionLabel="Add Class"
-                  icon="Users"
-                  onAction={() => setShowAddClass(true)}
-                />
-              ) : (
-                <div className="space-y-4">
-                  {classes.map(cls => {
-                    const classSchedules = schedules.filter(s => s.classId === cls.Id);
-                    return (
-                      <div key={cls.Id} className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-semibold text-gray-900">{cls.name}</h3>
-                              <span className="px-2 py-1 bg-primary-100 text-primary-800 text-sm rounded font-medium">
-                                {cls.gradeLevel}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                              <div className="flex items-center gap-2">
-                                <ApperIcon name="Users" size={16} className="text-gray-400" />
-                                <span>{cls.studentCount || 0} students</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <ApperIcon name="BookOpen" size={16} className="text-gray-400" />
-                                <span>{cls.subjects?.length || 0} subjects</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <ApperIcon name="Calendar" size={16} className="text-gray-400" />
-                                <span>{classSchedules.length} periods/week</span>
-                              </div>
-                            </div>
-                            {cls.subjects && cls.subjects.length > 0 && (
-                              <div className="mt-3">
-                                <div className="flex flex-wrap gap-1">
-                                  {cls.subjects.slice(0, 4).map(subject => (
-                                    <span
-                                      key={subject}
-                                      className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
-                                    >
-                                      {subject}
-                                    </span>
-                                  ))}
-                                  {cls.subjects.length > 4 && (
-                                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                                      +{cls.subjects.length - 4} more
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingClass(cls);
-                                setNewClass({
-                                  name: cls.name,
-                                  gradeLevel: cls.gradeLevel,
-                                  studentCount: cls.studentCount?.toString() || ""
-                                });
-                              }}
-                              className="flex items-center gap-2"
-                            >
-                              <ApperIcon name="Edit" size={16} />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteClass(cls.Id)}
-                              className="flex items-center gap-2 text-red-600 hover:bg-red-50 border-red-200"
-                            >
-                              <ApperIcon name="Trash" size={16} />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-{/* Weekly Schedule Tab */}
-      {activeTab === "weekly" && (
-        <div className="space-y-6">
-          {/* Weekly Schedule Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ApperIcon name="Calendar" size={24} className="text-primary-600" />
-                Weekly Schedule Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ApperIcon name="Info" size={16} className="text-blue-600" />
-                    <h4 className="font-medium text-blue-900">Direct Subject Scheduling</h4>
-                  </div>
-                  <p className="text-sm text-blue-700">
-                    Add subjects and their teaching time slots directly to create your weekly schedule. Select the days and time periods when you want to teach each subject.
-                  </p>
-                </div>
-
-<SubjectScheduleManager
-                  subjectSchedules={[]}
-                  onChange={() => {}}
-                  availableSubjects={subjects}
-                  days={days}
-                  dailySchedule={dailySchedule}
-                  schedulePreferences={schedulePreferences}
-                  timeSlots={(() => {
-                    // Get all available time slots across all enabled days
-                    const allTimeSlots = new Set();
-                    days.forEach((_, dayIndex) => {
-                      const dayTimeSlots = getTimeSlotsForDay(dayIndex, days, dailySchedule, schedulePreferences);
-                      dayTimeSlots.forEach(slot => allTimeSlots.add(slot));
-                    });
-                    return Array.from(allTimeSlots);
-                  })()}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-{/* Daily Schedule Configuration Tab */}
+      {/* Daily Schedule Configuration Tab */}
       {activeTab === "daily" && (
         <Card>
           <CardHeader>
@@ -965,16 +803,61 @@ const handleDefaultWorkingHoursChange = (field, value) => {
             </CardContent>
           </Card>
         )}
-      {/* Class Levels Management Tab */}
-      {activeTab === "levels" && (
+{/* Weekly Schedule Tab */}
+      {activeTab === "weekly" && (
         <div className="space-y-6">
-{/* Grade Level Configuration */}
+          {/* Weekly Schedule Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="Calendar" size={24} className="text-primary-600" />
+                Weekly Schedule Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ApperIcon name="Info" size={16} className="text-blue-600" />
+                    <h4 className="font-medium text-blue-900">Direct Subject Scheduling</h4>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    Add subjects and their teaching time slots directly to create your weekly schedule. Select the days and time periods when you want to teach each subject.
+                  </p>
+                </div>
+
+<SubjectScheduleManager
+                  subjectSchedules={[]}
+                  onChange={() => {}}
+                  availableSubjects={subjects}
+                  days={days}
+                  dailySchedule={dailySchedule}
+                  schedulePreferences={schedulePreferences}
+                  timeSlots={(() => {
+                    // Get all available time slots across all enabled days
+                    const allTimeSlots = new Set();
+                    days.forEach((_, dayIndex) => {
+                      const dayTimeSlots = getTimeSlotsForDay(dayIndex, days, dailySchedule, schedulePreferences);
+                      dayTimeSlots.forEach(slot => allTimeSlots.add(slot));
+                    });
+                    return Array.from(allTimeSlots);
+                  })()}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+{/* Class Levels Management Tab */}
+{activeTab === "levels" && (
+        <div className="space-y-6">
+          {/* Universal Grade Level Counter */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <ApperIcon name="Settings" size={24} className="text-primary-600" />
-                  Grade Level Configuration
+                  Universal Grade Level Setup
                 </CardTitle>
                 {schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length > 0 && (
                   <Button
@@ -990,140 +873,214 @@ const handleDefaultWorkingHoursChange = (field, value) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div>
-                  <p className="text-gray-600 mb-4">
-                    Configure the grade levels for your school. These will be used when creating classes and organizing your academic structure. You can customize the names to match your school's naming convention.
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ApperIcon name="Info" size={16} className="text-blue-600" />
+                    <h4 className="font-medium text-blue-900">Universal Counter with Custom Names</h4>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    Set the total number of grade levels for your school. Each level gets a default "Level Grade X" name that you can customize below. Use the counter to add or remove grade levels as needed.
                   </p>
-                  
-                  {schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <ApperIcon name="Info" size={16} className="text-blue-600" />
-                          <h4 className="font-medium text-blue-900">Customizable Grade Level Names</h4>
-                        </div>
-                        <p className="text-sm text-blue-700">
-                          You can customize these grade level names to match your school's convention (e.g., "Tahun 1", "Kindergarten", "Form 1", etc.). Changes will be reflected throughout the application.
-                        </p>
-                      </div>
-                      
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {schedulePreferences.gradeLevels.map((level, index) => (
-                          <div key={level.Id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
-                                <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900">Level {index + 1}</h4>
-                                <p className="text-xs text-gray-500">{level.numberOfClasses} classes</p>
-                              </div>
-                            </div>
-                            
-                            <FormField label="Grade Level Name">
-                              <Input
-                                value={level.name}
-                                onChange={(e) => {
-                                  const updatedLevels = schedulePreferences.gradeLevels.map(l => 
-                                    l.Id === level.Id ? { ...l, name: e.target.value } : l
-                                  );
-                                  setSchedulePreferences(prev => ({
-                                    ...prev,
-                                    gradeLevels: updatedLevels
-                                  }));
-                                  setHasUnsavedChanges(true);
-                                }}
-                                placeholder={`e.g., Tahun ${index + 1}, Grade ${index + 1}`}
-                                required
-                                className="font-medium"
-                              />
-                              <div className="text-xs text-gray-500 mt-1">
-                                This name will appear in schedules and class creation
-                              </div>
-                            </FormField>
-
-                            <FormField label="Number of Classes" className="mt-3">
-                              <div className="flex items-center gap-3">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (level.numberOfClasses > 1) {
-                                      const updatedLevels = schedulePreferences.gradeLevels.map(l => 
-                                        l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses - 1 } : l
-                                      );
-                                      setSchedulePreferences(prev => ({
-                                        ...prev,
-                                        gradeLevels: updatedLevels
-                                      }));
-                                      setHasUnsavedChanges(true);
-                                    }
-                                  }}
-                                  disabled={level.numberOfClasses <= 1}
-                                  className="w-8 h-8 p-0 flex items-center justify-center"
-                                >
-                                  <ApperIcon name="Minus" size={14} />
-                                </Button>
-                                
-                                <div className="flex-1 text-center">
-                                  <span className="text-lg font-semibold text-gray-900">
-                                    {level.numberOfClasses}
-                                  </span>
-                                  <div className="text-xs text-gray-500">
-                                    {level.numberOfClasses === 1 ? 'class' : 'classes'}
-                                  </div>
-                                </div>
-                                
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (level.numberOfClasses < 10) {
-                                      const updatedLevels = schedulePreferences.gradeLevels.map(l => 
-                                        l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses + 1 } : l
-                                      );
-                                      setSchedulePreferences(prev => ({
-                                        ...prev,
-                                        gradeLevels: updatedLevels
-                                      }));
-                                      setHasUnsavedChanges(true);
-                                    }
-                                  }}
-                                  disabled={level.numberOfClasses >= 10}
-                                  className="w-8 h-8 p-0 flex items-center justify-center"
-                                >
-                                  <ApperIcon name="Plus" size={14} />
-                                </Button>
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                Maximum 10 classes per grade level
-                              </div>
-                            </FormField>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {hasUnsavedChanges && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                          <div className="flex items-center gap-2">
-                            <ApperIcon name="AlertCircle" size={16} className="text-amber-600" />
-                            <p className="text-sm text-amber-800 font-medium">
-                              You have unsaved changes to grade level names. Save your changes to apply them throughout the application.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <Empty
-                      title="No grade levels configured"
-                      description="Grade levels will be automatically generated when you configure your schedule preferences"
-                      icon="GraduationCap"
-                    />
-                  )}
                 </div>
+
+                {/* Universal Counter */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Total Grade Levels</h4>
+                      <p className="text-sm text-gray-600">Configure how many grade levels your school has</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentLevels = schedulePreferences?.gradeLevels || [];
+                          if (currentLevels.length > 1) {
+                            const updatedLevels = currentLevels.slice(0, -1);
+                            setSchedulePreferences(prev => ({
+                              ...prev,
+                              gradeLevels: updatedLevels
+                            }));
+                            setHasUnsavedChanges(true);
+                          }
+                        }}
+                        disabled={!schedulePreferences?.gradeLevels || schedulePreferences.gradeLevels.length <= 1}
+                        className="w-10 h-10 p-0 flex items-center justify-center"
+                      >
+                        <ApperIcon name="Minus" size={18} />
+                      </Button>
+                      
+                      <div className="text-center min-w-[80px]">
+                        <span className="text-2xl font-bold text-primary-600">
+                          {schedulePreferences?.gradeLevels?.length || 0}
+                        </span>
+                        <div className="text-xs text-gray-500">
+                          {(schedulePreferences?.gradeLevels?.length || 0) === 1 ? 'level' : 'levels'}
+                        </div>
+                      </div>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentLevels = schedulePreferences?.gradeLevels || [];
+                          if (currentLevels.length < 12) {
+                            const newLevel = {
+                              Id: Math.max(...currentLevels.map(l => l.Id), 0) + 1,
+                              name: `Level Grade ${currentLevels.length + 1}`,
+                              numberOfClasses: 2
+                            };
+                            const updatedLevels = [...currentLevels, newLevel];
+                            setSchedulePreferences(prev => ({
+                              ...prev,
+                              gradeLevels: updatedLevels
+                            }));
+                            setHasUnsavedChanges(true);
+                          }
+                        }}
+                        disabled={schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length >= 12}
+                        className="w-10 h-10 p-0 flex items-center justify-center"
+                      >
+                        <ApperIcon name="Plus" size={18} />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 text-center">
+                    Maximum 12 grade levels • Minimum 1 grade level
+                  </div>
+                </div>
+
+                {/* Individual Grade Level Customization */}
+                {schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">Customize Grade Level Names</h4>
+                      <p className="text-gray-600 mb-4">
+                        Customize each grade level name to match your school's convention (e.g., "Tahun 1", "Kindergarten", "Form 1", etc.). Changes will be reflected throughout the application.
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {schedulePreferences.gradeLevels.map((level, index) => (
+                        <div key={level.Id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
+                              <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-900">Level {index + 1}</h4>
+                              <p className="text-xs text-gray-500">{level.numberOfClasses} classes</p>
+                            </div>
+                          </div>
+                          
+                          <FormField label="Grade Level Name">
+                            <Input
+                              value={level.name}
+                              onChange={(e) => {
+                                const updatedLevels = schedulePreferences.gradeLevels.map(l => 
+                                  l.Id === level.Id ? { ...l, name: e.target.value } : l
+                                );
+                                setSchedulePreferences(prev => ({
+                                  ...prev,
+                                  gradeLevels: updatedLevels
+                                }));
+                                setHasUnsavedChanges(true);
+                              }}
+                              placeholder={`Level Grade ${index + 1}`}
+                              required
+                              className="font-medium"
+                            />
+                            <div className="text-xs text-gray-500 mt-1">
+                              This name will appear in schedules and class creation
+                            </div>
+                          </FormField>
+
+                          <FormField label="Number of Classes" className="mt-3">
+                            <div className="flex items-center gap-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (level.numberOfClasses > 1) {
+                                    const updatedLevels = schedulePreferences.gradeLevels.map(l => 
+                                      l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses - 1 } : l
+                                    );
+                                    setSchedulePreferences(prev => ({
+                                      ...prev,
+                                      gradeLevels: updatedLevels
+                                    }));
+                                    setHasUnsavedChanges(true);
+                                  }
+                                }}
+                                disabled={level.numberOfClasses <= 1}
+                                className="w-8 h-8 p-0 flex items-center justify-center"
+                              >
+                                <ApperIcon name="Minus" size={14} />
+                              </Button>
+                              
+                              <div className="flex-1 text-center">
+                                <span className="text-lg font-semibold text-gray-900">
+                                  {level.numberOfClasses}
+                                </span>
+                                <div className="text-xs text-gray-500">
+                                  {level.numberOfClasses === 1 ? 'class' : 'classes'}
+                                </div>
+                              </div>
+                              
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (level.numberOfClasses < 10) {
+                                    const updatedLevels = schedulePreferences.gradeLevels.map(l => 
+                                      l.Id === level.Id ? { ...l, numberOfClasses: l.numberOfClasses + 1 } : l
+                                    );
+                                    setSchedulePreferences(prev => ({
+                                      ...prev,
+                                      gradeLevels: updatedLevels
+                                    }));
+                                    setHasUnsavedChanges(true);
+                                  }
+                                }}
+                                disabled={level.numberOfClasses >= 10}
+                                className="w-8 h-8 p-0 flex items-center justify-center"
+                              >
+                                <ApperIcon name="Plus" size={14} />
+                              </Button>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Maximum 10 classes per grade level
+                            </div>
+                          </FormField>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {hasUnsavedChanges && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2">
+                          <ApperIcon name="AlertCircle" size={16} className="text-amber-600" />
+                          <p className="text-sm text-amber-800 font-medium">
+                            You have unsaved changes to grade level configuration. Save your changes to apply them throughout the application.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <ApperIcon name="GraduationCap" size={48} className="text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Grade Levels Configured</h3>
+                    <p className="text-gray-600 mb-4">
+                      Use the universal counter above to add your first grade level
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
