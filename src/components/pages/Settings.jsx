@@ -14,8 +14,9 @@ import { settingsService } from "@/services/api/settingsService";
 import { useUser } from "@/contexts/UserContext";
 
 const Settings = () => {
-  const { userProfile, updateUserProfile, loading: profileLoading } = useUser();
+  const { userProfile: contextUserProfile, updateUserProfile, loading: profileLoading } = useUser();
   const [activeTab, setActiveTab] = useState("profile");
+  const [userProfile, setUserProfile] = useState(contextUserProfile);
   const [notificationPreferences, setNotificationPreferences] = useState({
     classReminders: true,
     processingComplete: true,
@@ -86,7 +87,12 @@ const tabs = [
     { id: "export", label: "Export & Import", icon: "Download" }
   ];
 
-const handleSaveProfile = async (e) => {
+// Sync local state with context when context updates
+  React.useEffect(() => {
+    setUserProfile(contextUserProfile);
+  }, [contextUserProfile]);
+
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
       await updateUserProfile(userProfile);
@@ -397,7 +403,7 @@ const handleResetAllData = async () => {
 <FormField label="Full Name">
                 <Input
                   value={userProfile.name}
-                  onChange={(e) => updateUserProfile({...userProfile, name: e.target.value})}
+                  onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
                   required
                 />
               </FormField>
@@ -405,20 +411,20 @@ const handleResetAllData = async () => {
                 <Input
                   type="email"
                   value={userProfile.email}
-                  onChange={(e) => updateUserProfile({...userProfile, email: e.target.value})}
+                  onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
                   required
                 />
               </FormField>
 <FormField label="Phone Number">
                 <Input
                   value={userProfile.phone}
-                  onChange={(e) => updateUserProfile({...userProfile, phone: e.target.value})}
+                  onChange={(e) => setUserProfile({...userProfile, phone: e.target.value})}
                 />
               </FormField>
 <FormField label="Role">
                 <Select
                   value={userProfile.role}
-                  onChange={(e) => updateUserProfile({...userProfile, role: e.target.value})}
+                  onChange={(e) => setUserProfile({...userProfile, role: e.target.value})}
                 >
                   <option value="Teacher">Teacher</option>
                   <option value="Head Teacher">Head Teacher</option>
@@ -429,7 +435,7 @@ const handleResetAllData = async () => {
 <FormField label="Department">
                 <Select
                   value={userProfile.department}
-                  onChange={(e) => updateUserProfile({...userProfile, department: e.target.value})}
+                  onChange={(e) => setUserProfile({...userProfile, department: e.target.value})}
                 >
                   <option value="Elementary">Elementary</option>
                   <option value="Middle School">Middle School</option>
