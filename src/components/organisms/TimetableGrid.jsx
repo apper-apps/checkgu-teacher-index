@@ -56,19 +56,68 @@ const loadAcademicCalendar = async () => {
       return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
     }
     return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  };
+};
 
   const days = getDaysArray();
-  const timeSlots = [
-    "08:00 - 08:45",
-    "09:00 - 09:45",
-    "10:00 - 10:45",
-    "11:00 - 11:45",
-    "12:00 - 12:45",
-    "13:00 - 13:45",
-    "14:00 - 14:45",
-    "15:00 - 15:45",
-  ];
+  
+  // Generate time slots based on daily schedule working hours
+  const generateTimeSlots = (startTime, endTime, duration = 45) => {
+    const slots = [];
+    const start = new Date(`2000-01-01T${startTime}:00`);
+    const end = new Date(`2000-01-01T${endTime}:00`);
+    
+    let slotStart = new Date(start);
+    
+    while (slotStart < end) {
+      const slotEnd = new Date(slotStart.getTime() + duration * 60000);
+      
+      // Don't add slot if it would extend beyond working hours
+      if (slotEnd > end) break;
+      
+      const startStr = slotStart.toTimeString().substring(0, 5);
+      const endStr = slotEnd.toTimeString().substring(0, 5);
+      slots.push(`${startStr} - ${endStr}`);
+      
+      // Move to next slot (with 15-minute break)
+      slotStart = new Date(slotEnd.getTime() + 15 * 60000);
+    }
+    
+    return slots;
+  };
+
+  // Get time slots for a specific day based on its working hours
+  const getTimeSlotsForDay = (dayIndex) => {
+    if (!dailySchedule) {
+      // Fallback to default schedule if daily schedule not loaded
+      return generateTimeSlots("08:00", "16:00");
+    }
+    
+    const dayName = days[dayIndex];
+    const daySchedule = dailySchedule[dayName];
+    
+    if (!daySchedule || !daySchedule.enabled) {
+      return []; // No slots for disabled days
+    }
+    
+    return generateTimeSlots(daySchedule.startTime, daySchedule.endTime);
+  };
+
+  // Get all unique time slots across all enabled days
+  const getAllTimeSlots = () => {
+    if (!dailySchedule) {
+      return generateTimeSlots("08:00", "16:00");
+    }
+    
+    const allSlots = new Set();
+    days.forEach((_, dayIndex) => {
+      const daySlots = getTimeSlotsForDay(dayIndex);
+      daySlots.forEach(slot => allSlots.add(slot));
+    });
+    
+    return Array.from(allSlots).sort();
+  };
+
+  const timeSlots = getAllTimeSlots();
 
 const getWeekDates = () => {
     const weekStartsOn = academicCalendar?.weekStartsOnSunday ? 0 : 1;
@@ -91,8 +140,13 @@ const getAcademicWeekNumber = () => {
   };
 
 const getScheduleForSlot = (dayIndex, timeIndex) => {
+    const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+    const timeSlot = dayTimeSlots[timeIndex];
+    
+    if (!timeSlot) return null;
+    
     const schedule = schedules.find(
-      (s) => s.dayOfWeek === dayIndex && s.timeSlot === timeSlots[timeIndex]
+      (s) => s.dayOfWeek === dayIndex && s.timeSlot === timeSlot
     );
     return schedule || null;
   };
@@ -154,24 +208,28 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
           );
         })}
         
-        {timeSlots.map((timeSlot, timeIndex) => (
+{timeSlots.map((timeSlot, timeIndex) => (
           <div key={timeSlot} className="contents">
             <div className="py-3 text-sm text-gray-600 font-medium">
               {timeSlot}
             </div>
 {days.map((day, dayIndex) => {
-              const schedule = getScheduleForSlot(dayIndex, timeIndex);
+              const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+              const dayTimeIndex = dayTimeSlots.indexOf(timeSlot);
+              const schedule = dayTimeIndex >= 0 ? getScheduleForSlot(dayIndex, dayTimeIndex) : null;
+              const isSlotAvailable = dayTimeSlots.includes(timeSlot);
+              
               return (
                 <TimeSlot
                   key={`${day}-${timeIndex}`}
                   time={timeSlot}
                   subject={schedule?.subject}
                   className={schedule?.className}
-                  isEmpty={!schedule}
+                  isEmpty={!schedule || !isSlotAvailable}
                   isToday={isCurrentDay(dayIndex)}
-                  hideTime={!schedule}
-                  isAfterWorkingHours={isAfterWorkingHours(dayIndex, timeSlot)}
-                  onClick={() => onSlotClick?.(dayIndex, timeIndex, timeSlot)}
+                  hideTime={!schedule || !isSlotAvailable}
+                  isAfterWorkingHours={!isSlotAvailable}
+                  onClick={() => isSlotAvailable ? onSlotClick?.(dayIndex, dayTimeIndex, timeSlot) : null}
                 />
               );
             })}
@@ -231,7 +289,7 @@ const getScheduleForSlot = (dayIndex, timeIndex) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-{timeSlots.map((timeSlot, timeIndex) => {
+{getTimeSlotsForDay(selectedDay).map((timeSlot, timeIndex) => {
               const schedule = getScheduleForSlot(selectedDay, timeIndex);
               return (
                 <TimeSlot
