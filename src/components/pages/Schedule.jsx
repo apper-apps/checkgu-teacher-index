@@ -1082,12 +1082,13 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                     required
                   />
                 </FormField>
-                <FormField label="Grade Level">
+<FormField label="Grade Level">
                   <Select
                     value={newClass.gradeLevel}
                     onChange={(e) => setNewClass({...newClass, gradeLevel: e.target.value})}
                     required
-<option value="">Select Grade</option>
+                  >
+                    <option value="">Select Grade</option>
                     {classLevels.map(level => (
                       <option key={level.Id} value={level.name}>{level.name}</option>
                     ))}
