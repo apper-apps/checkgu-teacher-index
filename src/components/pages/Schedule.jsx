@@ -926,9 +926,7 @@ const handleDefaultWorkingHoursChange = (field, value) => {
               )}
             </CardContent>
           </Card>
-        </div>
-      )}
-      
+        )}
       {/* Class Levels Management Tab */}
       {activeTab === "levels" && (
         <div className="space-y-6">
