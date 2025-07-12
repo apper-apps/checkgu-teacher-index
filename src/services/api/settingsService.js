@@ -209,6 +209,43 @@ async deleteClass(id) {
     return true;
   },
 
+  // Class Levels Management Methods
+  getClassLevels: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([...mockClassLevels]);
+      }, 100);
+    });
+  },
+
+  updateClassLevels: async (levelsData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        mockClassLevels.length = 0;
+        mockClassLevels.push(...levelsData);
+        resolve([...mockClassLevels]);
+      }, 200);
+    });
+  },
+
+  // Academic Calendar Methods
+  getAcademicCalendar: async () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ ...mockAcademicCalendar });
+      }, 100);
+    });
+  },
+
+  updateAcademicCalendar: async (calendarData) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        Object.assign(mockAcademicCalendar, calendarData);
+        resolve({ ...mockAcademicCalendar });
+      }, 200);
+    });
+  },
+
   // Holiday Management Methods
   async getHolidays() {
     await delay(200);

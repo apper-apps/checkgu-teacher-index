@@ -212,22 +212,46 @@ const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData, academicCalendarData] = await Promise.all([
-        classService.getAll(),
-        scheduleService.getAll(),
-        settingsService.getSchedulePreferences(),
-        settingsService.getDailySchedule(),
-        settingsService.getClassLevels(),
-        settingsService.getAcademicCalendar()
-      ]);
-      setClasses(classesData);
-      setSchedules(schedulesData);
-      setSchedulePreferences(preferencesData);
-      setDailySchedule(dailyScheduleData);
-      setClassLevels(classLevelsData);
-      setAcademicCalendar(academicCalendarData);
+      
+      // Load data with individual error handling for each service
+      const promises = [
+        classService.getAll().catch(err => {
+          console.error('Failed to load classes:', err);
+          return [];
+        }),
+        scheduleService.getAll().catch(err => {
+          console.error('Failed to load schedules:', err);
+          return [];
+        }),
+        settingsService.getSchedulePreferences?.().catch(err => {
+          console.error('Failed to load schedule preferences:', err);
+          return { defaultWorkingHours: { start: "08:00", end: "16:00" }, classPeriodMinutes: 45 };
+        }) || Promise.resolve({ defaultWorkingHours: { start: "08:00", end: "16:00" }, classPeriodMinutes: 45 }),
+        settingsService.getDailySchedule?.().catch(err => {
+          console.error('Failed to load daily schedule:', err);
+          return {};
+        }) || Promise.resolve({}),
+        settingsService.getClassLevels?.().catch(err => {
+          console.error('Failed to load class levels:', err);
+          return [];
+        }) || Promise.resolve([]),
+        settingsService.getAcademicCalendar?.().catch(err => {
+          console.error('Failed to load academic calendar:', err);
+          return { weekStartsOnSunday: false };
+        }) || Promise.resolve({ weekStartsOnSunday: false })
+      ];
+      
+      const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData, academicCalendarData] = await Promise.all(promises);
+      
+      setClasses(classesData || []);
+      setSchedules(schedulesData || []);
+      setSchedulePreferences(preferencesData || { defaultWorkingHours: { start: "08:00", end: "16:00" }, classPeriodMinutes: 45 });
+      setDailySchedule(dailyScheduleData || {});
+      setClassLevels(classLevelsData || []);
+      setAcademicCalendar(academicCalendarData || { weekStartsOnSunday: false });
     } catch (err) {
-      setError(err.message);
+      console.error('Critical error loading schedule data:', err);
+      setError(err.message || 'Failed to load schedule data');
     } finally {
       setLoading(false);
     }
@@ -422,9 +446,13 @@ const handleDefaultWorkingHoursChange = (field, value) => {
     }
   };
 
-  const handleCreateClassLevel = async (e) => {
+const handleCreateClassLevel = async (e) => {
     e.preventDefault();
     try {
+      if (!settingsService.updateClassLevels) {
+        throw new Error("Class level management not available");
+      }
+      
       const updatedLevels = [...classLevels, { 
         Id: Math.max(...classLevels.map(c => c.Id), 0) + 1, 
         ...newClassLevel 
@@ -435,13 +463,18 @@ const handleDefaultWorkingHoursChange = (field, value) => {
       setShowAddClassLevel(false);
       toast.success("Class level added successfully!");
     } catch (err) {
-      toast.error("Failed to add class level");
+      console.error('Error creating class level:', err);
+      toast.error(err.message || "Failed to add class level");
     }
   };
 
-  const handleEditClassLevel = async (e) => {
+const handleEditClassLevel = async (e) => {
     e.preventDefault();
     try {
+      if (!settingsService.updateClassLevels) {
+        throw new Error("Class level management not available");
+      }
+      
       const updatedLevels = classLevels.map(level => 
         level.Id === editingClassLevel.Id ? { ...level, ...newClassLevel } : level
       );
@@ -451,22 +484,28 @@ const handleDefaultWorkingHoursChange = (field, value) => {
       setNewClassLevel({ name: "", description: "" });
       toast.success("Class level updated successfully!");
     } catch (err) {
-      toast.error("Failed to update class level");
+      console.error('Error updating class level:', err);
+      toast.error(err.message || "Failed to update class level");
     }
   };
 
-  const handleDeleteClassLevel = async (levelId) => {
+const handleDeleteClassLevel = async (levelId) => {
     if (confirm("Are you sure you want to delete this class level?")) {
       try {
+        if (!settingsService.updateClassLevels) {
+          throw new Error("Class level management not available");
+        }
+        
         const updatedLevels = classLevels.filter(level => level.Id !== levelId);
         await settingsService.updateClassLevels(updatedLevels);
         setClassLevels(updatedLevels);
         toast.success("Class level deleted successfully!");
       } catch (err) {
-        toast.error("Failed to delete class level");
+        console.error('Error deleting class level:', err);
+        toast.error(err.message || "Failed to delete class level");
       }
     }
-};
+  };
 
   const resetGradeLevelsToDefaults = async () => {
     if (confirm("Are you sure you want to reset all grade levels to default values? This will replace all current grade level names.")) {
