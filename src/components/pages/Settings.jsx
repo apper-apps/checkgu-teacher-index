@@ -747,9 +747,8 @@ case "calendar":
               <ApperIcon name="Save" size={16} className="mr-2" />
               Save Academic Calendar
             </Button>
-          </form>
+</form>
         );
-);
 
 case "universalGradeSetup":
         return (
