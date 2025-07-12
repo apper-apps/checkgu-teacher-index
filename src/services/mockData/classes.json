@@ -1,42 +1,82 @@
 [
   {
     "Id": 1,
-    "name": "4A",
-    "gradeLevel": 4,
-    "subjects": ["Mathematics", "English", "Science", "History", "Art", "Physical Education", "Music"],
-    "teacherId": 1,
-    "studentCount": 24
+    "name": "1A",
+    "grade": "1",
+    "section": "A",
+    "capacity": 25,
+    "description": "Grade 1 Section A"
   },
   {
     "Id": 2,
-    "name": "4B",
-    "gradeLevel": 4,
-    "subjects": ["Mathematics", "English", "Science", "Geography", "Art", "Physical Education", "Music"],
-    "teacherId": 1,
-    "studentCount": 22
+    "name": "1B",
+    "grade": "1",
+    "section": "B",
+    "capacity": 25,
+    "description": "Grade 1 Section B"
   },
   {
     "Id": 3,
-    "name": "5A",
-    "gradeLevel": 5,
-    "subjects": ["Mathematics", "English", "Science", "History", "Geography", "Art", "Physical Education"],
-    "teacherId": 2,
-    "studentCount": 26
+    "name": "2A",
+    "grade": "2",
+    "section": "A",
+    "capacity": 28,
+    "description": "Grade 2 Section A"
   },
   {
     "Id": 4,
-    "name": "5B",
-    "gradeLevel": 5,
-    "subjects": ["Mathematics", "English", "Science", "History", "Geography", "Music", "Physical Education"],
-    "teacherId": 2,
-    "studentCount": 25
+    "name": "2B",
+    "grade": "2",
+    "section": "B",
+    "capacity": 28,
+    "description": "Grade 2 Section B"
   },
   {
     "Id": 5,
     "name": "3A",
-    "gradeLevel": 3,
-    "subjects": ["Mathematics", "English", "Science", "Art", "Music", "Physical Education"],
-    "teacherId": 3,
-    "studentCount": 20
+    "grade": "3",
+    "section": "A",
+    "capacity": 30,
+    "description": "Grade 3 Section A"
+  },
+  {
+    "Id": 6,
+    "name": "3B",
+    "grade": "3",
+    "section": "B",
+    "capacity": 30,
+    "description": "Grade 3 Section B"
+  },
+  {
+    "Id": 7,
+    "name": "4A",
+    "grade": "4",
+    "section": "A",
+    "capacity": 30,
+    "description": "Grade 4 Section A"
+  },
+  {
+    "Id": 8,
+    "name": "4B",
+    "grade": "4",
+    "section": "B",
+    "capacity": 30,
+    "description": "Grade 4 Section B"
+  },
+  {
+    "Id": 9,
+    "name": "5A",
+    "grade": "5",
+    "section": "A",
+    "capacity": 32,
+    "description": "Grade 5 Section A"
+  },
+  {
+    "Id": 10,
+    "name": "5B",
+    "grade": "5",
+    "section": "B",
+    "capacity": 32,
+    "description": "Grade 5 Section B"
   }
 ]

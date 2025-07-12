@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import FormField from "@/components/molecules/FormField";
-import Input from "@/components/atoms/Input";
-import Select from "@/components/atoms/Select";
-import Textarea from "@/components/atoms/Textarea";
-import ApperIcon from "@/components/ApperIcon";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
+import Textarea from "@/components/atoms/Textarea";
+import Input from "@/components/atoms/Input";
+import FormField from "@/components/molecules/FormField";
+import { settingsService } from "@/services/api/settingsService";
 
 const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
   const [formData, setFormData] = useState({
@@ -20,6 +21,15 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
     materials: "",
     assessment: "",
   });
+
+  const [subjects, setSubjects] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+useEffect(() => {
+    loadSubjectsAndClasses();
+  }, []);
 
   useEffect(() => {
     if (lesson) {
@@ -36,14 +46,35 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
     }
   }, [lesson]);
 
+  const loadSubjectsAndClasses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [subjectsData, classesData] = await Promise.all([
+        settingsService.getSubjects(),
+        settingsService.getClasses()
+      ]);
+      setSubjects(subjectsData);
+      setClasses(classesData);
+    } catch (err) {
+      setError("Failed to load subjects and classes");
+      toast.error("Failed to load form data");
+    } finally {
+      setLoading(false);
+}
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       await onSave(formData);
-      toast.success("Lesson plan saved successfully!");
+      toast.success("Lesson plan saved successfully");
       onClose();
     } catch (error) {
       toast.error("Failed to save lesson plan");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,6 +108,11 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
             </div>
           </CardHeader>
           <CardContent>
+{error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField label="Subject">
@@ -84,35 +120,29 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
                     value={formData.subject}
                     onChange={(e) => handleChange("subject", e.target.value)}
                     required
+disabled={loading}
                   >
                     <option value="">Select Subject</option>
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="English">English</option>
-                    <option value="Science">Science</option>
-                    <option value="History">History</option>
-                    <option value="Geography">Geography</option>
-                    <option value="Art">Art</option>
-                    <option value="Physical Education">Physical Education</option>
-                    <option value="Music">Music</option>
+                    {subjects.map((subject) => (
+                      <option key={subject.Id} value={subject.name}>
+                        {subject.name}
+                      </option>
+                    ))}
                   </Select>
                 </FormField>
-                <FormField label="Class">
+<FormField label="Class">
                   <Select
                     value={formData.className}
                     onChange={(e) => handleChange("className", e.target.value)}
                     required
+                    disabled={loading}
                   >
                     <option value="">Select Class</option>
-                    <option value="1A">1A</option>
-                    <option value="1B">1B</option>
-                    <option value="2A">2A</option>
-                    <option value="2B">2B</option>
-                    <option value="3A">3A</option>
-                    <option value="3B">3B</option>
-                    <option value="4A">4A</option>
-                    <option value="4B">4B</option>
-                    <option value="5A">5A</option>
-                    <option value="5B">5B</option>
+                    {classes.map((classItem) => (
+                      <option key={classItem.Id} value={classItem.name}>
+                        {classItem.name}
+                      </option>
+                    ))}
                   </Select>
                 </FormField>
                 <FormField label="Date">

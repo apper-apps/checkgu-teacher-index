@@ -1,0 +1,50 @@
+[
+  {
+    "Id": 1,
+    "name": "Mathematics",
+    "code": "MATH",
+    "description": "Numbers, algebra, geometry, and problem-solving skills"
+  },
+  {
+    "Id": 2,
+    "name": "English",
+    "code": "ENG",
+    "description": "Reading, writing, speaking, and literature"
+  },
+  {
+    "Id": 3,
+    "name": "Science",
+    "code": "SCI",
+    "description": "Biology, chemistry, physics, and scientific method"
+  },
+  {
+    "Id": 4,
+    "name": "History",
+    "code": "HIST",
+    "description": "Past events, civilizations, and historical analysis"
+  },
+  {
+    "Id": 5,
+    "name": "Geography",
+    "code": "GEO",
+    "description": "Earth's features, countries, and human geography"
+  },
+  {
+    "Id": 6,
+    "name": "Art",
+    "code": "ART",
+    "description": "Creative expression, drawing, painting, and crafts"
+  },
+  {
+    "Id": 7,
+    "name": "Physical Education",
+    "code": "PE",
+    "description": "Sports, fitness, and physical health activities"
+  },
+  {
+    "Id": 8,
+    "name": "Music",
+    "code": "MUS",
+    "description": "Singing, instruments, and musical appreciation"
+  }
+]

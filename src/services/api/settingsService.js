@@ -1,5 +1,11 @@
-// Mock settings service for academic calendar, school profile, and schedule preferences
-const mockAcademicCalendar = {
+import { toast } from "react-toastify";
+import subjectsData from "@/services/mockData/subjects.json";
+import React from "react";
+import Error from "@/components/ui/Error";
+import classesData from "@/services/mockData/classes.json";
+
+// Mock data for settings
+let academicCalendar = {
   termStart: "2025-02-17",
   termEnd: "2025-06-30",
   winterBreakStart: "2025-04-01",
@@ -13,107 +19,220 @@ const mockAcademicCalendar = {
   ]
 };
 
-const mockHolidays = [
-  { Id: 1, name: "New Year's Day", date: "2025-01-01", description: "New Year celebration", isSchoolHoliday: true },
-  { Id: 2, name: "Martin Luther King Jr. Day", date: "2025-01-20", description: "Federal holiday", isSchoolHoliday: true },
-  { Id: 3, name: "Presidents' Day", date: "2025-02-17", description: "Federal holiday", isSchoolHoliday: true },
-  { Id: 4, name: "Memorial Day", date: "2025-05-26", description: "Federal holiday", isSchoolHoliday: true },
-  { Id: 5, name: "Independence Day", date: "2025-07-04", description: "Fourth of July", isSchoolHoliday: false },
-  { Id: 6, name: "Labor Day", date: "2025-09-01", description: "Federal holiday", isSchoolHoliday: true },
-  { Id: 7, name: "Thanksgiving", date: "2025-11-27", description: "Thanksgiving Day", isSchoolHoliday: true },
-  { Id: 8, name: "Christmas Day", date: "2025-12-25", description: "Christmas celebration", isSchoolHoliday: true }
-];
+let dailySchedule = {
+  Monday: { enabled: true, startTime: "08:00", endTime: "15:30" },
+  Tuesday: { enabled: true, startTime: "08:00", endTime: "15:30" },
+  Wednesday: { enabled: true, startTime: "08:00", endTime: "15:30" },
+  Thursday: { enabled: true, startTime: "08:00", endTime: "15:30" },
+  Friday: { enabled: true, startTime: "08:00", endTime: "15:30" },
+  Saturday: { enabled: false, startTime: "08:00", endTime: "12:00" },
+  Sunday: { enabled: false, startTime: "08:00", endTime: "12:00" }
+};
 
-let nextHolidayId = 9;
+let schedulePreferences = {
+  classPeriodMinutes: 45,
+  breakMinutes: 15,
+  lunchBreakMinutes: 60,
+  timeFormat: "12hour"
+};
 
-const mockSchoolProfile = {
+let schoolProfile = {
   name: "Greenwood Elementary School",
   type: "Public Elementary",
   address: "123 Education Lane, Springfield, ST 12345",
   phone: "+1 (555) 987-6543",
   email: "info@greenwood.edu",
   website: "www.greenwood.edu",
-  logo: null,
-  logoPreview: null
+  logo: null
 };
 
-const mockSchedulePreferences = {
-  numberOfLevels: 5,
-  numberOfClasses: 2,
-  defaultLessonDuration: 30,
-  defaultWorkingHours: {
-    start: "08:00",
-end: "16:00"
-  },
-  gradeLevels: [
-    { Id: 1, name: "Tahun 1", numberOfClasses: 2 },
-    { Id: 2, name: "Tahun 2", numberOfClasses: 2 },
-    { Id: 3, name: "Tahun 3", numberOfClasses: 2 },
-    { Id: 4, name: "Tahun 4", numberOfClasses: 2 },
-    { Id: 5, name: "Tahun 5", numberOfClasses: 2 }
-  ]
-};
-const mockDailySchedule = {
-  Monday: { enabled: true, startTime: "08:00", endTime: "16:00" },
-  Tuesday: { enabled: true, startTime: "08:00", endTime: "16:00" },
-  Wednesday: { enabled: true, startTime: "08:00", endTime: "16:00" },
-  Thursday: { enabled: true, startTime: "08:00", endTime: "16:00" },
-  Friday: { enabled: true, startTime: "08:00", endTime: "16:00" }
+let notificationPreferences = {
+  classReminders: true,
+  processingComplete: true,
+  systemUpdates: false
 };
 
-const mockClassLevels = [
-  { Id: 1, name: "Grade 1", description: "Elementary level - Age 6-7" },
-  { Id: 2, name: "Grade 2", description: "Elementary level - Age 7-8" },
-  { Id: 3, name: "Grade 3", description: "Elementary level - Age 8-9" },
-  { Id: 4, name: "Grade 4", description: "Elementary level - Age 9-10" },
-  { Id: 5, name: "Grade 5", description: "Elementary level - Age 10-11" },
-  { Id: 6, name: "Grade 6", description: "Elementary level - Age 11-12" }
-];
+// Data management - subjects and classes
+let subjects = [...subjectsData];
+let classes = [...classesData];
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const settingsService = {
-  getAcademicCalendar: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ ...mockAcademicCalendar });
-      }, 100);
-    });
+  // Academic Calendar Methods
+  async getAcademicCalendar() {
+    await delay(300);
+    return { ...academicCalendar };
   },
 
-  updateAcademicCalendar: async (calendarData) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        Object.assign(mockAcademicCalendar, calendarData);
-        resolve({ ...mockAcademicCalendar });
-      }, 200);
-    });
+  async updateAcademicCalendar(calendar) {
+    await delay(400);
+    academicCalendar = { ...calendar };
+    return { ...academicCalendar };
   },
 
-  getSchoolProfile: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ ...mockSchoolProfile });
-      }, 100);
-    });
+  // Daily Schedule Methods
+  async getDailySchedule() {
+    await delay(200);
+    return { ...dailySchedule };
   },
 
-  updateSchoolProfile: async (profileData) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        Object.assign(mockSchoolProfile, profileData);
-        resolve({ ...mockSchoolProfile });
-      }, 200);
-    });
+  async updateDailySchedule(schedule) {
+    await delay(300);
+    dailySchedule = { ...schedule };
+    return { ...dailySchedule };
   },
 
-  getSchedulePreferences: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ ...mockSchedulePreferences });
-      }, 100);
-    });
+  // Schedule Preferences Methods
+  async getSchedulePreferences() {
+    await delay(200);
+    return { ...schedulePreferences };
   },
 
-updateSchedulePreferences: async (preferencesData) => {
+  async updateSchedulePreferences(preferences) {
+    await delay(300);
+    schedulePreferences = { ...preferences };
+    return { ...schedulePreferences };
+  },
+
+  // School Profile Methods
+  async getSchoolProfile() {
+    await delay(200);
+    return { ...schoolProfile };
+  },
+
+  async updateSchoolProfile(profile) {
+    await delay(300);
+    schoolProfile = { ...profile };
+    return { ...schoolProfile };
+  },
+
+  // Notification Preferences Methods
+  async getNotificationPreferences() {
+    await delay(200);
+    return { ...notificationPreferences };
+},
+
+  async updateNotificationPreferences(preferences) {
+    await delay(300);
+    notificationPreferences = { ...preferences };
+    return { ...notificationPreferences };
+  },
+
+  // Subject Management Methods
+  async getSubjects() {
+    await delay(300);
+    return [...subjects];
+  },
+
+  async getSubjectById(id) {
+    await delay(200);
+    const subject = subjects.find(s => s.Id === parseInt(id));
+    if (!subject) {
+      throw new Error("Subject not found");
+    }
+    return { ...subject };
+  },
+
+  async createSubject(subjectData) {
+    await delay(400);
+    const newSubject = {
+      ...subjectData,
+      Id: Math.max(...subjects.map(s => s.Id), 0) + 1
+    };
+    subjects.push(newSubject);
+    return { ...newSubject };
+  },
+
+  async updateSubject(id, subjectData) {
+    await delay(300);
+    const index = subjects.findIndex(s => s.Id === parseInt(id));
+    if (index === -1) {
+      throw new Error("Subject not found");
+    }
+    subjects[index] = { ...subjects[index], ...subjectData };
+    return { ...subjects[index] };
+  },
+
+  async deleteSubject(id) {
+    await delay(200);
+    const index = subjects.findIndex(s => s.Id === parseInt(id));
+    if (index === -1) {
+      throw new Error("Subject not found");
+    }
+    subjects.splice(index, 1);
+    return true;
+  },
+
+  // Class Management Methods
+  async getClasses() {
+    await delay(300);
+    return [...classes];
+  },
+
+  async getClassById(id) {
+    await delay(200);
+    const classItem = classes.find(c => c.Id === parseInt(id));
+    if (!classItem) {
+      throw new Error("Class not found");
+    }
+    return { ...classItem };
+  },
+
+  async createClass(classData) {
+    await delay(400);
+    const newClass = {
+      ...classData,
+      Id: Math.max(...classes.map(c => c.Id), 0) + 1
+    };
+    classes.push(newClass);
+    return { ...newClass };
+  },
+
+  async updateClass(id, classData) {
+    await delay(300);
+    const index = classes.findIndex(c => c.Id === parseInt(id));
+    if (index === -1) {
+      throw new Error("Class not found");
+    }
+    classes[index] = { ...classes[index], ...classData };
+    return { ...classes[index] };
+  },
+
+  async deleteClass(id) {
+    await delay(200);
+    const index = classes.findIndex(c => c.Id === parseInt(id));
+    if (index === -1) {
+      throw new Error("Class not found");
+    }
+    classes.splice(index, 1);
+    return true;
+}
+};
+
+// Additional mock data for extended functionality
+let mockSchedulePreferences = { ...schedulePreferences };
+let mockDailySchedule = { ...dailySchedule };
+let mockAcademicCalendar = { ...academicCalendar };
+let mockClassLevels = [
+  { Id: 1, name: "Grade 1", description: "First Grade" },
+  { Id: 2, name: "Grade 2", description: "Second Grade" },
+  { Id: 3, name: "Grade 3", description: "Third Grade" },
+  { Id: 4, name: "Grade 4", description: "Fourth Grade" },
+  { Id: 5, name: "Grade 5", description: "Fifth Grade" }
+];
+
+let mockHolidays = [
+  { Id: 1, name: "New Year's Day", date: "2025-01-01", description: "New Year Holiday", isSchoolHoliday: true },
+  { Id: 2, name: "Independence Day", date: "2025-07-04", description: "National Holiday", isSchoolHoliday: true },
+  { Id: 3, name: "Christmas Day", date: "2025-12-25", description: "Christmas Holiday", isSchoolHoliday: true }
+];
+
+let nextHolidayId = 4;
+
+// Extended settings service with additional methods
+export const extendedSettingsService = {
+  updateSchedulePreferences: async (preferencesData) => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         try {
@@ -356,7 +475,7 @@ updateSchedulePreferences: async (preferencesData) => {
         }
       }, 200);
     });
-},
+  },
 
   updateNotificationPreferences: async (preferencesData) => {
     return new Promise((resolve) => {
