@@ -5,39 +5,73 @@ import './index.css'
 
 // Apper SDK initialization with error handling
 const initializeApperSDK = () => {
-  try {
-    // Check if Apper SDK is available
-    if (typeof window !== 'undefined' && window.ApperSDK) {
-      // Ensure viewport has proper dimensions before SDK operations
-      const checkViewport = () => {
-        const viewport = document.documentElement;
-        return viewport.clientWidth > 0 && viewport.clientHeight > 0;
-      };
+  let retryCount = 0;
+  const maxRetries = 10;
+  const baseDelay = 100;
 
-      // Wait for proper viewport dimensions
-      const initSDK = () => {
-        if (checkViewport()) {
-          window.ApperSDK.init({
-            projectId: import.meta.env.VITE_APPER_PROJECT_ID,
-            publicKey: import.meta.env.VITE_APPER_PUBLIC_KEY,
-            // Prevent canvas operations on zero-dimension elements
-            captureViewport: false,
-            autoCapture: false,
-          }).catch(error => {
-            console.warn('Apper SDK initialization failed:', error);
-          });
+  const checkSDKAvailability = () => {
+    return typeof window !== 'undefined' && 
+           window.ApperSDK && 
+           typeof window.ApperSDK.init === 'function';
+  };
+
+  const checkViewport = () => {
+    const viewport = document.documentElement;
+    return viewport.clientWidth > 0 && viewport.clientHeight > 0;
+  };
+
+  const initSDK = () => {
+    try {
+      if (!checkSDKAvailability()) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
+          console.log(`Apper SDK not ready, retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`);
+          setTimeout(initSDK, delay);
+          return;
         } else {
-          // Retry after DOM is fully ready
-          setTimeout(initSDK, 100);
+          console.warn('Apper SDK failed to load after maximum retries. App will continue without SDK.');
+          return;
         }
-      };
+      }
 
-      // Initialize after a brief delay to ensure DOM is stable
-      setTimeout(initSDK, 500);
+      if (!checkViewport()) {
+        setTimeout(initSDK, 100);
+        return;
+      }
+
+      // Verify environment variables are available
+      const projectId = import.meta.env.VITE_APPER_PROJECT_ID;
+      const publicKey = import.meta.env.VITE_APPER_PUBLIC_KEY;
+
+      if (!projectId || !publicKey) {
+        console.warn('Apper SDK environment variables not configured properly');
+        return;
+      }
+
+      // Initialize SDK with proper error handling
+      const initPromise = window.ApperSDK.init({
+        projectId,
+        publicKey,
+        captureViewport: false,
+        autoCapture: false,
+      });
+
+      // Handle both promise and non-promise returns
+      if (initPromise && typeof initPromise.catch === 'function') {
+        initPromise.catch(error => {
+          console.warn('Apper SDK initialization failed:', error);
+        });
+      }
+
+      console.log('Apper SDK initialized successfully');
+    } catch (error) {
+      console.warn('Apper SDK initialization error:', error);
     }
-  } catch (error) {
-    console.warn('Apper SDK setup error:', error);
-  }
+  };
+
+  // Start initialization after a brief delay
+  setTimeout(initSDK, 500);
 };
 
 // Enhanced error boundary for canvas operations
