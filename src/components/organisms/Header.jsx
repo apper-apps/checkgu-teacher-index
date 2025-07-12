@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import { cn } from "@/utils/cn";
-
+import { useUser } from "@/contexts/UserContext";
 const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
+  const { displayName, firstName, roleDisplay } = useUser();
   const [currentTerm] = useState("Fall 2024");
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const navigate = useNavigate();
@@ -40,19 +41,19 @@ const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
               <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                 <ApperIcon name="User" size={16} className="text-primary-600" />
 </div>
-              <span className="hidden md:block text-sm font-medium">
-                {userProfile?.firstName || "Ms. Johnson"}
+<span className="hidden md:block text-sm font-medium">
+                {userProfile?.firstName || firstName || "Ms. Johnson"}
               </span>
               <ApperIcon name="ChevronDown" size={14} className="hidden md:block" />
             </Button>
             {userDropdownOpen && (
 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
 <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
-                    {userProfile?.displayName || "Ms. Johnson"}
+<p className="text-sm font-medium text-gray-900">
+                    {userProfile?.displayName || displayName || "Ms. Johnson"}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {userProfile?.roleDisplay || "Teacher - Elementary"}
+                    {userProfile?.roleDisplay || roleDisplay || "Teacher - Elementary"}
                   </p>
 </div>
                 <button 
