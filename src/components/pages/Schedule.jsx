@@ -237,21 +237,26 @@ const loadData = async () => {
         }) || Promise.resolve([]),
         settingsService.getAcademicCalendar?.().catch(err => {
           console.error('Failed to load academic calendar:', err);
-          return { weekStartsOnSunday: false };
-        }) || Promise.resolve({ weekStartsOnSunday: false })
+return null;
+        }) || Promise.resolve(null)
       ];
       
       const [classesData, schedulesData, preferencesData, dailyScheduleData, classLevelsData, academicCalendarData] = await Promise.all(promises);
       
-      setClasses(classesData || []);
-      setSchedules(schedulesData || []);
-      setSchedulePreferences(preferencesData || { defaultWorkingHours: { start: "08:00", end: "16:00" }, classPeriodMinutes: 45 });
+      setClasses(Array.isArray(classesData) ? classesData : []);
+      setSchedules(Array.isArray(schedulesData) ? schedulesData : []);
+      setSchedulePreferences(preferencesData || { 
+        defaultWorkingHours: { start: "08:00", end: "16:00" }, 
+        classPeriodMinutes: 45,
+        dailySchedules: {},
+        gradeLevels: []
+      });
       setDailySchedule(dailyScheduleData || {});
-      setClassLevels(classLevelsData || []);
-      setAcademicCalendar(academicCalendarData || { weekStartsOnSunday: false });
+      setClassLevels(Array.isArray(classLevelsData) ? classLevelsData : []);
+      setAcademicCalendar(academicCalendarData);
     } catch (err) {
-      console.error('Critical error loading schedule data:', err);
-      setError(err.message || 'Failed to load schedule data');
+      console.error('Error loading data:', err);
+      setError('Failed to load schedule data');
     } finally {
       setLoading(false);
     }
@@ -353,7 +358,6 @@ const handleCreateClass = async (e) => {
       toast.error("Failed to update schedule");
     }
   };
-
 const handleDailyScheduleChange = (day, field, value) => {
     const updatedSchedule = {
       ...dailySchedule,
@@ -362,64 +366,54 @@ const handleDailyScheduleChange = (day, field, value) => {
         [field]: value
       }
     };
-    
     setDailySchedule(updatedSchedule);
     setHasUnsavedChanges(true);
   };
 
-const handleDefaultWorkingHoursChange = (field, value) => {
+  const handleDefaultWorkingHoursChange = (field, value) => {
     const updatedPreferences = {
       ...schedulePreferences,
       defaultWorkingHours: {
-        ...schedulePreferences.defaultWorkingHours,
+        ...schedulePreferences?.defaultWorkingHours,
         [field]: value
       }
     };
-    
-    // Handle classPeriodMinutes separately since it's not nested
-    if (field === "classPeriodMinutes") {
-      updatedPreferences.classPeriodMinutes = value;
-      delete updatedPreferences.defaultWorkingHours.classPeriodMinutes;
-    }
-    
     setSchedulePreferences(updatedPreferences);
+    setHasUnsavedChanges(true);
+  };
+
+  const getTimeSlotsForDay = (dayIndex) => {
+    const daysArray = getDaysArray() || [];
+    const dayName = daysArray[dayIndex];
+    if (!dayName) return [];
     
-    // Auto-update daily schedules that are using default values
-    if (field === "start" || field === "end") {
-      const currentDefaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
-      const currentDefaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
-      
-      const updatedDailySchedule = { ...dailySchedule };
-      
-      days.forEach(day => {
-        const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
-        
-        // Check if this day is currently using the default value for the field being changed
-        const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === currentDefaultStart;
-        const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === currentDefaultEnd;
-        
-        let shouldUpdate = false;
-        const updatedDaySchedule = { ...daySchedule };
-        
-        if (field === "start" && isUsingDefaultStart) {
-          updatedDaySchedule.startTime = value;
-          shouldUpdate = true;
-        }
-        
-        if (field === "end" && isUsingDefaultEnd) {
-          updatedDaySchedule.endTime = value;
-          shouldUpdate = true;
-        }
-        
-        if (shouldUpdate) {
-          updatedDailySchedule[day] = updatedDaySchedule;
+    const daySchedule = schedulePreferences?.dailySchedules?.[dayName] || {};
+    const startTime = daySchedule.startTime || schedulePreferences?.defaultWorkingHours?.start || "08:00";
+    const endTime = daySchedule.endTime || schedulePreferences?.defaultWorkingHours?.end || "16:00";
+    const duration = schedulePreferences?.classPeriodMinutes || 45;
+    
+    return generateTimeSlots(startTime, endTime, duration);
+  };
+const getAllTimeSlots = () => {
+    const allSlots = [];
+    
+    (getDaysArray() || []).forEach((day, dayIndex) => {
+      const dayTimeSlots = getTimeSlotsForDay(dayIndex) || [];
+      dayTimeSlots.forEach(slot => {
+        if (slot && !allSlots.some(existingSlot => 
+          existingSlot === slot
+        )) {
+          allSlots.push(slot);
         }
       });
-      
-      setDailySchedule(updatedDailySchedule);
-    }
+    });
     
-    setHasUnsavedChanges(true);
+    // Sort slots by start time
+    return allSlots.sort((a, b) => {
+      const timeA = new Date(`1970/01/01 ${a.split(' - ')[0]}`);
+      const timeB = new Date(`1970/01/01 ${b.split(' - ')[0]}`);
+      return timeA - timeB;
+    });
   };
   
   const handleSaveAllChanges = async () => {
@@ -827,109 +821,107 @@ const handleDeleteClassLevel = async (levelId) => {
                       value={schedulePreferences?.defaultWorkingHours?.end || "16:00"}
                       onChange={(e) => handleDefaultWorkingHoursChange("end", e.target.value)}
                       className="bg-white"
-                    />
-                  </FormField>
+</FormField>
                   <FormField label="Class Period Duration (minutes)">
-                    <Select
+                    <Input
+                      type="number"
                       value={schedulePreferences?.classPeriodMinutes || 45}
-                      onChange={(e) => handleDefaultWorkingHoursChange("classPeriodMinutes", parseInt(e.target.value))}
+                      onChange={(e) => {
+                        const updatedPreferences = {
+                          ...schedulePreferences,
+                          classPeriodMinutes: parseInt(e.target.value)
+                        };
+                        setSchedulePreferences(updatedPreferences);
+                        setHasUnsavedChanges(true);
+                      }}
+                      min="15"
+                      max="120"
                       className="bg-white"
-                    >
-                      <option value={30}>30 minutes</option>
-                      <option value={45}>45 minutes</option>
-                      <option value={60}>60 minutes</option>
-                    </Select>
+                    />
                   </FormField>
                 </div>
               </div>
-              
-              <div className="border-t pt-6">
-                <h4 className="font-semibold text-gray-900 mb-2">Daily Schedule Overrides</h4>
-                <p className="text-gray-600 mb-4">
-                  Configure specific working hours for individual days. Leave empty to use the default hours above.
-                </p>
-              </div>
-              
-{days.map(day => {
-                const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
-                const defaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
-                const defaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
-                // Check if this day is using default values
-                const isUsingDefaultStart = !daySchedule.startTime || daySchedule.startTime === defaultStart;
-                const isUsingDefaultEnd = !daySchedule.endTime || daySchedule.endTime === defaultEnd;
-                const effectiveStartTime = daySchedule.startTime || defaultStart;
-                const effectiveEndTime = daySchedule.endTime || defaultEnd;
+
+              {/* Individual Day Configurations */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <ApperIcon name="Calendar" size={20} />
+                  Individual Day Configuration
+                </h4>
+                <div className="text-sm text-gray-600 mb-4">
+                  <p>
+                    Override default hours for specific days. Leave empty to use default values.
+                  </p>
+                </div>
                 
-                return (
-                  <div key={day} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-lg">{day}</h3>
-                        {(isUsingDefaultStart && isUsingDefaultEnd) && (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                            Using Default Hours
-                          </span>
-                        )}
-                        {(!isUsingDefaultStart || !isUsingDefaultEnd) && (
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">
-                            Custom Schedule
-                          </span>
-                        )}
+                {days.map(day => {
+                  const daySchedule = dailySchedule[day] || { enabled: true, startTime: null, endTime: null };
+                  const defaultStart = schedulePreferences?.defaultWorkingHours?.start || "08:00";
+                  const defaultEnd = schedulePreferences?.defaultWorkingHours?.end || "16:00";
+                  const effectiveStartTime = daySchedule.startTime || defaultStart;
+                  const effectiveEndTime = daySchedule.endTime || defaultEnd;
+                  const isUsingDefaultStart = !daySchedule.startTime;
+                  const isUsingDefaultEnd = !daySchedule.endTime;
+
+                  return (
+                    <div key={day} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="font-medium text-gray-900">{day}</h5>
+                        <div className="flex items-center">
+                          <label className="text-sm text-gray-600 mr-2">Enabled</label>
+                          <input
+                            type="checkbox"
+                            checked={daySchedule.enabled !== false}
+                            onChange={(e) => handleDailyScheduleChange(day, "enabled", e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                        </div>
                       </div>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={daySchedule.enabled}
-                          onChange={(e) => handleDailyScheduleChange(day, "enabled", e.target.checked)}
-                          className="rounded"
-                        />
-                        <span className="text-sm">Active</span>
-                      </label>
+                      
+                      {daySchedule.enabled !== false && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField label={
+<div className="flex items-center gap-2">
+                              <span>Start Time</span>
+                              {isUsingDefaultStart && (
+                                <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
+                              )}
+                            </div>
+                          }>
+                            <Input
+                              type="time"
+                              value={effectiveStartTime}
+                              onChange={(e) => handleDailyScheduleChange(day, "startTime", e.target.value)}
+                              placeholder={defaultStart}
+                            />
+                          </FormField>
+                          <FormField label={
+                            <div className="flex items-center gap-2">
+                              <span>End Time</span>
+                              {isUsingDefaultEnd && (
+                                <span className="text-xs text-blue-600">(Default: {defaultEnd})</span>
+                              )}
+                            </div>
+                          }>
+                            <Input
+                              type="time"
+                              value={effectiveEndTime}
+                              onChange={(e) => handleDailyScheduleChange(day, "endTime", e.target.value)}
+                              placeholder={defaultEnd}
+                            />
+                          </FormField>
+                        </div>
+                      )}
+                      
+                      {!daySchedule.enabled && (
+                        <div className="text-gray-500 text-sm">
+                          This day is disabled for classes
+                        </div>
+                      )}
                     </div>
-                    
-                    {daySchedule.enabled && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField label={
-                          <div className="flex items-center gap-2">
-                            <span>Start Time</span>
-                            {isUsingDefaultStart && (
-                              <span className="text-xs text-blue-600">(Default: {defaultStart})</span>
-                            )}
-                          </div>
-}>
-                          <Input
-                            type="time"
-                            value={effectiveStartTime}
-                            onChange={(e) => handleDailyScheduleChange(day, "startTime", e.target.value)}
-                            placeholder={defaultStart}
-                          />
-                        </FormField>
-                        <FormField label={
-                          <div className="flex items-center gap-2">
-                            <span>End Time</span>
-                            {isUsingDefaultEnd && (
-                              <span className="text-xs text-blue-600">(Default: {defaultEnd})</span>
-                            )}
-                          </div>
-}>
-                          <Input
-                            type="time"
-                            value={effectiveEndTime}
-                            onChange={(e) => handleDailyScheduleChange(day, "endTime", e.target.value)}
-                            placeholder={defaultEnd}
-                          />
-                        </FormField>
-                      </div>
-                    )}
-                    
-                    {!daySchedule.enabled && (
-                      <div className="text-gray-500 text-sm">
-                        This day is disabled for classes
-                      </div>
-                    )}
-                  </div>
-                );
-})}
+                  );
+                })}
+              </div>
               
               {hasUnsavedChanges && (
                 <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
