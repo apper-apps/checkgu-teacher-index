@@ -755,14 +755,12 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                         <ApperIcon name="Save" size={16} />
                         Save Changes
                       </>
-                    )}
-                  </Button>
 )}
                   </Button>
                 </div>
               )}
             </CardHeader>
-          </CardHeader>
+            <CardContent>
               {/* Default Working Hours Configuration */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <h4 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
@@ -924,10 +922,10 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                       )}
                     </Button>
                   </div>
-                </div>
+</div>
               )}
-            </div>
-          </CardContent>
+            </CardContent>
+          </Card>
         </Card>
       )}
 
