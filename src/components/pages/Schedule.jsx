@@ -11,11 +11,45 @@ import Loading from "@/components/ui/Loading";
 import FormField from "@/components/molecules/FormField";
 import { scheduleService } from "@/services/api/scheduleService";
 import { settingsService } from "@/services/api/settingsService";
-import { classService } from "@/services/api/classService";
+import { classService } from '@/services/api/classService'
+
+// Helper functions for time slot generation
+const generateTimeSlots = (startTime, endTime, duration = 45) => {
+  const slots = [];
+  const start = new Date(`2000-01-01T${startTime}:00`);
+  const end = new Date(`2000-01-01T${endTime}:00`);
+  
+  while (start < end) {
+    const slotStart = start.toTimeString().slice(0, 5);
+    start.setMinutes(start.getMinutes() + duration);
+    const slotEnd = start.toTimeString().slice(0, 5);
+    
+    if (start <= end) {
+      slots.push(`${slotStart} - ${slotEnd}`);
+    }
+  }
+  return slots;
+};
+
+const getTimeSlotsForDay = (dayIndex, days, dailySchedule, schedulePreferences) => {
+  const dayName = days[dayIndex];
+  const daySchedule = dailySchedule[dayName];
+  
+  // If day is explicitly disabled, return empty slots
+  if (daySchedule && !daySchedule.enabled) {
+    return [];
+  }
+  
+  // Use day-specific schedule if available, otherwise use individual day defaults
+  const startTime = daySchedule?.startTime || schedulePreferences?.defaultWorkingHours?.start || "08:00";
+  const endTime = daySchedule?.endTime || schedulePreferences?.defaultWorkingHours?.end || "16:00";
+  
+  return generateTimeSlots(startTime, endTime, schedulePreferences?.classPeriodMinutes || 45);
+};
 
 // Subject Schedule Manager Component
-const SubjectScheduleManager = ({ subjectSchedules, onChange, availableSubjects, days, timeSlots }) => {
-  const [selectedSubject, setSelectedSubject] = useState("");
+const SubjectScheduleManager = ({ subjectSchedules, onChange, availableSubjects, days, timeSlots, dailySchedule, schedulePreferences }) => {
+  const [selectedSubject, setSelectedSubject] = useState('')
   const [selectedDays, setSelectedDays] = useState([]);
   const [selectedTimeSlots, setSelectedTimeSlots] = useState([]);
 
@@ -122,10 +156,10 @@ const SubjectScheduleManager = ({ subjectSchedules, onChange, availableSubjects,
                   ));
                 }
                 
-                // Get all available time slots for selected days
+// Get all available time slots for selected days
                 const availableTimeSlots = new Set();
                 selectedDays.forEach(dayIndex => {
-                  const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                  const dayTimeSlots = getTimeSlotsForDay(dayIndex, days, dailySchedule, schedulePreferences);
                   dayTimeSlots.forEach(slot => availableTimeSlots.add(slot));
                 });
                 
@@ -262,38 +296,6 @@ const loadData = async () => {
     }
   };
 
-  const generateTimeSlots = (startTime, endTime, duration = 45) => {
-    const slots = [];
-    const start = new Date(`2000-01-01T${startTime}:00`);
-    const end = new Date(`2000-01-01T${endTime}:00`);
-    
-    while (start < end) {
-      const slotStart = start.toTimeString().slice(0, 5);
-      start.setMinutes(start.getMinutes() + duration);
-      const slotEnd = start.toTimeString().slice(0, 5);
-      
-      if (start <= end) {
-        slots.push(`${slotStart} - ${slotEnd}`);
-      }
-    }
-    return slots;
-  };
-
-const getTimeSlotsForDay = (dayIndex) => {
-    const dayName = days[dayIndex];
-    const daySchedule = dailySchedule[dayName];
-    
-    // If day is explicitly disabled, return empty slots
-    if (daySchedule && !daySchedule.enabled) {
-      return [];
-    }
-    
-    // Use day-specific schedule if available, otherwise use individual day defaults
-    const startTime = daySchedule?.startTime || schedulePreferences?.defaultWorkingHours?.start || "08:00";
-    const endTime = daySchedule?.endTime || schedulePreferences?.defaultWorkingHours?.end || "16:00";
-    
-    return generateTimeSlots(startTime, endTime, schedulePreferences?.classPeriodMinutes || 45);
-  };
 
 const handleCreateClass = async (e) => {
     e.preventDefault();
@@ -685,11 +687,13 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                   onChange={() => {}}
                   availableSubjects={subjects}
                   days={days}
+                  dailySchedule={dailySchedule}
+                  schedulePreferences={schedulePreferences}
                   timeSlots={(() => {
                     // Get all available time slots across all enabled days
                     const allTimeSlots = new Set();
                     days.forEach((_, dayIndex) => {
-                      const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                      const dayTimeSlots = getTimeSlotsForDay(dayIndex, days, dailySchedule, schedulePreferences);
                       dayTimeSlots.forEach(slot => allTimeSlots.add(slot));
                     });
                     return Array.from(allTimeSlots);
@@ -1164,11 +1168,13 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                     onChange={(schedules) => setNewClass({...newClass, subjectSchedules: schedules})}
                     availableSubjects={subjects}
                     days={days}
+                    dailySchedule={dailySchedule}
+                    schedulePreferences={schedulePreferences}
                     timeSlots={(() => {
                       // Get all available time slots across all enabled days
                       const allTimeSlots = new Set();
                       days.forEach((_, dayIndex) => {
-                        const dayTimeSlots = getTimeSlotsForDay(dayIndex);
+                        const dayTimeSlots = getTimeSlotsForDay(dayIndex, days, dailySchedule, schedulePreferences);
                         dayTimeSlots.forEach(slot => allTimeSlots.add(slot));
                       });
                       return Array.from(allTimeSlots);
