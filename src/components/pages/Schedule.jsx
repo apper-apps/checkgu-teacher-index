@@ -295,6 +295,31 @@ const handleDefaultWorkingHoursChange = (field, value) => {
         toast.error("Failed to delete class level");
       }
     }
+};
+
+  const resetGradeLevelsToDefaults = async () => {
+    if (confirm("Are you sure you want to reset all grade levels to default values? This will replace all current grade level names.")) {
+      try {
+        const defaultGradeLevels = [
+          { Id: 1, name: "Grade 1", numberOfClasses: 2 },
+          { Id: 2, name: "Grade 2", numberOfClasses: 2 },
+          { Id: 3, name: "Grade 3", numberOfClasses: 2 },
+          { Id: 4, name: "Grade 4", numberOfClasses: 2 },
+          { Id: 5, name: "Grade 5", numberOfClasses: 2 }
+        ];
+        
+        const updatedPreferences = {
+          ...schedulePreferences,
+          gradeLevels: defaultGradeLevels
+        };
+        
+        setSchedulePreferences(updatedPreferences);
+        setHasUnsavedChanges(true);
+        toast.success("Grade levels reset to default values!");
+      } catch (err) {
+        toast.error("Failed to reset grade levels");
+      }
+    }
   };
 
   const getScheduleForSlot = (classId, dayIndex, timeSlot) => {
@@ -704,36 +729,58 @@ const handleDefaultWorkingHoursChange = (field, value) => {
 {/* Class Levels Management Tab */}
       {activeTab === "levels" && (
         <div className="space-y-6">
-          {/* Grade Level Configuration */}
+{/* Grade Level Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ApperIcon name="Settings" size={24} className="text-primary-600" />
-                Grade Level Configuration
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <ApperIcon name="Settings" size={24} className="text-primary-600" />
+                  Grade Level Configuration
+                </CardTitle>
+                {schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={resetGradeLevelsToDefaults}
+                    className="flex items-center gap-2"
+                  >
+                    <ApperIcon name="RotateCcw" size={16} />
+                    Reset to Defaults
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 <div>
                   <p className="text-gray-600 mb-4">
-                    Configure the grade levels for your school. These will be used when creating classes and organizing your academic structure.
+                    Configure the grade levels for your school. These will be used when creating classes and organizing your academic structure. You can customize the names to match your school's naming convention.
                   </p>
                   
                   {schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4">
-                      {schedulePreferences.gradeLevels.map((level, index) => (
-                        <div key={level.Id} className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
-                              <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
+                    <div className="space-y-4">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ApperIcon name="Info" size={16} className="text-blue-600" />
+                          <h4 className="font-medium text-blue-900">Customizable Grade Level Names</h4>
+                        </div>
+                        <p className="text-sm text-blue-700">
+                          You can customize these grade level names to match your school's convention (e.g., "Tahun 1", "Kindergarten", "Form 1", etc.). Changes will be reflected throughout the application.
+                        </p>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {schedulePreferences.gradeLevels.map((level, index) => (
+                          <div key={level.Id} className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
+                                <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-gray-900">Level {index + 1}</h4>
+                                <p className="text-xs text-gray-500">{level.numberOfClasses} classes</p>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-900">Level {index + 1}</h4>
-                              <p className="text-xs text-gray-600">Grade level configuration</p>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-4">
+                            
                             <FormField label="Grade Level Name">
                               <Input
                                 value={level.name}
@@ -747,17 +794,28 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                                   }));
                                   setHasUnsavedChanges(true);
                                 }}
-                                placeholder="e.g., Tahun 1, Kindergarten"
+                                placeholder={`e.g., Tahun ${index + 1}, Grade ${index + 1}`}
                                 required
                                 className="font-medium"
                               />
                               <div className="text-xs text-gray-500 mt-1">
-                                This name will appear in your schedules and reports
+                                This name will appear in schedules and class creation
                               </div>
                             </FormField>
                           </div>
+                        ))}
+                      </div>
+                      
+                      {hasUnsavedChanges && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2">
+                            <ApperIcon name="AlertCircle" size={16} className="text-amber-600" />
+                            <p className="text-sm text-amber-800 font-medium">
+                              You have unsaved changes to grade level names. Save your changes to apply them throughout the application.
+                            </p>
+                          </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   ) : (
                     <Empty
