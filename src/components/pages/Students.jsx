@@ -28,8 +28,10 @@ const [selectedStudent, setSelectedStudent] = useState(null);
   const [activeTab, setActiveTab] = useState('details');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [showParentLinkModal, setShowParentLinkModal] = useState(false);
+const [showParentLinkModal, setShowParentLinkModal] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
   const [bulkDeleteStudents, setBulkDeleteStudents] = useState([]);
   const [parentLink, setParentLink] = useState("");
   const [importFile, setImportFile] = useState(null);
@@ -103,11 +105,27 @@ const [selectedStudent, setSelectedStudent] = useState(null);
     setSelectedStudent(student);
     setShowStudentDetails(true);
   };
-
-  const handleEditStudent = (student) => {
+const handleEditStudent = (student) => {
     setEditingStudent({ ...student });
     setShowEditStudent(true);
     setShowStudentDetails(false);
+  };
+
+  const handleDeleteStudent = (studentId) => {
+    setStudentToDelete(studentId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteStudent = async () => {
+    try {
+      await studentService.delete(studentToDelete);
+      toast.success("Student deleted successfully!");
+      setShowDeleteModal(false);
+      setStudentToDelete(null);
+      loadData();
+    } catch (err) {
+      toast.error("Failed to delete student");
+    }
   };
 
   const handleBulkDelete = (studentIds) => {
@@ -284,11 +302,13 @@ return (
         </Card>
       </div>
 
-      {/* Student List */}
-<StudentList
+{/* Student List */}
+      <StudentList
         students={students}
         onStudentClick={handleStudentClick}
         onBulkDelete={handleBulkDelete}
+        onDeleteStudent={handleDeleteStudent}
+        onEditStudent={handleEditStudent}
       />
 
       {/* Add Student Modal */}
@@ -804,6 +824,45 @@ return (
                     onClick={() => {
                       setShowBulkDeleteModal(false);
                       setBulkDeleteStudents([]);
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+</div>
+      )}
+
+      {/* Delete Student Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <ApperIcon name="AlertTriangle" size={24} />
+                Confirm Delete Student
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  Are you sure you want to delete this student? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={confirmDeleteStudent}
+                    className="flex-1 bg-red-600 hover:bg-red-700"
+                  >
+                    Delete Student
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setStudentToDelete(null);
                     }}
                     className="flex-1"
                   >

@@ -5,7 +5,7 @@ import Select from "@/components/atoms/Select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
 import ApperIcon from "@/components/ApperIcon";
 
-const StudentList = ({ students = [], onStudentClick, onBulkDelete }) => {
+const StudentList = ({ students = [], onStudentClick, onBulkDelete, onDeleteStudent, onEditStudent }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
   const [viewMode, setViewMode] = useState("card");
@@ -137,21 +137,32 @@ return (
       )}
 
 {/* Student List/Grid */}
-      {viewMode === "card" ? (
+{viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStudents.map(student => (
-            <div key={student.Id} className="relative">
+            <div key={student.Id} className="relative group">
               <input
                 type="checkbox"
                 checked={selectedStudents.includes(student.Id)}
                 onChange={() => handleSelectStudent(student.Id)}
                 className="absolute top-3 left-3 z-10 w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500"
               />
-              <StudentCard
-                student={student}
-                onClick={() => onStudentClick?.(student)}
-                className="cursor-pointer hover:bg-gray-50"
-              />
+              <button
+                onClick={() => onDeleteStudent?.(student.Id)}
+                className="absolute top-3 right-3 z-10 p-1 bg-red-100 text-red-600 hover:bg-red-200 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Delete student"
+              >
+                <ApperIcon name="Trash2" size={14} />
+              </button>
+              <div
+                onClick={() => onEditStudent?.(student)}
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
+              >
+                <StudentCard
+                  student={student}
+                  className="pointer-events-none"
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -179,7 +190,7 @@ return (
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStudents.map(student => (
+{filteredStudents.map(student => (
                     <tr key={student.Id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="p-4">
                         <input
@@ -189,7 +200,10 @@ return (
                           className="w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500"
                         />
                       </td>
-                      <td className="p-4">
+                      <td 
+                        className="p-4 cursor-pointer"
+                        onClick={() => onEditStudent?.(student)}
+                      >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                             <ApperIcon name="User" size={14} className="text-primary-600" />
@@ -197,10 +211,28 @@ return (
                           <span className="font-medium text-gray-900">{student.name}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-gray-600">{student.studentId}</td>
-                      <td className="p-4 text-gray-600">{student.className}</td>
-                      <td className="p-4 text-gray-600">{student.guardianName}</td>
-                      <td className="p-4">
+<td 
+                        className="p-4 text-gray-600 cursor-pointer"
+                        onClick={() => onEditStudent?.(student)}
+                      >
+                        {student.studentId}
+                      </td>
+                      <td 
+                        className="p-4 text-gray-600 cursor-pointer"
+                        onClick={() => onEditStudent?.(student)}
+                      >
+                        {student.className}
+                      </td>
+                      <td 
+                        className="p-4 text-gray-600 cursor-pointer"
+                        onClick={() => onEditStudent?.(student)}
+                      >
+                        {student.guardianName}
+                      </td>
+                      <td 
+                        className="p-4 cursor-pointer"
+                        onClick={() => onEditStudent?.(student)}
+                      >
                         <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                           student.attendanceRate >= 90 
                             ? 'bg-green-100 text-green-800'
@@ -211,13 +243,23 @@ return (
                           {student.attendanceRate}%
                         </span>
                       </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => onStudentClick?.(student)}
-                          className="text-primary-600 hover:text-primary-800 transition-colors"
-                        >
-                          <ApperIcon name="Eye" size={16} />
-                        </button>
+<td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => onEditStudent?.(student)}
+                            className="text-primary-600 hover:text-primary-800 transition-colors"
+                            title="Edit student"
+                          >
+                            <ApperIcon name="Edit" size={16} />
+                          </button>
+                          <button
+                            onClick={() => onDeleteStudent?.(student.Id)}
+                            className="text-red-600 hover:text-red-800 transition-colors"
+                            title="Delete student"
+                          >
+                            <ApperIcon name="Trash2" size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
