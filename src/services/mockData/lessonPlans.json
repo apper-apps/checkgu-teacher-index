@@ -2,6 +2,7 @@
   {
     "Id": 1,
     "subject": "Mathematics",
+    "category": "STEM",
     "className": "4A",
     "date": "2024-01-15",
     "time": "08:00",
@@ -13,6 +14,7 @@
   {
     "Id": 2,
     "subject": "English",
+    "category": "Language Arts",
     "className": "4A",
     "date": "2024-01-15",
     "time": "09:00",
@@ -24,6 +26,7 @@
   {
     "Id": 3,
     "subject": "Science",
+    "category": "STEM",
     "className": "4A",
     "date": "2024-01-15",
     "time": "10:00",
@@ -35,6 +38,7 @@
   {
     "Id": 4,
     "subject": "History",
+    "category": "Core Subjects",
     "className": "4A",
     "date": "2024-01-16",
     "time": "09:00",
@@ -46,6 +50,7 @@
   {
     "Id": 5,
     "subject": "Art",
+    "category": "Arts & Creativity",
     "className": "4A",
     "date": "2024-01-16",
     "time": "10:00",
@@ -57,6 +62,7 @@
   {
     "Id": 6,
     "subject": "Physical Education",
+    "category": "Physical Education",
     "className": "4A",
     "date": "2024-01-17",
     "time": "08:00",

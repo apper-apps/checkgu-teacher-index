@@ -8,10 +8,12 @@ import Select from "@/components/atoms/Select";
 import Textarea from "@/components/atoms/Textarea";
 import ApperIcon from "@/components/ApperIcon";
 import { toast } from "react-toastify";
+import { lessonPlanService } from "@/services/api/lessonPlanService";
 
-const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
+const LessonPlanModal = ({ isOpen, onClose, lesson, onSave, mode = "single" }) => {
   const [formData, setFormData] = useState({
     subject: "",
+    category: "",
     className: "",
     date: "",
     time: "",
@@ -21,10 +23,17 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
     assessment: "",
   });
 
-  useEffect(() => {
+  const [categories, setCategories] = useState([]);
+  const [selectedLessons, setSelectedLessons] = useState([]);
+  const [lessonPlans, setLessonPlans] = useState([]);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState(null);
+  const [loading, setLoading] = useState(false);
+useEffect(() => {
     if (lesson) {
       setFormData({
         subject: lesson.subject || "",
+        category: lesson.category || "",
         className: lesson.className || "",
         date: lesson.date || "",
         time: lesson.time || "",
@@ -36,14 +45,85 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
     }
   }, [lesson]);
 
+  useEffect(() => {
+    if (isOpen && mode === "bulk") {
+      loadData();
+    }
+  }, [isOpen, mode]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [categoriesData, lessonsData] = await Promise.all([
+        lessonPlanService.getCategories(),
+        lessonPlanService.getAll()
+      ]);
+      setCategories(categoriesData);
+      setLessonPlans(lessonsData);
+    } catch (error) {
+      toast.error("Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await onSave(formData);
-      toast.success("Lesson plan saved successfully!");
+      if (mode === "bulk" && selectedLessons.length > 0) {
+        await lessonPlanService.updateMultiple(selectedLessons, {
+          category: formData.category
+        });
+        toast.success(`Updated ${selectedLessons.length} lesson plans successfully!`);
+      } else {
+        await onSave(formData);
+        toast.success("Lesson plan saved successfully!");
+      }
       onClose();
     } catch (error) {
       toast.error("Failed to save lesson plan");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedLessons.length === 0) {
+      toast.warning("Please select lessons to delete");
+      return;
+    }
+
+    if (confirm(`Are you sure you want to delete ${selectedLessons.length} lesson plan(s)?`)) {
+      try {
+        await lessonPlanService.deleteMultiple(selectedLessons);
+        toast.success(`Deleted ${selectedLessons.length} lesson plans successfully!`);
+        setSelectedLessons([]);
+        await loadData();
+      } catch (error) {
+        toast.error("Failed to delete lesson plans");
+      }
+    }
+  };
+
+  const handleCategoryEdit = async (categoryData) => {
+    try {
+      await lessonPlanService.updateCategory(categoryToEdit.Id, categoryData);
+      toast.success("Category updated successfully!");
+      setIsEditingCategory(false);
+      setCategoryToEdit(null);
+      await loadData();
+    } catch (error) {
+      toast.error("Failed to update category");
+    }
+  };
+
+  const handleCategoryDelete = async (categoryId) => {
+    if (confirm("Are you sure you want to delete this category?")) {
+      try {
+        await lessonPlanService.deleteCategory(categoryId);
+        toast.success("Category deleted successfully!");
+        await loadData();
+      } catch (error) {
+        toast.error("Failed to delete category");
+      }
     }
   };
 
@@ -54,7 +134,182 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
     }));
   };
 
-  if (!isOpen) return null;
+  const toggleLessonSelection = (lessonId) => {
+    setSelectedLessons(prev => 
+      prev.includes(lessonId)
+        ? prev.filter(id => id !== lessonId)
+        : [...prev, lessonId]
+    );
+  };
+if (!isOpen) return null;
+
+  if (mode === "bulk") {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <ApperIcon name="Settings" size={24} className="text-primary-600" />
+                  Manage Subjects and Categories
+                </CardTitle>
+                <Button variant="ghost" size="sm" onClick={onClose}>
+                  <ApperIcon name="X" size={20} />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <ApperIcon name="Loader2" size={24} className="animate-spin" />
+                  <span className="ml-2">Loading...</span>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Category Management Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <ApperIcon name="Tag" size={20} />
+                      Categories
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                      {categories.map(category => (
+                        <div key={category.Id} className="p-4 border rounded-lg bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">{category.name}</h4>
+                              <p className="text-sm text-gray-600">{category.description}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setCategoryToEdit(category);
+                                  setIsEditingCategory(true);
+                                }}
+                              >
+                                <ApperIcon name="Edit" size={16} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCategoryDelete(category.Id)}
+                              >
+                                <ApperIcon name="Trash2" size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Lesson Selection Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <ApperIcon name="BookOpen" size={20} />
+                      Lesson Plans ({lessonPlans.length})
+                    </h3>
+                    <div className="mb-4">
+                      <FormField label="Update Category for Selected Lessons">
+                        <Select
+                          value={formData.category}
+                          onChange={(e) => handleChange("category", e.target.value)}
+                        >
+                          <option value="">Select Category</option>
+                          {categories.map(category => (
+                            <option key={category.Id} value={category.name}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </FormField>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto border rounded-lg">
+                      {lessonPlans.map(lessonPlan => (
+                        <div
+                          key={lessonPlan.Id}
+                          className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 ${
+                            selectedLessons.includes(lessonPlan.Id) ? 'bg-blue-50 border-blue-200' : ''
+                          }`}
+                          onClick={() => toggleLessonSelection(lessonPlan.Id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedLessons.includes(lessonPlan.Id)}
+                              onChange={() => toggleLessonSelection(lessonPlan.Id)}
+                              className="rounded"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{lessonPlan.subject}</span>
+                                <span className="text-sm px-2 py-1 bg-gray-200 rounded">
+                                  {lessonPlan.category}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {lessonPlan.className} • {lessonPlan.date} at {lessonPlan.time}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={selectedLessons.length === 0 || !formData.category}
+                      className="flex-1"
+                    >
+                      <ApperIcon name="Save" size={18} className="mr-2" />
+                      Update Selected ({selectedLessons.length})
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleBulkDelete}
+                      disabled={selectedLessons.length === 0}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      <ApperIcon name="Trash2" size={18} className="mr-2" />
+                      Delete Selected
+                    </Button>
+                    <Button type="button" variant="outline" onClick={onClose}>
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+        
+        {/* Category Edit Modal */}
+        {isEditingCategory && categoryToEdit && (
+          <CategoryEditModal
+            category={categoryToEdit}
+            onSave={handleCategoryEdit}
+            onClose={() => {
+              setIsEditingCategory(false);
+              setCategoryToEdit(null);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -96,7 +351,21 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
                     <option value="Music">Music</option>
                   </Select>
                 </FormField>
-                <FormField label="Class">
+                <FormField label="Category">
+                  <Select
+                    value={formData.category}
+                    onChange={(e) => handleChange("category", e.target.value)}
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Core Subjects">Core Subjects</option>
+                    <option value="Arts & Creativity">Arts & Creativity</option>
+                    <option value="Physical Education">Physical Education</option>
+                    <option value="Language Arts">Language Arts</option>
+                    <option value="STEM">STEM</option>
+                  </Select>
+                </FormField>
+<FormField label="Class">
                   <Select
                     value={formData.className}
                     onChange={(e) => handleChange("className", e.target.value)}
@@ -174,6 +443,80 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave }) => {
                 <Button type="submit" className="flex-1">
                   <ApperIcon name="Save" size={18} className="mr-2" />
                   Save Lesson Plan
+                </Button>
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+  );
+};
+
+// Category Edit Modal Component
+const CategoryEditModal = ({ category, onSave, onClose }) => {
+  const [formData, setFormData] = useState({
+    name: category?.name || "",
+    description: category?.description || ""
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-md"
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="Edit" size={20} className="text-primary-600" />
+                Edit Category
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <ApperIcon name="X" size={16} />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <FormField label="Category Name">
+                <Input
+                  value={formData.name}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                  placeholder="Enter category name"
+                  required
+                />
+              </FormField>
+              <FormField label="Description">
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                  placeholder="Enter category description"
+                  rows={3}
+                />
+              </FormField>
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" className="flex-1">
+                  <ApperIcon name="Save" size={16} className="mr-2" />
+                  Save Changes
                 </Button>
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
