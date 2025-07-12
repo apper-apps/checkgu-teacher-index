@@ -41,16 +41,17 @@ const mockSchedulePreferences = {
   numberOfLevels: 5,
   numberOfClasses: 2,
   defaultLessonDuration: 30,
+  defaultGradeLevelName: "Grade",
   defaultWorkingHours: {
     start: "08:00",
 end: "16:00"
   },
   gradeLevels: [
-    { Id: 1, name: "Tahun 1", numberOfClasses: 2 },
-    { Id: 2, name: "Tahun 2", numberOfClasses: 2 },
-    { Id: 3, name: "Tahun 3", numberOfClasses: 2 },
-    { Id: 4, name: "Tahun 4", numberOfClasses: 2 },
-    { Id: 5, name: "Tahun 5", numberOfClasses: 2 }
+    { Id: 1, name: "Grade 1", numberOfClasses: 2 },
+    { Id: 2, name: "Grade 2", numberOfClasses: 2 },
+    { Id: 3, name: "Grade 3", numberOfClasses: 2 },
+    { Id: 4, name: "Grade 4", numberOfClasses: 2 },
+    { Id: 5, name: "Grade 5", numberOfClasses: 2 }
   ]
 };
 const mockDailySchedule = {
@@ -130,11 +131,33 @@ updateSchedulePreferences: async (preferencesData) => {
             }
           }
           
-          // Validate class period minutes if provided
-          if (preferencesData.classPeriodMinutes) {
-            const minutes = parseInt(preferencesData.classPeriodMinutes);
+          // Validate default lesson duration if provided
+          if (preferencesData.defaultLessonDuration) {
+            const minutes = parseInt(preferencesData.defaultLessonDuration);
             if (isNaN(minutes) || minutes < 15 || minutes > 120) {
-              reject(new Error("Class period must be between 15 and 120 minutes"));
+              reject(new Error("Lesson duration must be between 15 and 120 minutes"));
+              return;
+            }
+          }
+
+          // Validate default grade level name if provided
+          if (preferencesData.defaultGradeLevelName) {
+            const name = preferencesData.defaultGradeLevelName.trim();
+            if (name.length === 0) {
+              reject(new Error("Grade level name cannot be empty"));
+              return;
+            }
+            if (name.length > 20) {
+              reject(new Error("Grade level name must be 20 characters or less"));
+              return;
+            }
+          }
+
+          // Validate number of levels if provided
+          if (preferencesData.numberOfLevels) {
+            const levels = parseInt(preferencesData.numberOfLevels);
+            if (isNaN(levels) || levels < 1 || levels > 12) {
+              reject(new Error("Number of levels must be between 1 and 12"));
               return;
             }
           }
