@@ -617,12 +617,11 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                             </td>
                             <td className="py-2">{classSchedules.length}</td>
                           </tr>
-                        );
+);
                       })}
                     </tbody>
                   </table>
                 </div>
-</div>
               )}
             </CardContent>
           </Card>
@@ -758,12 +757,12 @@ const handleDefaultWorkingHoursChange = (field, value) => {
                       </>
                     )}
                   </Button>
+)}
+                  </Button>
                 </div>
               )}
-            </div>
+            </CardHeader>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
               {/* Default Working Hours Configuration */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <h4 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
