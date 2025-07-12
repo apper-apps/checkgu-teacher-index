@@ -44,10 +44,10 @@ const [academicCalendar, setAcademicCalendar] = useState({
     termEnd: "2025-06-30",
     winterBreakStart: "2025-04-01",
     winterBreakEnd: "2025-04-15",
-    springTermStart: "2025-04-16",
+springTermStart: "2025-04-16",
     springTermEnd: "2025-06-30",
     weekStartsOnSunday: false,
-breaks: [
+    breaks: [
       { Id: 1, name: "Winter Break", startDate: "2025-04-01", endDate: "2025-04-15" },
       { Id: 2, name: "Spring Break", startDate: "2025-03-15", endDate: "2025-03-22" }
     ]
@@ -61,23 +61,7 @@ breaks: [
 
   const [editingBreak, setEditingBreak] = useState(null);
 
-const [schedulePreferences, setSchedulePreferences] = useState({
-    numberOfLevels: 5,
-    numberOfClasses: 2,
-    defaultLessonDuration: 30,
-    defaultWorkingHours: {
-      start: "08:00",
-end: "16:00"
-    },
-    gradeLevels: [
-      { Id: 1, name: "Tahun 1", numberOfClasses: 2 },
-      { Id: 2, name: "Tahun 2", numberOfClasses: 2 },
-      { Id: 3, name: "Tahun 3", numberOfClasses: 2 },
-      { Id: 4, name: "Tahun 4", numberOfClasses: 2 },
-      { Id: 5, name: "Tahun 5", numberOfClasses: 2 }
-    ]
-  });
-  const [calendarSync, setCalendarSync] = useState({
+const [calendarSync, setCalendarSync] = useState({
     googleCalendarId: "",
     appleCalendarId: "",
     syncEnabled: false,
@@ -88,7 +72,6 @@ const tabs = [
     { id: "profile", label: "User Profile", icon: "User" },
     { id: "school", label: "School Profile", icon: "Building" },
     { id: "calendar", label: "Academic Calendar", icon: "Calendar" },
-    { id: "schedule", label: "Schedule", icon: "Clock" },
     { id: "sync", label: "Calendar Sync", icon: "RefreshCw" },
     { id: "notifications", label: "Notifications", icon: "Bell" },
     { id: "export", label: "Export & Import", icon: "Download" }
@@ -253,60 +236,7 @@ const handleDeleteBreak = (breakId) => {
   const handleCancelEdit = () => {
     setEditingBreak(null);
     setNewBreak({ name: "", startDate: "", endDate: "" });
-  };
-
-const handleSaveSchedule = async (e) => {
-    e.preventDefault();
-    
-    // Validate that all grade levels have names
-    const missingNames = schedulePreferences.gradeLevels.some(level => !level.name.trim());
-    if (missingNames) {
-      toast.error("Please provide names for all grade levels");
-      return;
-    }
-    
-    try {
-      await settingsService.updateSchedulePreferences(schedulePreferences);
-      toast.success("Schedule preferences updated successfully!");
-    } catch (err) {
-      toast.error("Failed to update schedule preferences");
-    }
-  };
-
-  const handleNumberOfLevelsChange = (newCount) => {
-    const currentLevels = schedulePreferences.gradeLevels;
-    let updatedLevels = [...currentLevels];
-if (newCount > currentLevels.length) {
-      // Add new grade levels with "Tahun" naming
-      for (let i = currentLevels.length; i < newCount; i++) {
-        updatedLevels.push({
-          Id: i + 1,
-          name: `Tahun ${i + 1}`,
-          numberOfClasses: schedulePreferences.numberOfClasses
-        });
-      }
-    } else if (newCount < currentLevels.length) {
-      // Remove excess grade levels
-      updatedLevels = updatedLevels.slice(0, newCount);
-    }
-    
-    setSchedulePreferences({
-      ...schedulePreferences,
-      numberOfLevels: newCount,
-      gradeLevels: updatedLevels
-    });
-  };
-
-  const handleGradeLevelChange = (levelId, field, value) => {
-    setSchedulePreferences(prev => ({
-      ...prev,
-      gradeLevels: prev.gradeLevels.map(level => 
-        level.Id === levelId 
-          ? { ...level, [field]: field === 'numberOfClasses' ? parseInt(value) : value }
-          : level
-      )
-    }));
-  };
+};
 
   const handleSaveSync = async (e) => {
     e.preventDefault();
@@ -735,11 +665,10 @@ case "calendar":
                         >
                           <ApperIcon name="Edit" size={14} />
                         </Button>
-                        <Button
+<Button
                           type="button"
                           variant="outline"
-onClick={() => handleDeleteBreak(breakItem.Id)}
-                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => handleDeleteBreak(breakItem.Id)}
                           className="text-red-600 hover:bg-red-50"
                         >
                           <ApperIcon name="Trash2" size={14} />
@@ -785,91 +714,9 @@ onClick={() => handleDeleteBreak(breakItem.Id)}
           </form>
         );
 
-case "schedule":
-        return (
-          <form onSubmit={handleSaveSchedule} className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Class Schedule</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Number of Grade Levels">
-                  <Input
-                    type="number"
-                    value={schedulePreferences.numberOfLevels}
-                    onChange={(e) => handleNumberOfLevelsChange(parseInt(e.target.value))}
-                    min="1"
-                    max="12"
-                  />
-                </FormField>
-              </div>
-            </div>
-{/* Grade Level Configuration */}
-            <div className="border-t pt-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Grade Level Configuration</h3>
-                <div className="text-sm text-gray-600">
-                  Configure the name and number of classes for each grade level. Default names use "Tahun" format but can be customized.
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-4">
-                {schedulePreferences.gradeLevels.map((level, index) => (
-                  <div key={level.Id} className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
-                        <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">Level {index + 1}</h4>
-                        <p className="text-xs text-gray-600">Grade level configuration</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <FormField label="Grade Level Name">
-                        <Input
-                          value={level.name}
-                          onChange={(e) => handleGradeLevelChange(level.Id, 'name', e.target.value)}
-                          placeholder="e.g., Tahun 1, Kindergarten"
-                          required
-                          className="font-medium"
-                        />
-                        <div className="text-xs text-gray-500 mt-1">
-                          This name will appear in your schedules and reports
-                        </div>
-                      </FormField>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="border-t pt-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Schedule Preferences</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Default Lesson Duration (minutes)">
-                  <Input
-                    type="number"
-                    value={schedulePreferences.defaultLessonDuration}
-                    onChange={(e) => setSchedulePreferences({...schedulePreferences, defaultLessonDuration: parseInt(e.target.value)})}
-                    min="15"
-                    max="120"
-                    placeholder="e.g., 30"
-                  />
-                  <div className="text-sm text-gray-500 mt-1">
-                    This will be used as the default when creating new lessons
-                  </div>
-                </FormField>
-              </div>
-</div>
-            
-            <Button type="submit">
-              <ApperIcon name="Save" size={16} className="mr-2" />
-              Save Schedule Preferences
-            </Button>
-          </form>
-        );
+case "sync":
 
-      case "sync":
-        return (
+return (
           <form onSubmit={handleSaveSync} className="space-y-4">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -1047,7 +894,6 @@ case "schedule":
                   <ApperIcon name="Upload" size={18} className="text-primary-600" />
                   <h4 className="font-medium text-gray-900">Import Data</h4>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">Select a JSON file to import your data</p>
                 <Input
                   type="file"
                   accept=".json"

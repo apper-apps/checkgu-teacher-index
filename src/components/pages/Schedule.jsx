@@ -701,68 +701,139 @@ const handleDefaultWorkingHoursChange = (field, value) => {
       )}
 
       {/* Class Levels Management Tab */}
+{/* Class Levels Management Tab */}
       {activeTab === "levels" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+        <div className="space-y-6">
+          {/* Grade Level Configuration */}
+          <Card>
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ApperIcon name="GraduationCap" size={24} className="text-primary-600" />
-                Class Level Management
+                <ApperIcon name="Settings" size={24} className="text-primary-600" />
+                Grade Level Configuration
               </CardTitle>
-              <Button onClick={() => setShowAddClassLevel(true)}>
-                <ApperIcon name="Plus" size={18} className="mr-2" />
-                Add Class Level
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                Manage the available class levels for your school. These levels will appear when creating classes and schedules.
-              </p>
-              
-              {classLevels.length === 0 ? (
-                <Empty
-                  title="No class levels configured"
-                  description="Add class levels to organize your school structure"
-                  actionLabel="Add Class Level"
-                  icon="GraduationCap"
-                  onAction={() => setShowAddClassLevel(true)}
-                />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {classLevels.map(level => (
-                    <div key={level.Id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">{level.name}</h3>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditingClassLevel(level);
-                              setNewClassLevel({ name: level.name, description: level.description });
-                            }}
-                          >
-                            <ApperIcon name="Edit" size={16} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteClassLevel(level.Id)}
-                          >
-                            <ApperIcon name="Trash" size={16} />
-                          </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-gray-600 mb-4">
+                    Configure the grade levels for your school. These will be used when creating classes and organizing your academic structure.
+                  </p>
+                  
+                  {schedulePreferences?.gradeLevels && schedulePreferences.gradeLevels.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {schedulePreferences.gradeLevels.map((level, index) => (
+                        <div key={level.Id} className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="flex items-center justify-center w-8 h-8 bg-primary-100 rounded-full">
+                              <span className="text-sm font-semibold text-primary-700">{index + 1}</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-900">Level {index + 1}</h4>
+                              <p className="text-xs text-gray-600">Grade level configuration</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <FormField label="Grade Level Name">
+                              <Input
+                                value={level.name}
+                                onChange={(e) => {
+                                  const updatedLevels = schedulePreferences.gradeLevels.map(l => 
+                                    l.Id === level.Id ? { ...l, name: e.target.value } : l
+                                  );
+                                  setSchedulePreferences(prev => ({
+                                    ...prev,
+                                    gradeLevels: updatedLevels
+                                  }));
+                                  setHasUnsavedChanges(true);
+                                }}
+                                placeholder="e.g., Tahun 1, Kindergarten"
+                                required
+                                className="font-medium"
+                              />
+                              <div className="text-xs text-gray-500 mt-1">
+                                This name will appear in your schedules and reports
+                              </div>
+                            </FormField>
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-sm text-gray-600">{level.description}</p>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <Empty
+                      title="No grade levels configured"
+                      description="Grade levels will be automatically generated when you configure your schedule preferences"
+                      icon="GraduationCap"
+                    />
+                  )}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Class Levels Management */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <ApperIcon name="GraduationCap" size={24} className="text-primary-600" />
+                  Class Level Management
+                </CardTitle>
+                <Button onClick={() => setShowAddClassLevel(true)}>
+                  <ApperIcon name="Plus" size={18} className="mr-2" />
+                  Add Class Level
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-gray-600">
+                  Manage the available class levels for your school. These levels will appear when creating classes and schedules.
+                </p>
+                
+                {classLevels.length === 0 ? (
+                  <Empty
+                    title="No class levels configured"
+                    description="Add class levels to organize your school structure"
+                    actionLabel="Add Class Level"
+                    icon="GraduationCap"
+                    onAction={() => setShowAddClassLevel(true)}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {classLevels.map(level => (
+                      <div key={level.Id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold">{level.name}</h3>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingClassLevel(level);
+                                setNewClassLevel({ name: level.name, description: level.description });
+                              }}
+                            >
+                              <ApperIcon name="Edit" size={16} />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteClassLevel(level.Id)}
+                            >
+                              <ApperIcon name="Trash" size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600">{level.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+</Card>
+        </div>
       )}
 
       {/* Add Class Modal */}

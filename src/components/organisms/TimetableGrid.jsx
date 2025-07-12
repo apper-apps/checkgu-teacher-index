@@ -102,19 +102,42 @@ const loadAcademicCalendar = async () => {
     return generateTimeSlots(daySchedule.startTime, daySchedule.endTime);
   };
 
-  // Get all unique time slots across all enabled days
+// Get time slots that respect each day's individual working hours
   const getAllTimeSlots = () => {
     if (!dailySchedule) {
       return generateTimeSlots("08:00", "16:00");
     }
     
-    const allSlots = new Set();
+    // Find the earliest start time and latest end time among enabled days
+    let earliestStart = "23:59";
+    let latestEnd = "00:00";
+    
     days.forEach((_, dayIndex) => {
-      const daySlots = getTimeSlotsForDay(dayIndex);
-      daySlots.forEach(slot => allSlots.add(slot));
+      const dayName = days[dayIndex];
+      const daySchedule = dailySchedule[dayName];
+      
+      // Skip disabled days
+      if (!daySchedule || !daySchedule.enabled) {
+        return;
+      }
+      
+      const startTime = daySchedule.startTime || "08:00";
+      const endTime = daySchedule.endTime || "16:00";
+      
+      if (startTime < earliestStart) {
+        earliestStart = startTime;
+      }
+      if (endTime > latestEnd) {
+        latestEnd = endTime;
+      }
     });
     
-    return Array.from(allSlots).sort();
+    // If no enabled days found, return default
+    if (earliestStart === "23:59" || latestEnd === "00:00") {
+      return generateTimeSlots("08:00", "16:00");
+    }
+    
+    return generateTimeSlots(earliestStart, latestEnd);
   };
 
   const timeSlots = getAllTimeSlots();
