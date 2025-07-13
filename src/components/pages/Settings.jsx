@@ -83,13 +83,26 @@ const tabs = [
     { id: "calendar", label: "Academic Calendar", icon: "Calendar" },
     { id: "sync", label: "Calendar Sync", icon: "RefreshCw" },
     { id: "notifications", label: "Notifications", icon: "Bell" },
-    { id: "export", label: "Export & Import", icon: "Download" }
-  ];
+];
 
 // Sync local state with context when context updates
   React.useEffect(() => {
     setUserProfile(contextUserProfile);
   }, [contextUserProfile]);
+
+  // Load persisted schedule preferences on mount
+  React.useEffect(() => {
+    const loadSchedulePreferences = async () => {
+      try {
+        const persistedPreferences = await settingsService.getSchedulePreferences();
+        setSchedulePreferences(persistedPreferences);
+      } catch (err) {
+        console.error('Failed to load schedule preferences:', err);
+      }
+    };
+    
+    loadSchedulePreferences();
+  }, []);
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
