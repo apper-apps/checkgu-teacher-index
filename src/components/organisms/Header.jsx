@@ -4,8 +4,8 @@ import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import { cn } from "@/utils/cn";
 import { useUser } from "@/contexts/UserContext";
-const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
-  const { displayName, firstName, roleDisplay } = useUser();
+const Header = ({ onMenuToggle, className }) => {
+  const { userProfile, schoolProfile, displayName, firstName, roleDisplay } = useUser();
   const [currentTerm] = useState("Fall 2024");
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+<div className="flex items-center gap-2 sm:gap-4">
           <span className="text-sm text-gray-600 hidden lg:block max-w-48 truncate">
             {schoolProfile?.name || "Greenwood Elementary School"}
           </span>
@@ -42,7 +42,7 @@ const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
                 <ApperIcon name="User" size={16} className="text-primary-600" />
 </div>
 <span className="hidden md:block text-sm font-medium">
-                {userProfile?.firstName || firstName || "Ms. Johnson"}
+                {userProfile?.name?.split(' ')[0] || firstName || "Ms. Johnson"}
               </span>
               <ApperIcon name="ChevronDown" size={14} className="hidden md:block" />
             </Button>
@@ -50,10 +50,10 @@ const Header = ({ onMenuToggle, userProfile, schoolProfile, className }) => {
 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
 <div className="px-4 py-2 border-b border-gray-100">
 <p className="text-sm font-medium text-gray-900">
-                    {userProfile?.displayName || displayName || "Ms. Johnson"}
+                    {userProfile?.name || displayName || "Ms. Johnson"}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {userProfile?.roleDisplay || roleDisplay || "Teacher - Elementary"}
+                    {userProfile ? `${userProfile.role} - ${userProfile.department}` : roleDisplay || "Teacher - Elementary"}
                   </p>
 </div>
                 <button 
