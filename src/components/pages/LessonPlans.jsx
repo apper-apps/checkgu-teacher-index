@@ -25,6 +25,8 @@ const LessonPlans = () => {
   const [error, setError] = useState(null);
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [lessonToShare, setLessonToShare] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedClass, setSelectedClass] = useState("all");
@@ -156,10 +158,10 @@ const handleExportPDF = async () => {
         lesson.className,
         lesson.date ? format(new Date(lesson.date), "MMM d, yyyy") : "No date",
         lesson.time || "No time",
-        lesson.objectives ? lesson.objectives.substring(0, 80) + (lesson.objectives.length > 80 ? "..." : "") : "No objectives",
-        lesson.content.substring(0, 100) + (lesson.content.length > 100 ? "..." : ""),
-        lesson.materials ? lesson.materials.substring(0, 60) + (lesson.materials.length > 60 ? "..." : "") : "No materials",
-        lesson.assessment ? lesson.assessment.substring(0, 60) + (lesson.assessment.length > 60 ? "..." : "") : "No assessment"
+        lesson.objectives || "No objectives",
+        lesson.content,
+        lesson.materials || "No materials",
+        lesson.assessment || "No assessment"
       ]);
       
       // Add structured table
@@ -256,58 +258,37 @@ const handleExportDOCX = async () => {
 const handleExportSinglePDF = async (lesson) => {
     try {
       const doc = new jsPDF();
-      let yPosition = 20;
       
       // Add title
-      doc.setFontSize(24);
-      doc.text("Lesson Plan", 20, yPosition);
-      yPosition += 20;
+      doc.setFontSize(20);
+      doc.text("Lesson Plan", 20, 20);
       
-      // Add lesson details in structured format
-      doc.setFontSize(16);
-      doc.text(`Subject: ${lesson.subject}`, 20, yPosition);
-      yPosition += 10;
-      doc.text(`Class: ${lesson.className}`, 20, yPosition);
-      yPosition += 10;
-      doc.text(`Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}`, 20, yPosition);
-      yPosition += 10;
-      doc.text(`Time: ${lesson.time || "No time"}`, 20, yPosition);
-      yPosition += 20;
-      
-      // Add objectives
-      doc.setFontSize(14);
-      doc.text("Learning Objectives:", 20, yPosition);
-      yPosition += 10;
+      // Add export date
       doc.setFontSize(12);
-      const splitObjectives = doc.splitTextToSize(lesson.objectives || "No objectives specified", 170);
-      doc.text(splitObjectives, 20, yPosition);
-      yPosition += splitObjectives.length * 5 + 10;
+      doc.text(`Exported on: ${format(new Date(), "MMMM d, yyyy")}`, 20, 35);
       
-      // Add content
-      doc.setFontSize(14);
-      doc.text("Lesson Content:", 20, yPosition);
-      yPosition += 10;
-      doc.setFontSize(12);
-      const splitContent = doc.splitTextToSize(lesson.content, 170);
-      doc.text(splitContent, 20, yPosition);
-      yPosition += splitContent.length * 5 + 10;
+      // Prepare structured data for table
+      const tableData = [
+        ['Subject', lesson.subject],
+        ['Class', lesson.className],
+        ['Date', lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"],
+        ['Time', lesson.time || "No time"],
+        ['Objectives', lesson.objectives || "No objectives"],
+        ['Content', lesson.content],
+        ['Materials', lesson.materials || "No materials"],
+        ['Assessment', lesson.assessment || "No assessment"]
+      ];
       
-      // Add materials
-      doc.setFontSize(14);
-      doc.text("Materials Needed:", 20, yPosition);
-      yPosition += 10;
-      doc.setFontSize(12);
-      const splitMaterials = doc.splitTextToSize(lesson.materials || "No materials specified", 170);
-      doc.text(splitMaterials, 20, yPosition);
-      yPosition += splitMaterials.length * 5 + 10;
-      
-      // Add assessment
-      doc.setFontSize(14);
-      doc.text("Assessment Method:", 20, yPosition);
-      yPosition += 10;
-      doc.setFontSize(12);
-      const splitAssessment = doc.splitTextToSize(lesson.assessment || "No assessment method specified", 170);
-      doc.text(splitAssessment, 20, yPosition);
+      // Add structured table
+      doc.autoTable({
+        body: tableData,
+        startY: 45,
+        styles: { fontSize: 10 },
+        columnStyles: {
+          0: { cellWidth: 30, fontStyle: 'bold' }, // Field names
+          1: { cellWidth: 140 } // Values
+        }
+      });
       
       doc.save(`lesson-plan-${lesson.subject}-${lesson.className}.pdf`);
       toast.success("Lesson plan exported to PDF successfully!");
@@ -453,41 +434,10 @@ const handleExportSingleDOCX = async (lesson) => {
   };
 
 const handleShareLesson = async (lesson) => {
-    const lessonText = `Lesson Plan - ${lesson.subject} (${lesson.className})
-Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}
-Time: ${lesson.time || "No time"}
-
-Learning Objectives:
-${lesson.objectives || "No objectives specified"}
-
-Lesson Content:
-${lesson.content}
-
-Materials Needed:
-${lesson.materials || "No materials specified"}
-
-Assessment Method:
-${lesson.assessment || "No assessment method specified"}`;
-
-    // Show sharing options
-    const shareOptions = [
-      {
-        name: 'Copy to Clipboard',
-        action: () => copyToClipboard(lessonText)
-      },
-      {
-        name: 'Email',
-        action: () => shareViaEmail(lesson, lessonText)
-      },
-      {
-        name: 'Generate Share Link',
-        action: () => generateShareLink(lesson, lessonText)
-      }
-    ];
-
     // Try native sharing first
     if (navigator.share) {
       try {
+        const lessonText = generateLessonText(lesson);
         await navigator.share({
           title: `Lesson Plan - ${lesson.subject}`,
           text: lessonText,
@@ -503,15 +453,33 @@ ${lesson.assessment || "No assessment method specified"}`;
       }
     }
 
-    // Show custom sharing options
-    const selectedOption = await showShareOptions(shareOptions);
-    if (selectedOption) {
-      selectedOption.action();
-    }
+    // Show custom sharing modal
+    setLessonToShare(lesson);
+    setShowShareModal(true);
   };
 
-  const copyToClipboard = async (text) => {
+  const generateLessonText = (lesson) => {
+    return `Lesson Plan - ${lesson.subject} (${lesson.className})
+Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}
+Time: ${lesson.time || "No time"}
+
+Learning Objectives:
+${lesson.objectives || "No objectives specified"}
+
+Lesson Content:
+${lesson.content}
+
+Materials Needed:
+${lesson.materials || "No materials specified"}
+
+Assessment Method:
+${lesson.assessment || "No assessment method specified"}`;
+  };
+
+
+const handleCopyToClipboard = async (lesson) => {
     try {
+      const text = generateLessonText(lesson);
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
         toast.success("Lesson plan copied to clipboard!");
@@ -541,44 +509,105 @@ ${lesson.assessment || "No assessment method specified"}`;
     } catch (err) {
       toast.error("Failed to copy lesson plan");
     }
+    setShowShareModal(false);
   };
 
-  const shareViaEmail = (lesson, text) => {
+  const handleShareViaEmail = (lesson) => {
+    const text = generateLessonText(lesson);
     const subject = `Lesson Plan - ${lesson.subject} (${lesson.className})`;
     const body = encodeURIComponent(text);
     const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
     window.open(mailtoUrl, '_blank');
     toast.success("Email client opened with lesson plan!");
+    setShowShareModal(false);
   };
 
-  const generateShareLink = (lesson, text) => {
-    // Create a data URL for temporary sharing
+  const handleDownloadTextFile = (lesson) => {
+    const text = generateLessonText(lesson);
     const dataUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
     const link = document.createElement('a');
     link.href = dataUrl;
     link.download = `lesson-plan-${lesson.subject}-${lesson.className}.txt`;
     link.click();
     toast.success("Lesson plan file downloaded!");
+    setShowShareModal(false);
   };
 
-  const showShareOptions = (options) => {
-    return new Promise((resolve) => {
-      const optionText = options.map((opt, index) => `${index + 1}. ${opt.name}`).join('\n');
-      const choice = prompt(`Choose sharing option:\n${optionText}\n\nEnter number (1-${options.length}) or cancel:`);
-      
-      if (choice === null) {
-        resolve(null);
-        return;
-      }
-      
-      const index = parseInt(choice) - 1;
-      if (index >= 0 && index < options.length) {
-        resolve(options[index]);
-      } else {
-        toast.error("Invalid selection");
-        resolve(null);
-      }
-    });
+// Share Modal Component
+  const ShareModal = ({ isOpen, onClose, lesson }) => {
+    if (!isOpen || !lesson) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Share Lesson Plan</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <ApperIcon name="X" size={20} />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Share "{lesson.subject}" for {lesson.className}
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-xs text-gray-500 mb-2">Preview:</div>
+                <div className="text-sm text-gray-700">
+                  <div className="font-medium">{lesson.subject}</div>
+                  <div className="text-xs text-gray-500">
+                    {lesson.className} • {lesson.date ? format(new Date(lesson.date), "MMM d, yyyy") : "No date"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Button
+                onClick={() => handleCopyToClipboard(lesson)}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                <ApperIcon name="Copy" size={16} className="mr-3" />
+                Copy to Clipboard
+              </Button>
+
+              <Button
+                onClick={() => handleShareViaEmail(lesson)}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                <ApperIcon name="Mail" size={16} className="mr-3" />
+                Share via Email
+              </Button>
+
+              <Button
+                onClick={() => handleDownloadTextFile(lesson)}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                <ApperIcon name="Download" size={16} className="mr-3" />
+                Download as Text File
+              </Button>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <Button
+                onClick={onClose}
+                variant="outline"
+                className="w-full"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
   const filteredLessonPlans = lessonPlans.filter(lesson => {
     const matchesSearch = lesson.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1022,7 +1051,7 @@ Delete
         </>
       )}
 
-      {/* Lesson Plan Modal */}
+{/* Lesson Plan Modal */}
       <LessonPlanModal
         isOpen={showLessonModal}
         onClose={() => {
@@ -1031,6 +1060,16 @@ Delete
         }}
         lesson={selectedLesson}
         onSave={handleSaveLessonPlan}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          setLessonToShare(null);
+        }}
+        lesson={lessonToShare}
       />
     </div>
   );
