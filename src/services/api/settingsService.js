@@ -433,10 +433,10 @@ updateNotificationPreferences: async (preferencesData) => {
             return;
           }
 
-          // Validate phone format if provided
+// Validate phone format if provided
           if (profileData.phone && profileData.phone.trim().length > 0) {
-            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-            const cleanPhone = profileData.phone.replace(/[\s\-\(\)]/g, '');
+            const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
+            const cleanPhone = profileData.phone.replace(/[\s\-()]/g, '');
             if (!phoneRegex.test(cleanPhone)) {
               reject(new Error("Invalid phone number format"));
               return;
