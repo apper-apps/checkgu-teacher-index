@@ -1,18 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import ApperIcon from "@/components/ApperIcon";
-import StudentList from "@/components/organisms/StudentList";
-import Select from "@/components/atoms/Select";
-import Button from "@/components/atoms/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
-import Input from "@/components/atoms/Input";
-import Error from "@/components/ui/Error";
-import Loading from "@/components/ui/Loading";
-import SubjectChart from "@/components/molecules/SubjectChart";
-import FormField from "@/components/molecules/FormField";
-import PerformanceChart from "@/components/molecules/PerformanceChart";
-import AttendanceChart from "@/components/molecules/AttendanceChart";
-import { classService } from "@/services/api/classService";
+import React, { useEffect, useState } from 'react'
+import { toast } from 'react-toastify'
+import ApperIcon from '@/components/ApperIcon'
+import StudentList from '@/components/organisms/StudentList'
+import Select from '@/components/atoms/Select'
+import Button from '@/components/atoms/Button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/atoms/Card'
+import Input from '@/components/atoms/Input'
+import Error from '@/components/ui/Error'
+import Loading from '@/components/ui/Loading'
+import SubjectChart from '@/components/molecules/SubjectChart'
+import FormField from '@/components/molecules/FormField'
+import PerformanceChart from '@/components/molecules/PerformanceChart'
+import AttendanceChart from '@/components/molecules/AttendanceChart'
+import { classService } from '@/services/api/classService'
+import { settingsService } from '@/services/api/settingsService'
 import { studentService } from "@/services/api/studentService";
 
 const Students = () => {

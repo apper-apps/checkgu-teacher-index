@@ -248,12 +248,12 @@ const [newClass, setNewClass] = useState({
     name: "",
     description: ""
   });
-
-  const subjects = [
+  const [showAddSubject, setShowAddSubject] = useState(false);
+  const [newSubject, setNewSubject] = useState("");
+  const [subjects, setSubjects] = useState([
     "Mathematics", "English", "Science", "History", "Geography", 
     "Art", "Physical Education", "Music"
-  ];
-
+  ]);
 const [academicCalendar, setAcademicCalendar] = useState(null);
 
   // Get days array based on week start preference
@@ -591,6 +591,18 @@ return (
             <span className="sm:hidden">Weekly</span>
           </button>
           <button
+            onClick={() => setActiveTab("subjects")}
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+              activeTab === "subjects"
+                ? "border-primary-500 text-primary-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <ApperIcon name="BookOpen" size={16} className="inline mr-2" />
+            <span className="hidden sm:inline">Subjects</span>
+            <span className="sm:hidden">Subjects</span>
+          </button>
+          <button
             onClick={() => setActiveTab("levels")}
             className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === "levels"
@@ -850,6 +862,82 @@ return (
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Subjects Management Tab */}
+      {activeTab === "subjects" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ApperIcon name="BookOpen" size={24} className="text-primary-600" />
+                Subject Management
+              </CardTitle>
+              <Button onClick={() => setShowAddSubject(true)}>
+                <ApperIcon name="Plus" size={16} className="mr-2" />
+                Add Subject
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <ApperIcon name="Info" size={16} className="text-blue-600" />
+                  <h4 className="font-medium text-blue-900">Subject Configuration</h4>
+                </div>
+                <p className="text-sm text-blue-700">
+                  Add and manage subjects that will be available for scheduling across all classes. These subjects will appear in the weekly schedule creation and class timetables.
+                </p>
+              </div>
+              
+              {subjects.length === 0 ? (
+                <div className="text-center py-8">
+                  <ApperIcon name="BookOpen" size={48} className="text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Subjects Added</h3>
+                  <p className="text-gray-600 mb-4">
+                    Start by adding subjects that will be taught in your school
+                  </p>
+                  <Button onClick={() => setShowAddSubject(true)}>
+                    <ApperIcon name="Plus" size={16} className="mr-2" />
+                    Add First Subject
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {subjects.map((subject, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                            <ApperIcon name="BookOpen" size={16} className="text-primary-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900">{subject}</h3>
+                            <p className="text-sm text-gray-500">Subject</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to remove "${subject}"?`)) {
+                              setSubjects(prev => prev.filter(s => s !== subject));
+                              toast.success(`${subject} removed successfully!`);
+                            }
+                          }}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <ApperIcon name="Trash2" size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 {/* Class Levels Management Tab */}
 {activeTab === "levels" && (
@@ -1443,6 +1531,58 @@ return (
                       setShowAddClassLevel(false);
                       setEditingClassLevel(null);
                       setNewClassLevel({ name: "", description: "" });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+</Card>
+        </div>
+      )}
+
+      {/* Add Subject Modal */}
+      {showAddSubject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle>Add New Subject</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!newSubject.trim()) {
+                  toast.error("Subject name is required");
+                  return;
+                }
+                if (subjects.includes(newSubject.trim())) {
+                  toast.error("Subject already exists");
+                  return;
+                }
+                setSubjects(prev => [...prev, newSubject.trim()]);
+                setNewSubject("");
+                setShowAddSubject(false);
+                toast.success("Subject added successfully!");
+              }} className="space-y-4">
+                <FormField label="Subject Name">
+                  <Input
+                    value={newSubject}
+                    onChange={(e) => setNewSubject(e.target.value)}
+                    placeholder="e.g., Biology, Chemistry, Physics"
+                    required
+                  />
+                </FormField>
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit" className="flex-1">
+                    Add Subject
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowAddSubject(false);
+                      setNewSubject("");
                     }}
                   >
                     Cancel

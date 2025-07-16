@@ -144,16 +144,9 @@ return (
               <input
                 type="checkbox"
                 checked={selectedStudents.includes(student.Id)}
-                onChange={() => handleSelectStudent(student.Id)}
+onChange={() => handleSelectStudent(student.Id)}
                 className="absolute top-3 left-3 z-10 w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500"
               />
-              <button
-                onClick={() => onDeleteStudent?.(student.Id)}
-                className="absolute top-3 right-3 z-10 p-1 bg-red-100 text-red-600 hover:bg-red-200 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Delete student"
-              >
-                <ApperIcon name="Trash2" size={14} />
-              </button>
               <div
                 onClick={() => onEditStudent?.(student)}
                 className="cursor-pointer hover:bg-gray-50 transition-colors"
