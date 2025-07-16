@@ -25,13 +25,14 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave, mode = "single" }) =
     iconUrl: "",
   });
   
-  const [iconPreview, setIconPreview] = useState(null);
+const [iconPreview, setIconPreview] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedLessons, setSelectedLessons] = useState([]);
   const [lessonPlans, setLessonPlans] = useState([]);
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
-const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isUsingDefaultIcon, setIsUsingDefaultIcon] = useState(false);
   
   useEffect(() => {
     if (lesson) {
@@ -133,13 +134,56 @@ const [loading, setLoading] = useState(false);
     }
   };
 
-const handleChange = (field, value) => {
+const handleChange = async (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // Auto-select default icon when subject or class changes
+    if (field === 'subject' || field === 'className') {
+      const currentSubject = field === 'subject' ? value : formData.subject;
+      const currentClass = field === 'className' ? value : formData.className;
+      
+      if (currentSubject && currentClass && !formData.iconUrl) {
+        try {
+          const defaultIcon = await lessonPlanService.getDefaultIcon(currentSubject, currentClass);
+          if (defaultIcon) {
+            setIconPreview(defaultIcon);
+            setIsUsingDefaultIcon(true);
+            setFormData(prev => ({
+              ...prev,
+              iconUrl: defaultIcon
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to load default icon:', error);
+        }
+      }
+    }
   };
-  const handleFileUpload = (event) => {
+
+  const handleUseDefaultIcon = async () => {
+    if (formData.subject && formData.className) {
+      try {
+        const defaultIcon = await lessonPlanService.getDefaultIcon(formData.subject, formData.className);
+        if (defaultIcon) {
+          setIconPreview(defaultIcon);
+          setIsUsingDefaultIcon(true);
+          setFormData(prev => ({
+            ...prev,
+            iconUrl: defaultIcon
+          }));
+          toast.success('Default icon applied for this class level');
+        }
+      } catch (error) {
+        toast.error('Failed to load default icon');
+      }
+    } else {
+      toast.warning('Please select subject and class first');
+    }
+  };
+const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
       // Check file type
@@ -158,21 +202,25 @@ const handleChange = (field, value) => {
       reader.onload = (e) => {
         const dataUrl = e.target.result;
         setIconPreview(dataUrl);
+        setIsUsingDefaultIcon(false);
         setFormData(prev => ({
           ...prev,
           iconUrl: dataUrl
         }));
+        toast.success('Custom icon uploaded successfully');
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveIcon = () => {
+const handleRemoveIcon = () => {
     setIconPreview(null);
+    setIsUsingDefaultIcon(false);
     setFormData(prev => ({
       ...prev,
       iconUrl: ""
     }));
+    toast.info('Icon removed');
   };
 
 const toggleLessonSelection = (lessonId) => {
@@ -396,41 +444,68 @@ const toggleLessonSelection = (lessonId) => {
                           <option value="Music">Music</option>
                         </Select>
                       </div>
-                      <div className="flex items-center gap-2">
+<div className="flex items-center gap-3">
                         {iconPreview ? (
                           <div className="relative">
                             <img 
                               src={iconPreview} 
                               alt="Subject icon" 
-                              className="w-12 h-12 object-cover rounded-lg border-2 border-gray-200"
+                              className="w-14 h-14 object-cover rounded-lg border-2 border-gray-200"
                             />
                             <button
                               type="button"
                               onClick={handleRemoveIcon}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
                             >
-                              <ApperIcon name="X" size={10} />
+                              <ApperIcon name="X" size={12} />
                             </button>
+                            {isUsingDefaultIcon && (
+                              <div className="absolute -bottom-1 -left-1 bg-primary-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                                <ApperIcon name="Star" size={10} />
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <div className="w-12 h-12 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                            <ApperIcon name="Image" size={20} className="text-gray-400" />
+                          <div className="w-14 h-14 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                            <ApperIcon name="Image" size={24} className="text-gray-400" />
                           </div>
                         )}
-                        <div className="flex flex-col gap-1">
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleFileUpload}
-                              className="hidden"
-                            />
-                            <Button type="button" variant="outline" size="sm">
-                              <ApperIcon name="Upload" size={14} className="mr-1" />
-                              {iconPreview ? "Change" : "Upload"}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                              />
+                              <Button type="button" variant="outline" size="sm">
+                                <ApperIcon name="Upload" size={14} className="mr-1" />
+                                {iconPreview ? "Change" : "Upload"}
+                              </Button>
+                            </label>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm"
+                              onClick={handleUseDefaultIcon}
+                              disabled={!formData.subject || !formData.className}
+                              className="border-primary-300 text-primary-600 hover:bg-primary-50"
+                            >
+                              <ApperIcon name="Star" size={14} className="mr-1" />
+                              Default
                             </Button>
-                          </label>
-                          <p className="text-xs text-gray-500">Icon/Image</p>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {isUsingDefaultIcon ? (
+                              <span className="flex items-center gap-1 text-primary-600">
+                                <ApperIcon name="Star" size={12} />
+                                Default for {formData.className}
+                              </span>
+                            ) : (
+                              "Class-level icon"
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
