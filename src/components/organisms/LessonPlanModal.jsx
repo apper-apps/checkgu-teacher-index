@@ -422,12 +422,14 @@ const toggleLessonSelection = (lessonId) => {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <FormField label="Subject">
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
+<form onSubmit={handleSubmit} className="space-y-6">
+              {/* Subject and Icon Section */}
+              <div className="space-y-4">
+                <FormField label="Subject & Class Icon">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                         <Select
                           value={formData.subject}
                           onChange={(e) => handleChange("subject", e.target.value)}
@@ -444,73 +446,118 @@ const toggleLessonSelection = (lessonId) => {
                           <option value="Music">Music</option>
                         </Select>
                       </div>
-<div className="flex items-center gap-3">
-                        {iconPreview ? (
-                          <div className="relative">
-                            <img 
-                              src={iconPreview} 
-                              alt="Subject icon" 
-                              className="w-14 h-14 object-cover rounded-lg border-2 border-gray-200"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleRemoveIcon}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                            >
-                              <ApperIcon name="X" size={12} />
-                            </button>
-                            {isUsingDefaultIcon && (
-                              <div className="absolute -bottom-1 -left-1 bg-primary-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                                <ApperIcon name="Star" size={10} />
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
+                        <Select
+                          value={formData.className}
+                          onChange={(e) => handleChange("className", e.target.value)}
+                          required
+                        >
+                          <option value="">Select Class</option>
+                          <option value="1A">1A</option>
+                          <option value="1B">1B</option>
+                          <option value="2A">2A</option>
+                          <option value="2B">2B</option>
+                          <option value="3A">3A</option>
+                          <option value="3B">3B</option>
+                          <option value="4A">4A</option>
+                          <option value="4B">4B</option>
+                          <option value="5A">5A</option>
+                          <option value="5B">5B</option>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    {/* Icon Preview and Management */}
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Class Icon</label>
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0">
+                            {iconPreview ? (
+                              <div className="relative">
+                                <img 
+                                  src={iconPreview} 
+                                  alt="Subject icon" 
+                                  className="w-16 h-16 object-cover rounded-lg border-2 border-gray-200 shadow-sm"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleRemoveIcon}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors shadow-md"
+                                >
+                                  <ApperIcon name="X" size={12} />
+                                </button>
+                                {isUsingDefaultIcon && (
+                                  <div className="absolute -bottom-2 -left-2 bg-primary-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md">
+                                    <ApperIcon name="Star" size={12} />
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                                <ApperIcon name="Image" size={24} className="text-gray-400" />
                               </div>
                             )}
                           </div>
-                        ) : (
-                          <div className="w-14 h-14 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                            <ApperIcon name="Image" size={24} className="text-gray-400" />
-                          </div>
-                        )}
-                        <div className="flex flex-col gap-2">
-                          <div className="flex gap-2">
-                            <label className="cursor-pointer">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                              />
-                              <Button type="button" variant="outline" size="sm">
-                                <ApperIcon name="Upload" size={14} className="mr-1" />
-                                {iconPreview ? "Change" : "Upload"}
+                          
+                          <div className="flex-1 space-y-3">
+                            <div className="flex flex-col gap-2">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={handleUseDefaultIcon}
+                                disabled={!formData.subject || !formData.className}
+                                className="border-primary-300 text-primary-600 hover:bg-primary-50 justify-start"
+                              >
+                                <ApperIcon name="Star" size={14} className="mr-2" />
+                                Use Default Class Icon
                               </Button>
-                            </label>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              size="sm"
-                              onClick={handleUseDefaultIcon}
-                              disabled={!formData.subject || !formData.className}
-                              className="border-primary-300 text-primary-600 hover:bg-primary-50"
-                            >
-                              <ApperIcon name="Star" size={14} className="mr-1" />
-                              Default
-                            </Button>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {isUsingDefaultIcon ? (
-                              <span className="flex items-center gap-1 text-primary-600">
-                                <ApperIcon name="Star" size={12} />
-                                Default for {formData.className}
-                              </span>
-                            ) : (
-                              "Class-level icon"
-                            )}
+                              
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFileUpload}
+                                  className="hidden"
+                                />
+                                <Button type="button" variant="outline" size="sm" className="w-full justify-start">
+                                  <ApperIcon name="Upload" size={14} className="mr-2" />
+                                  {iconPreview ? "Change Custom Icon" : "Upload Custom Icon"}
+                                </Button>
+                              </label>
+                            </div>
+                            
+                            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                              {isUsingDefaultIcon ? (
+                                <div className="flex items-center gap-1 text-primary-600">
+                                  <ApperIcon name="Star" size={12} />
+                                  <span>Using default icon for {formData.className} level</span>
+                                </div>
+                              ) : iconPreview ? (
+                                <div className="flex items-center gap-1 text-orange-600">
+                                  <ApperIcon name="Upload" size={12} />
+                                  <span>Custom icon uploaded</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <ApperIcon name="Info" size={12} />
+                                  <span>Select subject and class to use default icon</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </FormField>
-                </div>
+                  </div>
+                </FormField>
+              </div>
+
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 <FormField label="Category">
                   <Select
                     value={formData.category}
