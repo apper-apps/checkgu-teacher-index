@@ -108,6 +108,34 @@ export const lessonPlanService = {
         deletedIds.push(parseInt(id));
       }
     }
-    return deletedIds;
+return deletedIds;
+  },
+
+  // Individual export methods
+  async exportSinglePDF(id) {
+    await delay(200);
+    const lessonPlan = lessonPlans.find(lp => lp.Id === parseInt(id));
+    if (!lessonPlan) {
+      throw new Error("Lesson plan not found");
+    }
+    return { ...lessonPlan };
+  },
+
+  async exportSingleDOCX(id) {
+    await delay(200);
+    const lessonPlan = lessonPlans.find(lp => lp.Id === parseInt(id));
+    if (!lessonPlan) {
+      throw new Error("Lesson plan not found");
+    }
+    return { ...lessonPlan };
+  },
+
+  async shareLessonPlan(id) {
+    await delay(200);
+    const lessonPlan = lessonPlans.find(lp => lp.Id === parseInt(id));
+    if (!lessonPlan) {
+      throw new Error("Lesson plan not found");
+    }
+    return { ...lessonPlan };
   }
 };

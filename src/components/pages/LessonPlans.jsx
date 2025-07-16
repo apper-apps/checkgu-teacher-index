@@ -1,21 +1,22 @@
-import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import SearchBar from "@/components/molecules/SearchBar";
-import Select from "@/components/atoms/Select";
-import LessonPlanModal from "@/components/organisms/LessonPlanModal";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import { lessonPlanService } from "@/services/api/lessonPlanService";
-import { classService } from "@/services/api/classService";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType } from "docx";
+import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, WidthType } from "docx";
+import { saveAs } from "file-saver";
+import ApperIcon from "@/components/ApperIcon";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import LessonPlanModal from "@/components/organisms/LessonPlanModal";
+import SearchBar from "@/components/molecules/SearchBar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
+import Select from "@/components/atoms/Select";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import { lessonPlanService } from "@/services/api/lessonPlanService";
+import { classService } from "@/services/api/classService";
 
 const LessonPlans = () => {
   const [lessonPlans, setLessonPlans] = useState([]);
@@ -246,8 +247,184 @@ const handleCreateLesson = () => {
       toast.error("Failed to export DOCX");
       console.error(err);
     }
+};
+
+  const handleExportSinglePDF = async (lesson) => {
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(24);
+      doc.text("Lesson Plan", 20, 20);
+      
+      // Add lesson details
+      doc.setFontSize(16);
+      doc.text(`Subject: ${lesson.subject}`, 20, 40);
+      doc.text(`Class: ${lesson.className}`, 20, 50);
+      doc.text(`Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}`, 20, 60);
+      doc.text(`Time: ${lesson.time || "No time"}`, 20, 70);
+      
+      // Add content
+      doc.setFontSize(14);
+      doc.text("Content:", 20, 90);
+      doc.setFontSize(12);
+      
+      // Split content into lines to fit page width
+      const splitContent = doc.splitTextToSize(lesson.content, 170);
+      doc.text(splitContent, 20, 105);
+      
+      // Add export timestamp
+      doc.setFontSize(10);
+      doc.text(`Exported on: ${format(new Date(), "MMMM d, yyyy 'at' HH:mm")}`, 20, doc.internal.pageSize.height - 20);
+      
+      doc.save(`lesson-plan-${lesson.subject}-${lesson.className}.pdf`);
+      toast.success("Lesson plan exported to PDF successfully!");
+    } catch (err) {
+      toast.error("Failed to export lesson plan to PDF");
+      console.error(err);
+    }
   };
 
+  const handleExportSingleDOCX = async (lesson) => {
+    try {
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Lesson Plan",
+                  bold: true,
+                  size: 32
+                })
+              ]
+            }),
+            new Paragraph({ text: "" }), // Empty line
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Subject: ${lesson.subject}`,
+                  bold: true,
+                  size: 24
+                })
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Class: ${lesson.className}`,
+                  size: 20
+                })
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}`,
+                  size: 20
+                })
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Time: ${lesson.time || "No time"}`,
+                  size: 20
+                })
+              ]
+            }),
+            new Paragraph({ text: "" }), // Empty line
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Content:",
+                  bold: true,
+                  size: 24
+                })
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: lesson.content,
+                  size: 20
+                })
+              ]
+            }),
+            new Paragraph({ text: "" }), // Empty line
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `Exported on: ${format(new Date(), "MMMM d, yyyy 'at' HH:mm")}`,
+                  size: 16,
+                  italics: true
+                })
+              ]
+            })
+          ]
+        }]
+      });
+      
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `lesson-plan-${lesson.subject}-${lesson.className}.docx`);
+      
+      toast.success("Lesson plan exported to DOCX successfully!");
+    } catch (err) {
+      toast.error("Failed to export lesson plan to DOCX");
+      console.error(err);
+    }
+  };
+
+  const handleShareLesson = async (lesson) => {
+    const lessonText = `Lesson Plan - ${lesson.subject} (${lesson.className})
+Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}
+Time: ${lesson.time || "No time"}
+
+Content:
+${lesson.content}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Lesson Plan - ${lesson.subject}`,
+          text: lessonText,
+          url: window.location.href
+        });
+        toast.success("Lesson plan shared successfully!");
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          fallbackShare(lessonText);
+        }
+      }
+    } else {
+      fallbackShare(lessonText);
+    }
+  };
+
+  const fallbackShare = (text) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success("Lesson plan copied to clipboard!");
+      }).catch(() => {
+        toast.error("Failed to copy lesson plan");
+      });
+    } else {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success("Lesson plan copied to clipboard!");
+      } catch (err) {
+        toast.error("Failed to copy lesson plan");
+      }
+      document.body.removeChild(textArea);
+    }
+  };
   const filteredLessonPlans = lessonPlans.filter(lesson => {
     const matchesSearch = lesson.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          lesson.subject.toLowerCase().includes(searchTerm.toLowerCase());
@@ -464,16 +641,39 @@ return (
                         <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{lesson.subject}</h3>
                         <p className="text-sm text-gray-600">{lesson.className}</p>
                       </div>
-                      <div className="flex gap-2">
+<div className="flex gap-1">
+                        <button
+                          onClick={() => handleExportSinglePDF(lesson)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Export to PDF"
+                        >
+                          <ApperIcon name="FileText" size={14} className="text-blue-600" />
+                        </button>
+                        <button
+                          onClick={() => handleExportSingleDOCX(lesson)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Export to DOCX"
+                        >
+                          <ApperIcon name="FileDown" size={14} className="text-green-600" />
+                        </button>
+                        <button
+                          onClick={() => handleShareLesson(lesson)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Share lesson plan"
+                        >
+                          <ApperIcon name="Share2" size={14} className="text-purple-600" />
+                        </button>
                         <button
                           onClick={() => handleEditLesson(lesson)}
                           className="p-1 hover:bg-gray-100 rounded"
+                          title="Edit lesson"
                         >
                           <ApperIcon name="Edit" size={14} className="text-gray-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteLesson(lesson.Id)}
                           className="p-1 hover:bg-gray-100 rounded"
+                          title="Delete lesson"
                         >
                           <ApperIcon name="Trash2" size={14} className="text-red-600" />
                         </button>
@@ -585,9 +785,36 @@ return (
                             <div className="text-sm text-gray-900 max-w-xs truncate">
                               {lesson.content.substring(0, 100)}...
                             </div>
-                          </td>
+</td>
                           <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleExportSinglePDF(lesson)}
+                                title="Export to PDF"
+                              >
+                                <ApperIcon name="FileText" size={14} className="mr-1" />
+                                PDF
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleExportSingleDOCX(lesson)}
+                                title="Export to DOCX"
+                              >
+                                <ApperIcon name="FileDown" size={14} className="mr-1" />
+                                DOCX
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleShareLesson(lesson)}
+                                title="Share lesson plan"
+                              >
+                                <ApperIcon name="Share2" size={14} className="mr-1" />
+                                Share
+                              </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -603,7 +830,7 @@ return (
                                 className="text-red-600 hover:bg-red-50"
                               >
                                 <ApperIcon name="Trash2" size={14} className="mr-1" />
-                                Delete
+Delete
                               </Button>
                             </div>
                           </td>
