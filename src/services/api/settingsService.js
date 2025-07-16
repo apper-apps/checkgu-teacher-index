@@ -214,10 +214,14 @@ updateSchedulePreferences: async (preferencesData) => {
     });
   },
 
-  updateSchoolBreaks: async (breaksData) => {
+updateSchoolBreaks: async (breaksData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         mockAcademicCalendar.breaks = [...breaksData];
+        // Trigger calendar update event
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('academicCalendarUpdated', Date.now().toString());
+        }
         resolve([...mockAcademicCalendar.breaks]);
       }, 200);
     });
@@ -233,12 +237,16 @@ updateSchedulePreferences: async (preferencesData) => {
     });
   },
 
-  deleteSchoolBreak: async (breakId) => {
+deleteSchoolBreak: async (breakId) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const index = mockAcademicCalendar.breaks.findIndex(b => b.Id === breakId);
         if (index !== -1) {
           mockAcademicCalendar.breaks.splice(index, 1);
+        }
+        // Trigger calendar update event
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('academicCalendarUpdated', Date.now().toString());
         }
         resolve(true);
       }, 200);

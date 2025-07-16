@@ -1,10 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import ApperIcon from "@/components/ApperIcon";
 import NavItem from "@/components/molecules/NavItem";
 import { cn } from "@/utils/cn";
-
-const Sidebar = ({ isOpen, onClose, className, schoolProfile }) => {
+import { useUser } from "@/contexts/UserContext";
+const Sidebar = ({ isOpen, onClose, className }) => {
+  const { schoolProfile } = useUser();
 const navigationItems = [
     { icon: "LayoutDashboard", label: "Dashboard", to: "/" },
     { icon: "Users", label: "Parent Dashboard", to: "/parent-dashboard" },

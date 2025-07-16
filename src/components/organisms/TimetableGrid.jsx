@@ -25,7 +25,7 @@ const TimetableGrid = ({ schedules = [], onSlotClick }) => {
     classPeriodMinutes: 45
   };
 
-  useEffect(() => {
+useEffect(() => {
     loadAcademicCalendar();
     loadDailySchedule();
   }, []);
@@ -37,10 +37,29 @@ const TimetableGrid = ({ schedules = [], onSlotClick }) => {
       setCurrentWeek(prev => new Date(prev));
     }
   }, [academicCalendar, dailySchedule]);
+
+  // Refresh academic calendar when breaks are updated
+  useEffect(() => {
+    const refreshCalendar = async () => {
+      await loadAcademicCalendar();
+    };
+    
+    // Listen for academic calendar updates
+    const handleStorageChange = (e) => {
+      if (e.key === 'academicCalendarUpdated') {
+        refreshCalendar();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 const loadAcademicCalendar = async () => {
     try {
       const calendar = await settingsService.getAcademicCalendar();
       setAcademicCalendar(calendar);
+      // Force re-render to update break displays
+      setCurrentWeek(prev => new Date(prev));
     } catch (error) {
       console.error('Failed to load academic calendar:', error);
     }

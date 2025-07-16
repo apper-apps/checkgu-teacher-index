@@ -22,7 +22,6 @@ function Layout() {
 <Sidebar 
           isOpen={isSidebarOpen} 
           onClose={handleSidebarClose} 
-          schoolProfile={schoolProfile} 
         />
         <div className="flex-1 lg:ml-0">
           <Header 

@@ -105,8 +105,8 @@ return (
         </CardContent>
       </Card>
 
-      {/* Bulk Actions Toolbar */}
-      {selectedStudents.length > 0 && (
+{/* Bulk Actions Toolbar - Only show in list view */}
+      {viewMode === "list" && selectedStudents.length > 0 && (
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -137,16 +137,10 @@ return (
       )}
 
 {/* Student List/Grid */}
-{viewMode === "card" ? (
+      {viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStudents.map(student => (
             <div key={student.Id} className="relative group">
-              <input
-                type="checkbox"
-                checked={selectedStudents.includes(student.Id)}
-onChange={() => handleSelectStudent(student.Id)}
-                className="absolute top-3 left-3 z-10 w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500"
-              />
               <div
                 onClick={() => onEditStudent?.(student)}
                 className="cursor-pointer hover:bg-gray-50 transition-colors"
@@ -161,7 +155,7 @@ onChange={() => handleSelectStudent(student.Id)}
         </div>
       ) : (
         <Card>
-          <CardContent className="p-0">
+<CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>

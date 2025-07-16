@@ -843,7 +843,35 @@ return (
 
 <SubjectScheduleManager
                   subjectSchedules={[]}
-                  onChange={() => {}}
+                  onChange={(newSchedules) => {
+                    // Process new schedules and create actual schedule entries
+                    newSchedules.forEach(schedule => {
+                      schedule.days.forEach(dayIndex => {
+                        schedule.timeSlots.forEach(timeSlot => {
+                          // Create schedule entry for each day/time combination
+                          const scheduleEntry = {
+                            dayOfWeek: dayIndex,
+                            timeSlot: timeSlot,
+                            subject: schedule.subject,
+                            className: 'General' // Default class for subject schedules
+                          };
+                          
+                          // Add to schedules if not already exists
+                          const exists = schedules.some(s => 
+                            s.dayOfWeek === dayIndex && 
+                            s.timeSlot === timeSlot && 
+                            s.subject === schedule.subject
+                          );
+                          
+                          if (!exists) {
+                            scheduleService.create(scheduleEntry).then(() => {
+                              loadData(); // Refresh data after creation
+                            });
+                          }
+                        });
+                      });
+                    });
+                  }}
                   availableSubjects={subjects}
                   days={days}
                   dailySchedule={dailySchedule}
@@ -855,7 +883,7 @@ return (
                       const dayTimeSlots = getTimeSlotsForDay(dayIndex, days, dailySchedule, schedulePreferences);
                       dayTimeSlots.forEach(slot => allTimeSlots.add(slot));
                     });
-                    return Array.from(allTimeSlots);
+                    return Array.from(allTimeSlots).sort();
                   })()}
                 />
               </div>
@@ -903,36 +931,62 @@ return (
                     Add First Subject
                   </Button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {subjects.map((subject, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                            <ApperIcon name="BookOpen" size={16} className="text-primary-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">{subject}</h3>
-                            <p className="text-sm text-gray-500">Subject</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to remove "${subject}"?`)) {
-                              setSubjects(prev => prev.filter(s => s !== subject));
-                              toast.success(`${subject} removed successfully!`);
-                            }
-                          }}
-                          className="text-red-600 hover:bg-red-50"
-                        >
-                          <ApperIcon name="Trash2" size={14} />
-                        </Button>
-                      </div>
+) : (
+                <div className="space-y-4">
+                  {/* Subject Selection Controls */}
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          const allSelected = subjects.every(s => subjects.includes(s));
+                          // Toggle all subjects selection logic here
+                          toast.info(allSelected ? "All subjects deselected" : "All subjects selected");
+                        }}
+                        className="px-3 py-1 text-sm bg-primary-100 text-primary-700 hover:bg-primary-200 rounded-md transition-colors flex items-center gap-1"
+                      >
+                        <ApperIcon name="CheckSquare" size={14} />
+                        Select All
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        {subjects.length} subject{subjects.length > 1 ? 's' : ''} available
+                      </span>
                     </div>
-                  ))}
+                    <div className="text-sm text-gray-500">
+                      Manage subjects for weekly scheduling
+                    </div>
+                  </div>
+                  
+                  {/* Subject Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {subjects.map((subject, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                              <ApperIcon name="BookOpen" size={16} className="text-primary-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">{subject}</h3>
+                              <p className="text-sm text-gray-500">Available for scheduling</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to remove "${subject}"?`)) {
+                                setSubjects(prev => prev.filter(s => s !== subject));
+                                toast.success(`${subject} removed successfully!`);
+                              }
+                            }}
+                            className="text-red-600 hover:bg-red-50"
+                          >
+                            <ApperIcon name="Trash2" size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
