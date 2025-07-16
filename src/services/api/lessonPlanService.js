@@ -279,3 +279,9 @@ return { ...lessonPlan };
     return subjects;
   }
 };
+const generateLessonText = (lesson) => {
+    return `Lesson Plan Content - ${lesson.subject} (${lesson.className})
+
+Content:
+${lesson.content}`;
+  };

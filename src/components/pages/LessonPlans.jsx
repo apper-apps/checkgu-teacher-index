@@ -146,40 +146,34 @@ const handleExportPDF = async () => {
       
       // Add title
       doc.setFontSize(20);
-      doc.text("Lesson Plans", 20, 20);
+      doc.text("Lesson Plans Content", 20, 20);
       
       // Add export date
       doc.setFontSize(12);
       doc.text(`Exported on: ${format(new Date(), "MMMM d, yyyy")}`, 20, 35);
       
-      // Prepare structured data for table
+      // Prepare content-only data for table
       const tableData = filteredLessonPlans.map(lesson => [
         lesson.subject,
         lesson.className,
-        lesson.date ? format(new Date(lesson.date), "MMM d, yyyy") : "No date",
-        lesson.time || "No time",
-        lesson.objectives || "No objectives",
-        lesson.content,
-        lesson.materials || "No materials",
-        lesson.assessment || "No assessment"
+        lesson.content
       ]);
       
       // Add structured table
       doc.autoTable({
-        head: [['Subject', 'Class', 'Date', 'Time', 'Objectives', 'Content', 'Materials', 'Assessment']],
+        head: [['Subject', 'Class', 'Content']],
         body: tableData,
         startY: 45,
-        styles: { fontSize: 8 },
+        styles: { fontSize: 10 },
         headStyles: { fillColor: [74, 144, 226] },
         columnStyles: {
-          4: { cellWidth: 20 }, // Objectives
-          5: { cellWidth: 25 }, // Content
-          6: { cellWidth: 20 }, // Materials
-          7: { cellWidth: 20 }  // Assessment
+          0: { cellWidth: 30 }, // Subject
+          1: { cellWidth: 20 }, // Class
+          2: { cellWidth: 120 } // Content
         }
       });
       
-      doc.save('lesson-plans.pdf');
+      doc.save('lesson-plans-content.pdf');
       toast.success("PDF exported successfully!");
     } catch (err) {
       toast.error("Failed to export PDF");
@@ -196,7 +190,7 @@ const handleExportDOCX = async () => {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: "Lesson Plans",
+                  text: "Lesson Plans Content",
                   bold: true,
                   size: 32
                 })
@@ -204,7 +198,7 @@ const handleExportDOCX = async () => {
             }),
             new Paragraph({ text: "" }), // Empty line
             
-            // Create structured table
+            // Create content-only table
             new Table({
               width: { size: 100, type: WidthType.PERCENTAGE },
               rows: [
@@ -213,12 +207,7 @@ const handleExportDOCX = async () => {
                   children: [
                     new TableCell({ children: [new Paragraph({ text: "Subject" })] }),
                     new TableCell({ children: [new Paragraph({ text: "Class" })] }),
-                    new TableCell({ children: [new Paragraph({ text: "Date" })] }),
-                    new TableCell({ children: [new Paragraph({ text: "Time" })] }),
-                    new TableCell({ children: [new Paragraph({ text: "Objectives" })] }),
-                    new TableCell({ children: [new Paragraph({ text: "Content" })] }),
-                    new TableCell({ children: [new Paragraph({ text: "Materials" })] }),
-                    new TableCell({ children: [new Paragraph({ text: "Assessment" })] })
+                    new TableCell({ children: [new Paragraph({ text: "Content" })] })
                   ]
                 }),
                 // Data rows
@@ -226,12 +215,7 @@ const handleExportDOCX = async () => {
                   children: [
                     new TableCell({ children: [new Paragraph({ text: lesson.subject })] }),
                     new TableCell({ children: [new Paragraph({ text: lesson.className })] }),
-                    new TableCell({ children: [new Paragraph({ text: lesson.date ? format(new Date(lesson.date), "MMM d, yyyy") : "No date" })] }),
-                    new TableCell({ children: [new Paragraph({ text: lesson.time || "No time" })] }),
-                    new TableCell({ children: [new Paragraph({ text: lesson.objectives || "No objectives" })] }),
-                    new TableCell({ children: [new Paragraph({ text: lesson.content })] }),
-                    new TableCell({ children: [new Paragraph({ text: lesson.materials || "No materials" })] }),
-                    new TableCell({ children: [new Paragraph({ text: lesson.assessment || "No assessment" })] })
+                    new TableCell({ children: [new Paragraph({ text: lesson.content })] })
                   ]
                 }))
               ]
@@ -244,7 +228,7 @@ const handleExportDOCX = async () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'lesson-plans.docx';
+      link.download = 'lesson-plans-content.docx';
       link.click();
       URL.revokeObjectURL(url);
       
@@ -261,39 +245,34 @@ const handleExportSinglePDF = async (lesson) => {
       
       // Add title
       doc.setFontSize(20);
-      doc.text("Lesson Plan", 20, 20);
+      doc.text("Lesson Plan Content", 20, 20);
       
       // Add export date
       doc.setFontSize(12);
       doc.text(`Exported on: ${format(new Date(), "MMMM d, yyyy")}`, 20, 35);
       
-      // Prepare structured data for table
+      // Prepare content-only data for table
       const tableData = [
         ['Subject', lesson.subject],
         ['Class', lesson.className],
-        ['Date', lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"],
-        ['Time', lesson.time || "No time"],
-        ['Objectives', lesson.objectives || "No objectives"],
-        ['Content', lesson.content],
-        ['Materials', lesson.materials || "No materials"],
-        ['Assessment', lesson.assessment || "No assessment"]
+        ['Content', lesson.content]
       ];
       
       // Add structured table
       doc.autoTable({
         body: tableData,
         startY: 45,
-        styles: { fontSize: 10 },
+        styles: { fontSize: 12 },
         columnStyles: {
           0: { cellWidth: 30, fontStyle: 'bold' }, // Field names
           1: { cellWidth: 140 } // Values
         }
       });
       
-      doc.save(`lesson-plan-${lesson.subject}-${lesson.className}.pdf`);
-      toast.success("Lesson plan exported to PDF successfully!");
+      doc.save(`lesson-plan-content-${lesson.subject}-${lesson.className}.pdf`);
+      toast.success("Lesson plan content exported to PDF successfully!");
     } catch (err) {
-      toast.error("Failed to export lesson plan to PDF");
+      toast.error("Failed to export lesson plan content to PDF");
       console.error(err);
     }
   };
@@ -307,7 +286,7 @@ const handleExportSingleDOCX = async (lesson) => {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: "Lesson Plan",
+                  text: "Lesson Plan Content",
                   bold: true,
                   size: 32
                 })
@@ -331,45 +310,11 @@ const handleExportSingleDOCX = async (lesson) => {
                 })
               ]
             }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}`,
-                  size: 20
-                })
-              ]
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `Time: ${lesson.time || "No time"}`,
-                  size: 20
-                })
-              ]
-            }),
             new Paragraph({ text: "" }), // Empty line
             new Paragraph({
               children: [
                 new TextRun({
-                  text: "Learning Objectives:",
-                  bold: true,
-                  size: 24
-                })
-              ]
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: lesson.objectives || "No objectives specified",
-                  size: 20
-                })
-              ]
-            }),
-            new Paragraph({ text: "" }), // Empty line
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Lesson Content:",
+                  text: "Content:",
                   bold: true,
                   size: 24
                 })
@@ -382,53 +327,17 @@ const handleExportSingleDOCX = async (lesson) => {
                   size: 20
                 })
               ]
-            }),
-            new Paragraph({ text: "" }), // Empty line
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Materials Needed:",
-                  bold: true,
-                  size: 24
-                })
-              ]
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: lesson.materials || "No materials specified",
-                  size: 20
-                })
-              ]
-            }),
-            new Paragraph({ text: "" }), // Empty line
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Assessment Method:",
-                  bold: true,
-                  size: 24
-                })
-              ]
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: lesson.assessment || "No assessment method specified",
-                  size: 20
-                })
-              ]
             })
           ]
         }]
       });
       
       const blob = await Packer.toBlob(doc);
-      saveAs(blob, `lesson-plan-${lesson.subject}-${lesson.className}.docx`);
+      saveAs(blob, `lesson-plan-content-${lesson.subject}-${lesson.className}.docx`);
       
-      toast.success("Lesson plan exported to DOCX successfully!");
+      toast.success("Lesson plan content exported to DOCX successfully!");
     } catch (err) {
-      toast.error("Failed to export lesson plan to DOCX");
+      toast.error("Failed to export lesson plan content to DOCX");
       console.error(err);
     }
   };
@@ -908,7 +817,7 @@ className={`px-3 py-1 rounded text-sm transition-colors ${
               ))}
             </div>
           ) : (
-            <Card>
+<Card>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -927,17 +836,11 @@ className={`px-3 py-1 rounded text-sm transition-colors ${
                             </span>
                           </div>
                         </th>
-<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Subject
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Subject & Class
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Class
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Time
+                          Date & Time
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Content
@@ -948,7 +851,7 @@ className={`px-3 py-1 rounded text-sm transition-colors ${
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredLessonPlans.map(lesson => (
+{filteredLessonPlans.map(lesson => (
                         <tr key={lesson.Id} className="hover:bg-gray-50">
                           <td className="px-4 py-4 whitespace-nowrap">
                             <input
@@ -958,40 +861,36 @@ className={`px-3 py-1 rounded text-sm transition-colors ${
                               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                             />
                           </td>
-<td className="px-4 py-4 whitespace-nowrap">
+                          <td className="px-4 py-4">
                             <div className="flex items-center gap-3">
                               {lesson.iconUrl ? (
                                 <img 
                                   src={lesson.iconUrl} 
                                   alt={`${lesson.subject} icon`} 
-                                  className="w-8 h-8 object-cover rounded-md border border-gray-200 flex-shrink-0"
+                                  className="w-10 h-10 object-cover rounded-lg border border-gray-200 flex-shrink-0"
                                 />
                               ) : (
-                                <div className="w-8 h-8 bg-primary-100 rounded-md flex items-center justify-center flex-shrink-0">
-                                  <ApperIcon name="BookOpen" size={14} className="text-primary-600" />
+                                <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <ApperIcon name="BookOpen" size={16} className="text-primary-600" />
                                 </div>
                               )}
-                              <div className="text-sm font-medium text-gray-900">
-                                {lesson.subject}
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{lesson.subject}</div>
+                                <div className="text-sm text-gray-500">{lesson.className}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{lesson.className}</div>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
+                          <td className="px-4 py-4">
                             <div className="text-sm text-gray-900">
                               {lesson.date ? format(new Date(lesson.date), "MMM d, yyyy") : "No date"}
                             </div>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{lesson.time || "No time"}</div>
+                            <div className="text-sm text-gray-500">{lesson.time || "No time"}</div>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="text-sm text-gray-900 max-w-xs truncate">
-                              {lesson.content.substring(0, 100)}...
+                            <div className="text-sm text-gray-900 max-w-md">
+                              {lesson.content.substring(0, 150)}...
                             </div>
-</td>
+                          </td>
                           <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end gap-2">
                               <Button

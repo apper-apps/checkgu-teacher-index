@@ -572,40 +572,28 @@ const toggleLessonSelection = (lessonId) => {
                     <option value="STEM">STEM</option>
                   </Select>
                 </FormField>
-                <FormField label="Class">
-                  <Select
-                    value={formData.className}
-                    onChange={(e) => handleChange("className", e.target.value)}
-                    required
-                  >
-                    <option value="">Select Class</option>
-                    <option value="1A">1A</option>
-                    <option value="1B">1B</option>
-                    <option value="2A">2A</option>
-                    <option value="2B">2B</option>
-                    <option value="3A">3A</option>
-                    <option value="3B">3B</option>
-                    <option value="4A">4A</option>
-                    <option value="4B">4B</option>
-                    <option value="5A">5A</option>
-                    <option value="5B">5B</option>
-                  </Select>
-                </FormField>
-                <FormField label="Date">
-                  <Input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => handleChange("date", e.target.value)}
-                    required
-                  />
-                </FormField>
-                <FormField label="Time">
-                  <Input
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => handleChange("time", e.target.value)}
-                    required
-                  />
+                
+                <FormField label="Date & Time">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => handleChange("date", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                      <Input
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) => handleChange("time", e.target.value)}
+                        required
+                      />
+</div>
+                  </div>
                 </FormField>
               </div>
 
