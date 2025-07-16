@@ -138,7 +138,7 @@ const handleCreateLesson = () => {
     }
   };
 
-  const handleExportPDF = async () => {
+const handleExportPDF = async () => {
     try {
       const doc = new jsPDF();
       
@@ -150,24 +150,30 @@ const handleCreateLesson = () => {
       doc.setFontSize(12);
       doc.text(`Exported on: ${format(new Date(), "MMMM d, yyyy")}`, 20, 35);
       
-      // Prepare data for table
+      // Prepare structured data for table
       const tableData = filteredLessonPlans.map(lesson => [
         lesson.subject,
         lesson.className,
         lesson.date ? format(new Date(lesson.date), "MMM d, yyyy") : "No date",
         lesson.time || "No time",
-        lesson.content.substring(0, 100) + (lesson.content.length > 100 ? "..." : "")
+        lesson.objectives ? lesson.objectives.substring(0, 80) + (lesson.objectives.length > 80 ? "..." : "") : "No objectives",
+        lesson.content.substring(0, 100) + (lesson.content.length > 100 ? "..." : ""),
+        lesson.materials ? lesson.materials.substring(0, 60) + (lesson.materials.length > 60 ? "..." : "") : "No materials",
+        lesson.assessment ? lesson.assessment.substring(0, 60) + (lesson.assessment.length > 60 ? "..." : "") : "No assessment"
       ]);
       
-      // Add table
+      // Add structured table
       doc.autoTable({
-        head: [['Subject', 'Class', 'Date', 'Time', 'Content']],
+        head: [['Subject', 'Class', 'Date', 'Time', 'Objectives', 'Content', 'Materials', 'Assessment']],
         body: tableData,
         startY: 45,
-        styles: { fontSize: 10 },
+        styles: { fontSize: 8 },
         headStyles: { fillColor: [74, 144, 226] },
         columnStyles: {
-          4: { cellWidth: 60 } // Content column wider
+          4: { cellWidth: 20 }, // Objectives
+          5: { cellWidth: 25 }, // Content
+          6: { cellWidth: 20 }, // Materials
+          7: { cellWidth: 20 }  // Assessment
         }
       });
       
@@ -179,7 +185,7 @@ const handleCreateLesson = () => {
     }
   };
 
-  const handleExportDOCX = async () => {
+const handleExportDOCX = async () => {
     try {
       const doc = new Document({
         sections: [{
@@ -194,17 +200,9 @@ const handleCreateLesson = () => {
                 })
               ]
             }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `Exported on: ${format(new Date(), "MMMM d, yyyy")}`,
-                  size: 20
-                })
-              ]
-            }),
             new Paragraph({ text: "" }), // Empty line
             
-            // Create table
+            // Create structured table
             new Table({
               width: { size: 100, type: WidthType.PERCENTAGE },
               rows: [
@@ -215,7 +213,10 @@ const handleCreateLesson = () => {
                     new TableCell({ children: [new Paragraph({ text: "Class" })] }),
                     new TableCell({ children: [new Paragraph({ text: "Date" })] }),
                     new TableCell({ children: [new Paragraph({ text: "Time" })] }),
-                    new TableCell({ children: [new Paragraph({ text: "Content" })] })
+                    new TableCell({ children: [new Paragraph({ text: "Objectives" })] }),
+                    new TableCell({ children: [new Paragraph({ text: "Content" })] }),
+                    new TableCell({ children: [new Paragraph({ text: "Materials" })] }),
+                    new TableCell({ children: [new Paragraph({ text: "Assessment" })] })
                   ]
                 }),
                 // Data rows
@@ -225,7 +226,10 @@ const handleCreateLesson = () => {
                     new TableCell({ children: [new Paragraph({ text: lesson.className })] }),
                     new TableCell({ children: [new Paragraph({ text: lesson.date ? format(new Date(lesson.date), "MMM d, yyyy") : "No date" })] }),
                     new TableCell({ children: [new Paragraph({ text: lesson.time || "No time" })] }),
-                    new TableCell({ children: [new Paragraph({ text: lesson.content.substring(0, 200) + (lesson.content.length > 200 ? "..." : "") })] })
+                    new TableCell({ children: [new Paragraph({ text: lesson.objectives || "No objectives" })] }),
+                    new TableCell({ children: [new Paragraph({ text: lesson.content })] }),
+                    new TableCell({ children: [new Paragraph({ text: lesson.materials || "No materials" })] }),
+                    new TableCell({ children: [new Paragraph({ text: lesson.assessment || "No assessment" })] })
                   ]
                 }))
               ]
@@ -247,35 +251,63 @@ const handleCreateLesson = () => {
       toast.error("Failed to export DOCX");
       console.error(err);
     }
-};
+  };
 
-  const handleExportSinglePDF = async (lesson) => {
+const handleExportSinglePDF = async (lesson) => {
     try {
       const doc = new jsPDF();
+      let yPosition = 20;
       
       // Add title
       doc.setFontSize(24);
-      doc.text("Lesson Plan", 20, 20);
+      doc.text("Lesson Plan", 20, yPosition);
+      yPosition += 20;
       
-      // Add lesson details
+      // Add lesson details in structured format
       doc.setFontSize(16);
-      doc.text(`Subject: ${lesson.subject}`, 20, 40);
-      doc.text(`Class: ${lesson.className}`, 20, 50);
-      doc.text(`Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}`, 20, 60);
-      doc.text(`Time: ${lesson.time || "No time"}`, 20, 70);
+      doc.text(`Subject: ${lesson.subject}`, 20, yPosition);
+      yPosition += 10;
+      doc.text(`Class: ${lesson.className}`, 20, yPosition);
+      yPosition += 10;
+      doc.text(`Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}`, 20, yPosition);
+      yPosition += 10;
+      doc.text(`Time: ${lesson.time || "No time"}`, 20, yPosition);
+      yPosition += 20;
+      
+      // Add objectives
+      doc.setFontSize(14);
+      doc.text("Learning Objectives:", 20, yPosition);
+      yPosition += 10;
+      doc.setFontSize(12);
+      const splitObjectives = doc.splitTextToSize(lesson.objectives || "No objectives specified", 170);
+      doc.text(splitObjectives, 20, yPosition);
+      yPosition += splitObjectives.length * 5 + 10;
       
       // Add content
       doc.setFontSize(14);
-      doc.text("Content:", 20, 90);
+      doc.text("Lesson Content:", 20, yPosition);
+      yPosition += 10;
       doc.setFontSize(12);
-      
-      // Split content into lines to fit page width
       const splitContent = doc.splitTextToSize(lesson.content, 170);
-      doc.text(splitContent, 20, 105);
+      doc.text(splitContent, 20, yPosition);
+      yPosition += splitContent.length * 5 + 10;
       
-      // Add export timestamp
-      doc.setFontSize(10);
-      doc.text(`Exported on: ${format(new Date(), "MMMM d, yyyy 'at' HH:mm")}`, 20, doc.internal.pageSize.height - 20);
+      // Add materials
+      doc.setFontSize(14);
+      doc.text("Materials Needed:", 20, yPosition);
+      yPosition += 10;
+      doc.setFontSize(12);
+      const splitMaterials = doc.splitTextToSize(lesson.materials || "No materials specified", 170);
+      doc.text(splitMaterials, 20, yPosition);
+      yPosition += splitMaterials.length * 5 + 10;
+      
+      // Add assessment
+      doc.setFontSize(14);
+      doc.text("Assessment Method:", 20, yPosition);
+      yPosition += 10;
+      doc.setFontSize(12);
+      const splitAssessment = doc.splitTextToSize(lesson.assessment || "No assessment method specified", 170);
+      doc.text(splitAssessment, 20, yPosition);
       
       doc.save(`lesson-plan-${lesson.subject}-${lesson.className}.pdf`);
       toast.success("Lesson plan exported to PDF successfully!");
@@ -285,7 +317,7 @@ const handleCreateLesson = () => {
     }
   };
 
-  const handleExportSingleDOCX = async (lesson) => {
+const handleExportSingleDOCX = async (lesson) => {
     try {
       const doc = new Document({
         sections: [{
@@ -338,7 +370,25 @@ const handleCreateLesson = () => {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: "Content:",
+                  text: "Learning Objectives:",
+                  bold: true,
+                  size: 24
+                })
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: lesson.objectives || "No objectives specified",
+                  size: 20
+                })
+              ]
+            }),
+            new Paragraph({ text: "" }), // Empty line
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Lesson Content:",
                   bold: true,
                   size: 24
                 })
@@ -356,9 +406,35 @@ const handleCreateLesson = () => {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `Exported on: ${format(new Date(), "MMMM d, yyyy 'at' HH:mm")}`,
-                  size: 16,
-                  italics: true
+                  text: "Materials Needed:",
+                  bold: true,
+                  size: 24
+                })
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: lesson.materials || "No materials specified",
+                  size: 20
+                })
+              ]
+            }),
+            new Paragraph({ text: "" }), // Empty line
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Assessment Method:",
+                  bold: true,
+                  size: 24
+                })
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: lesson.assessment || "No assessment method specified",
+                  size: 20
                 })
               ]
             })
@@ -376,14 +452,40 @@ const handleCreateLesson = () => {
     }
   };
 
-  const handleShareLesson = async (lesson) => {
+const handleShareLesson = async (lesson) => {
     const lessonText = `Lesson Plan - ${lesson.subject} (${lesson.className})
 Date: ${lesson.date ? format(new Date(lesson.date), "MMMM d, yyyy") : "No date"}
 Time: ${lesson.time || "No time"}
 
-Content:
-${lesson.content}`;
+Learning Objectives:
+${lesson.objectives || "No objectives specified"}
 
+Lesson Content:
+${lesson.content}
+
+Materials Needed:
+${lesson.materials || "No materials specified"}
+
+Assessment Method:
+${lesson.assessment || "No assessment method specified"}`;
+
+    // Show sharing options
+    const shareOptions = [
+      {
+        name: 'Copy to Clipboard',
+        action: () => copyToClipboard(lessonText)
+      },
+      {
+        name: 'Email',
+        action: () => shareViaEmail(lesson, lessonText)
+      },
+      {
+        name: 'Generate Share Link',
+        action: () => generateShareLink(lesson, lessonText)
+      }
+    ];
+
+    // Try native sharing first
     if (navigator.share) {
       try {
         await navigator.share({
@@ -392,38 +494,91 @@ ${lesson.content}`;
           url: window.location.href
         });
         toast.success("Lesson plan shared successfully!");
+        return;
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          fallbackShare(lessonText);
+        if (err.name === 'AbortError') {
+          return; // User cancelled
         }
+        // Fall through to custom options
       }
-    } else {
-      fallbackShare(lessonText);
+    }
+
+    // Show custom sharing options
+    const selectedOption = await showShareOptions(shareOptions);
+    if (selectedOption) {
+      selectedOption.action();
     }
   };
 
-  const fallbackShare = (text) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
         toast.success("Lesson plan copied to clipboard!");
-      }).catch(() => {
-        toast.error("Failed to copy lesson plan");
-      });
-    } else {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        toast.success("Lesson plan copied to clipboard!");
-      } catch (err) {
-        toast.error("Failed to copy lesson plan");
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            toast.success("Lesson plan copied to clipboard!");
+          } else {
+            throw new Error('Copy command failed');
+          }
+        } catch (err) {
+          toast.error("Failed to copy lesson plan");
+        } finally {
+          document.body.removeChild(textArea);
+        }
       }
-      document.body.removeChild(textArea);
+    } catch (err) {
+      toast.error("Failed to copy lesson plan");
     }
+  };
+
+  const shareViaEmail = (lesson, text) => {
+    const subject = `Lesson Plan - ${lesson.subject} (${lesson.className})`;
+    const body = encodeURIComponent(text);
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+    window.open(mailtoUrl, '_blank');
+    toast.success("Email client opened with lesson plan!");
+  };
+
+  const generateShareLink = (lesson, text) => {
+    // Create a data URL for temporary sharing
+    const dataUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `lesson-plan-${lesson.subject}-${lesson.className}.txt`;
+    link.click();
+    toast.success("Lesson plan file downloaded!");
+  };
+
+  const showShareOptions = (options) => {
+    return new Promise((resolve) => {
+      const optionText = options.map((opt, index) => `${index + 1}. ${opt.name}`).join('\n');
+      const choice = prompt(`Choose sharing option:\n${optionText}\n\nEnter number (1-${options.length}) or cancel:`);
+      
+      if (choice === null) {
+        resolve(null);
+        return;
+      }
+      
+      const index = parseInt(choice) - 1;
+      if (index >= 0 && index < options.length) {
+        resolve(options[index]);
+      } else {
+        toast.error("Invalid selection");
+        resolve(null);
+      }
+    });
   };
   const filteredLessonPlans = lessonPlans.filter(lesson => {
     const matchesSearch = lesson.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -567,20 +722,18 @@ return (
                       ? "bg-white text-gray-900 shadow-sm" 
                       : "text-gray-600 hover:text-gray-900"
                   }`}
-                >
-                  <ApperIcon name="Grid3X3" size={14} className="mr-1" />
-                  Card
+>
+                  <ApperIcon name="Grid3X3" size={14} />
                 </button>
                 <button
                   onClick={() => handleViewModeChange("list")}
-                  className={`px-3 py-1 rounded text-sm transition-colors ${
+className={`px-3 py-1 rounded text-sm transition-colors ${
                     viewMode === "list" 
                       ? "bg-white text-gray-900 shadow-sm" 
                       : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
-                  <ApperIcon name="List" size={14} className="mr-1" />
-                  List
+                  <ApperIcon name="List" size={14} />
                 </button>
               </div>
             </div>
