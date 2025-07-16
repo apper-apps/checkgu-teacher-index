@@ -787,14 +787,27 @@ className={`px-3 py-1 rounded text-sm transition-colors ${
           {viewMode === "card" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredLessonPlans.map(lesson => (
-                <Card key={lesson.Id} className="hover:shadow-md transition-shadow duration-200">
+<Card key={lesson.Id} className="hover:shadow-md transition-shadow duration-200">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">{lesson.subject}</h3>
-                        <p className="text-sm text-gray-600">{lesson.className}</p>
+                      <div className="flex items-center gap-3 flex-1">
+                        {lesson.iconUrl ? (
+                          <img 
+                            src={lesson.iconUrl} 
+                            alt={`${lesson.subject} icon`} 
+                            className="w-10 h-10 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <ApperIcon name="BookOpen" size={18} className="text-primary-600" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 truncate">{lesson.subject}</h3>
+                          <p className="text-sm text-gray-600">{lesson.className}</p>
+                        </div>
                       </div>
-<div className="flex gap-1">
+                      <div className="flex gap-1">
                         <button
                           onClick={() => handleExportSinglePDF(lesson)}
                           className="p-1 hover:bg-gray-100 rounded"
@@ -885,7 +898,7 @@ className={`px-3 py-1 rounded text-sm transition-colors ${
                             </span>
                           </div>
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Subject
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -916,8 +929,19 @@ className={`px-3 py-1 rounded text-sm transition-colors ${
                               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                             />
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
+<td className="px-4 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              {lesson.iconUrl ? (
+                                <img 
+                                  src={lesson.iconUrl} 
+                                  alt={`${lesson.subject} icon`} 
+                                  className="w-8 h-8 object-cover rounded-md border border-gray-200 flex-shrink-0"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 bg-primary-100 rounded-md flex items-center justify-center flex-shrink-0">
+                                  <ApperIcon name="BookOpen" size={14} className="text-primary-600" />
+                                </div>
+                              )}
                               <div className="text-sm font-medium text-gray-900">
                                 {lesson.subject}
                               </div>

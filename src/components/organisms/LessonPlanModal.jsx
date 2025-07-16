@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
+import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Loading from "@/components/ui/Loading";
 import FormField from "@/components/molecules/FormField";
-import Input from "@/components/atoms/Input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/atoms/Card";
 import Select from "@/components/atoms/Select";
 import Textarea from "@/components/atoms/Textarea";
-import ApperIcon from "@/components/ApperIcon";
-import { toast } from "react-toastify";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
 import { lessonPlanService } from "@/services/api/lessonPlanService";
 
 const LessonPlanModal = ({ isOpen, onClose, lesson, onSave, mode = "single" }) => {
@@ -21,15 +22,18 @@ const LessonPlanModal = ({ isOpen, onClose, lesson, onSave, mode = "single" }) =
     objectives: "",
     materials: "",
     assessment: "",
+    iconUrl: "",
   });
-
+  
+  const [iconPreview, setIconPreview] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedLessons, setSelectedLessons] = useState([]);
   const [lessonPlans, setLessonPlans] = useState([]);
   const [isEditingCategory, setIsEditingCategory] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState(null);
-  const [loading, setLoading] = useState(false);
-useEffect(() => {
+const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
     if (lesson) {
       setFormData({
         subject: lesson.subject || "",
@@ -41,7 +45,9 @@ useEffect(() => {
         objectives: lesson.objectives || "",
         materials: lesson.materials || "",
         assessment: lesson.assessment || "",
+        iconUrl: lesson.iconUrl || "",
       });
+      setIconPreview(lesson.iconUrl || null);
     }
   }, [lesson]);
 
@@ -127,21 +133,57 @@ useEffect(() => {
     }
   };
 
-  const handleChange = (field, value) => {
+const handleChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      // Check file size (limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        setIconPreview(dataUrl);
+        setFormData(prev => ({
+          ...prev,
+          iconUrl: dataUrl
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  const toggleLessonSelection = (lessonId) => {
-    setSelectedLessons(prev => 
+  const handleRemoveIcon = () => {
+    setIconPreview(null);
+    setFormData(prev => ({
+      ...prev,
+      iconUrl: ""
+    }));
+  };
+
+const toggleLessonSelection = (lessonId) => {
+    setSelectedLessons(prev =>
       prev.includes(lessonId)
         ? prev.filter(id => id !== lessonId)
         : [...prev, lessonId]
     );
   };
-if (!isOpen) return null;
+
+  if (!isOpen) return null;
 
   if (mode === "bulk") {
     return (
@@ -333,25 +375,68 @@ if (!isOpen) return null;
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Subject">
-                  <Select
-                    value={formData.subject}
-                    onChange={(e) => handleChange("subject", e.target.value)}
-                    required
-                  >
-                    <option value="">Select Subject</option>
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="English">English</option>
-                    <option value="Science">Science</option>
-                    <option value="History">History</option>
-                    <option value="Geography">Geography</option>
-                    <option value="Art">Art</option>
-                    <option value="Physical Education">Physical Education</option>
-                    <option value="Music">Music</option>
-                  </Select>
-                </FormField>
-                <FormField label="Category">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <FormField label="Subject">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <Select
+                          value={formData.subject}
+                          onChange={(e) => handleChange("subject", e.target.value)}
+                          required
+                        >
+                          <option value="">Select Subject</option>
+                          <option value="Mathematics">Mathematics</option>
+                          <option value="English">English</option>
+                          <option value="Science">Science</option>
+                          <option value="History">History</option>
+                          <option value="Geography">Geography</option>
+                          <option value="Art">Art</option>
+                          <option value="Physical Education">Physical Education</option>
+                          <option value="Music">Music</option>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {iconPreview ? (
+                          <div className="relative">
+                            <img 
+                              src={iconPreview} 
+                              alt="Subject icon" 
+                              className="w-12 h-12 object-cover rounded-lg border-2 border-gray-200"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRemoveIcon}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              <ApperIcon name="X" size={10} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                            <ApperIcon name="Image" size={20} className="text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-1">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                            <Button type="button" variant="outline" size="sm">
+                              <ApperIcon name="Upload" size={14} className="mr-1" />
+                              {iconPreview ? "Change" : "Upload"}
+                            </Button>
+                          </label>
+                          <p className="text-xs text-gray-500">Icon/Image</p>
+                        </div>
+                      </div>
+                    </div>
+                  </FormField>
+                </div>
+<FormField label="Category">
                   <Select
                     value={formData.category}
                     onChange={(e) => handleChange("category", e.target.value)}
@@ -365,7 +450,7 @@ if (!isOpen) return null;
                     <option value="STEM">STEM</option>
                   </Select>
                 </FormField>
-<FormField label="Class">
+                <FormField label="Class">
                   <Select
                     value={formData.className}
                     onChange={(e) => handleChange("className", e.target.value)}
